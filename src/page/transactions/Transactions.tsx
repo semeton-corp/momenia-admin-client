@@ -1,5 +1,5 @@
 const Transactions = () => {
-  return <div>Transactions</div>;
+  return <div className="text-7xl">Transactions</div>;
 };
 
 export default Transactions;

@@ -1,11 +1,8 @@
-import "./App.css";
+import { RouterProvider } from "react-router-dom";
+import { appRouter } from "@/router/appRouter";
 
 function App() {
-  return (
-    <>
-      <p className="text-6xl font-bold">HOLA COMOESTAS, BROTHER</p>
-    </>
-  );
+  return <RouterProvider router={appRouter} />;
 }
 
 export default App;
