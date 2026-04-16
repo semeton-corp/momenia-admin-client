@@ -1,6 +1,7 @@
 import AdminLayout from "@/layout/AdminLayout";
 import Dashboard from "@/page/dashboard/Dashboard";
 import Faq from "@/page/landing/faq/Faq";
+import Features from "@/page/landing/features/Features";
 import Testimonials from "@/page/landing/testimonials/Testimonials";
 import Transactions from "@/page/transactions/Transactions";
 import Users from "@/page/users/Users";
@@ -34,6 +35,11 @@ export const appRouter = createBrowserRouter([
         path: "landing/faq",
         element: <Faq />,
         handle: { title: "FAQ" },
+      },
+      {
+        path: "landing/features",
+        element: <Features />,
+        handle: { title: "Features" },
       },
       {
         path: "landing/testimonials",
