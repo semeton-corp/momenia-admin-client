@@ -1,17 +1,39 @@
 import AdminLayout from "@/layout/AdminLayout";
+import AuthCallback from "@/page/auth/AuthCallback";
 import Dashboard from "@/page/dashboard/Dashboard";
 import Catalogs from "@/page/landing/catalogs/Catalogs";
 import Faq from "@/page/landing/faq/Faq";
 import Features from "@/page/landing/features/Features";
 import Testimonials from "@/page/landing/testimonials/Testimonials";
+import Login from "@/page/login/Login";
 import Transactions from "@/page/transactions/Transactions";
 import Users from "@/page/users/Users";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { ensureAuthenticated } from "@/lib/auth";
+import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
+
+async function requireAuth() {
+  const isAuthenticated = await ensureAuthenticated();
+
+  if (!isAuthenticated) {
+    throw redirect("/login");
+  }
+
+  return null;
+}
 
 export const appRouter = createBrowserRouter([
   {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallback />,
+  },
+  {
     path: "/",
     element: <AdminLayout />,
+    loader: requireAuth,
     children: [
       {
         index: true,
