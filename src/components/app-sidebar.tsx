@@ -11,8 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { sidebarItems } from "@/data/sidebar/sidebarItem";
-import { NavDocuments } from "./nav-documents";
-import { NavSecondary } from "./nav-secondary";
+import { NavPages } from "./nav-pages";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -34,8 +33,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={sidebarItems.navMain} />
-        {/* <NavDocuments items={sidebarItems.documents} />
-        <NavSecondary items={sidebarItems.navSecondary} className="mt-auto" /> */}
+        <NavPages items={sidebarItems.pages} />
+        {/* <NavSecondary items={sidebarItems.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={sidebarItems.user} />

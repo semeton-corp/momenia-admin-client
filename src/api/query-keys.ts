@@ -1,0 +1,8 @@
+export const queryKeys = {
+  users: {
+    all: ["users"] as const,
+    lists: () => [...queryKeys.users.all, "list"] as const,
+    list: (params?: unknown) => [...queryKeys.users.lists(), params] as const,
+    detail: (id: string | number) => [...queryKeys.users.all, "detail", id] as const,
+  },
+};
