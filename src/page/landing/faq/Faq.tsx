@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
+import { getFaqs, type FaqResponseItem } from "@/api/landing-pages/faqs";
+import { queryKeys } from "@/api/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,33 +13,14 @@ type Locale = "english" | "indonesia";
 
 type FaqItem = {
   id: number;
-  question_en: string;
-  answer_en: string;
-  question_idn: string;
-  answer_idn: string;
+  questionEn: string;
+  answerEn: string;
+  questionIdn: string;
+  answerIdn: string;
   isOpen: boolean;
 };
 
-type FaqField = "question_en" | "answer_en" | "question_idn" | "answer_idn";
-
-const initialFaqs: FaqItem[] = [
-  {
-    id: 1,
-    question_en: "how memoria works?",
-    answer_en: "it works by create beautiful invitation for you",
-    question_idn: "bagaimana cara kerja memoria?",
-    answer_idn: "dengan membuat undangan yang indah",
-    isOpen: false,
-  },
-  {
-    id: 2,
-    question_en: "how memoria works?",
-    answer_en: "it works by create beautiful invitation for you",
-    question_idn: "bagaimana cara kerja memoria?",
-    answer_idn: "dengan membuat undangan yang indah",
-    isOpen: false,
-  },
-];
+type FaqField = "questionEn" | "answerEn" | "questionIdn" | "answerIdn";
 
 const languageLabels: Record<Locale, string> = {
   english: "English",
@@ -47,21 +31,43 @@ const locales: Locale[] = ["english", "indonesia"];
 
 const faqFields: Record<Locale, { question: FaqField; answer: FaqField }> = {
   english: {
-    question: "question_en",
-    answer: "answer_en",
+    question: "questionEn",
+    answer: "answerEn",
   },
   indonesia: {
-    question: "question_idn",
-    answer: "answer_idn",
+    question: "questionIdn",
+    answer: "answerIdn",
   },
 };
 
+function normalizeFaqs(faqs: FaqResponseItem[]): FaqItem[] {
+  return faqs.map((faq) => ({
+    id: faq.id,
+    questionEn: faq.questionEn ?? "",
+    answerEn: faq.answerEn ?? "",
+    questionIdn: faq.questionIdn ?? "",
+    answerIdn: faq.answerIdn ?? "",
+    isOpen: false,
+  }));
+}
+
 const Faq = () => {
-  const [faqs, setFaqs] = useState<FaqItem[]>(initialFaqs);
+  const [draftFaqs, setDraftFaqs] = useState<FaqItem[] | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const {
+    data: faqData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.faqs.lists(),
+    queryFn: getFaqs,
+  });
+  const apiFaqs = useMemo(() => normalizeFaqs(faqData ?? []), [faqData]);
+  const faqs = draftFaqs ?? apiFaqs;
 
   const markChanged = (nextFaqs: FaqItem[]) => {
-    setFaqs(nextFaqs);
+    setDraftFaqs(nextFaqs);
     setHasChanges(true);
   };
 
@@ -87,10 +93,10 @@ const Faq = () => {
       ...faqs,
       {
         id: nextId,
-        question_en: "",
-        answer_en: "",
-        question_idn: "",
-        answer_idn: "",
+        questionEn: "",
+        answerEn: "",
+        questionIdn: "",
+        answerIdn: "",
         isOpen: true,
       },
     ]);
@@ -116,7 +122,7 @@ const Faq = () => {
             type="button"
             variant="secondary"
             className="h-11 min-w-48 bg-muted text-muted-foreground"
-            disabled={!hasChanges}
+            disabled={!hasChanges || isLoading}
             onClick={applyChanges}
           >
             Apply changes
@@ -124,6 +130,7 @@ const Faq = () => {
           <Button
             type="button"
             className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
+            disabled={isLoading}
             onClick={addQuestion}
           >
             <Plus className="size-4" />
@@ -132,12 +139,33 @@ const Faq = () => {
         </div>
       </div>
 
+      {isLoading && (
+        <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+          Loading FAQs...
+        </div>
+      )}
+
+      {isError && (
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <span>Could not load FAQs from the API.</span>
+          <Button type="button" variant="secondary" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-8 xl:grid-cols-2 xl:gap-10">
         {locales.map((locale) => (
           <section key={locale} className="space-y-6">
             <h2 className="text-base font-medium">{languageLabels[locale]}</h2>
 
             <div className="space-y-6">
+              {!isLoading && faqs.length === 0 && (
+                <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+                  No FAQs yet.
+                </div>
+              )}
+
               {faqs.map((faq) => (
                 <FaqCard
                   key={faq.id}
