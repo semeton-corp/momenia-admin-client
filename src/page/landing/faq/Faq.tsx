@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getFaqs, type FaqResponseItem } from "@/api/landing-pages/faqs";
+import {
+  getFaqs,
+  updateFaqsBatch,
+  type FaqResponseItem,
+} from "@/api/landing-pages/faqs";
 import { queryKeys } from "@/api/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +16,8 @@ import { cn } from "@/lib/utils";
 type Locale = "english" | "indonesia";
 
 type FaqItem = {
-  id: number;
+  clientId: number;
+  id?: number;
   questionEn: string;
   answerEn: string;
   questionIdn: string;
@@ -42,6 +47,7 @@ const faqFields: Record<Locale, { question: FaqField; answer: FaqField }> = {
 
 function normalizeFaqs(faqs: FaqResponseItem[]): FaqItem[] {
   return faqs.map((faq) => ({
+    clientId: faq.id,
     id: faq.id,
     questionEn: faq.questionEn ?? "",
     answerEn: faq.answerEn ?? "",
@@ -51,9 +57,40 @@ function normalizeFaqs(faqs: FaqResponseItem[]): FaqItem[] {
   }));
 }
 
+function buildFaqsPayload(faqs: FaqItem[]) {
+  return faqs.map(({ id, questionEn, answerEn, questionIdn, answerIdn }) => ({
+    ...(id === undefined ? {} : { id }),
+    questionEn,
+    answerEn,
+    questionIdn,
+    answerIdn,
+  }));
+}
+
+function areFaqPayloadsEqual(
+  firstFaqs: ReturnType<typeof buildFaqsPayload>,
+  currentFaqs: ReturnType<typeof buildFaqsPayload>,
+) {
+  if (firstFaqs.length !== currentFaqs.length) {
+    return false;
+  }
+
+  return firstFaqs.every((firstFaq, index) => {
+    const currentFaq = currentFaqs[index];
+
+    return (
+      firstFaq.id === currentFaq.id &&
+      firstFaq.questionEn === currentFaq.questionEn &&
+      firstFaq.answerEn === currentFaq.answerEn &&
+      firstFaq.questionIdn === currentFaq.questionIdn &&
+      firstFaq.answerIdn === currentFaq.answerIdn
+    );
+  });
+}
+
 const Faq = () => {
+  const queryClient = useQueryClient();
   const [draftFaqs, setDraftFaqs] = useState<FaqItem[] | null>(null);
-  const [hasChanges, setHasChanges] = useState(false);
   const {
     data: faqData,
     isLoading,
@@ -63,36 +100,50 @@ const Faq = () => {
     queryKey: queryKeys.faqs.lists(),
     queryFn: getFaqs,
   });
+  const updateMutation = useMutation({
+    mutationFn: updateFaqsBatch,
+    onSuccess: (updatedFaqs) => {
+      queryClient.setQueryData(queryKeys.faqs.lists(), updatedFaqs);
+      setDraftFaqs(null);
+    },
+  });
   const apiFaqs = useMemo(() => normalizeFaqs(faqData ?? []), [faqData]);
   const faqs = draftFaqs ?? apiFaqs;
+  const firstFaqs = useMemo(() => buildFaqsPayload(apiFaqs), [apiFaqs]);
+  const currentFaqs = useMemo(() => buildFaqsPayload(faqs), [faqs]);
+  const hasChanges = useMemo(
+    () => !areFaqPayloadsEqual(firstFaqs, currentFaqs),
+    [firstFaqs, currentFaqs],
+  );
 
   const markChanged = (nextFaqs: FaqItem[]) => {
     setDraftFaqs(nextFaqs);
-    setHasChanges(true);
   };
 
-  const toggleFaq = (id: number) => {
+  const toggleFaq = (clientId: number) => {
     markChanged(
       faqs.map((faq) =>
-        faq.id === id ? { ...faq, isOpen: !faq.isOpen } : faq,
+        faq.clientId === clientId ? { ...faq, isOpen: !faq.isOpen } : faq,
       ),
     );
   };
 
-  const updateFaq = (id: number, field: FaqField, value: string) => {
+  const updateFaq = (clientId: number, field: FaqField, value: string) => {
     markChanged(
-      faqs.map((faq) => (faq.id === id ? { ...faq, [field]: value } : faq)),
+      faqs.map((faq) =>
+        faq.clientId === clientId ? { ...faq, [field]: value } : faq,
+      ),
     );
   };
 
   const addQuestion = () => {
-    const faqIds = faqs.map((faq) => faq.id);
-    const nextId = Math.max(0, ...faqIds) + 1;
+    const nextClientId =
+      Math.max(0, ...faqs.map((faq) => faq.clientId)) + 1;
 
     markChanged([
       ...faqs,
       {
-        id: nextId,
+        clientId: nextClientId,
         questionEn: "",
         answerEn: "",
         questionIdn: "",
@@ -102,12 +153,12 @@ const Faq = () => {
     ]);
   };
 
-  const removeQuestion = (id: number) => {
-    markChanged(faqs.filter((faq) => faq.id !== id));
+  const removeQuestion = (clientId: number) => {
+    markChanged(faqs.filter((faq) => faq.clientId !== clientId));
   };
 
   const applyChanges = () => {
-    setHasChanges(false);
+    updateMutation.mutate(currentFaqs);
   };
 
   return (
@@ -121,16 +172,21 @@ const Faq = () => {
           <Button
             type="button"
             variant="secondary"
-            className="h-11 min-w-48 bg-muted text-muted-foreground"
-            disabled={!hasChanges || isLoading}
+            className={cn(
+              "h-11 min-w-48",
+              hasChanges
+                ? "bg-[#4f46e5] text-white hover:bg-[#4338ca]"
+                : "bg-muted text-muted-foreground",
+            )}
+            disabled={!hasChanges || isLoading || updateMutation.isPending}
             onClick={applyChanges}
           >
-            Apply changes
+            {updateMutation.isPending ? "Applying..." : "Apply changes"}
           </Button>
           <Button
             type="button"
             className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-            disabled={isLoading}
+            disabled={isLoading || updateMutation.isPending}
             onClick={addQuestion}
           >
             <Plus className="size-4" />
@@ -154,6 +210,12 @@ const Faq = () => {
         </div>
       )}
 
+      {updateMutation.isError && (
+        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive shadow-sm">
+          Could not apply FAQ changes.
+        </div>
+      )}
+
       <div className="grid gap-8 xl:grid-cols-2 xl:gap-10">
         {locales.map((locale) => (
           <section key={locale} className="space-y-6">
@@ -168,7 +230,7 @@ const Faq = () => {
 
               {faqs.map((faq) => (
                 <FaqCard
-                  key={faq.id}
+                  key={faq.clientId}
                   faq={faq}
                   locale={locale}
                   onToggle={toggleFaq}
@@ -187,9 +249,9 @@ const Faq = () => {
 type FaqCardProps = {
   faq: FaqItem;
   locale: Locale;
-  onToggle: (id: number) => void;
-  onUpdate: (id: number, field: FaqField, value: string) => void;
-  onRemove: (id: number) => void;
+  onToggle: (clientId: number) => void;
+  onUpdate: (clientId: number, field: FaqField, value: string) => void;
+  onRemove: (clientId: number) => void;
 };
 
 const FaqCard = ({
@@ -212,7 +274,7 @@ const FaqCard = ({
           faq.isOpen && "mb-5",
         )}
         aria-expanded={faq.isOpen}
-        onClick={() => onToggle(faq.id)}
+        onClick={() => onToggle(faq.clientId)}
       >
         {faq.isOpen ? (
           <span className="text-sm font-medium">Question</span>
@@ -240,19 +302,19 @@ const FaqCard = ({
             value={question}
             placeholder="Type the feature title (Max 5 words)"
             onChange={(event) =>
-              onUpdate(faq.id, fields.question, event.target.value)
+              onUpdate(faq.clientId, fields.question, event.target.value)
             }
           />
 
           <div className="space-y-2">
-            <Label htmlFor={`${locale}-${faq.id}-answer`}>Answer</Label>
+            <Label htmlFor={`${locale}-${faq.clientId}-answer`}>Answer</Label>
             <textarea
-              id={`${locale}-${faq.id}-answer`}
+              id={`${locale}-${faq.clientId}-answer`}
               value={answer}
               placeholder="Type the feature description (Max 50 words)"
               className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:ring-[3px]"
               onChange={(event) =>
-                onUpdate(faq.id, fields.answer, event.target.value)
+                onUpdate(faq.clientId, fields.answer, event.target.value)
               }
             />
           </div>
@@ -261,7 +323,7 @@ const FaqCard = ({
             <Button
               type="button"
               variant="destructive"
-              onClick={() => onRemove(faq.id)}
+              onClick={() => onRemove(faq.clientId)}
             >
               Remove Question
             </Button>

@@ -1,6 +1,13 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Star } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import {
+  getTestimonials,
+  updateTestimonialsBatch,
+  type TestimonialResponseItem,
+} from "@/api/landing-pages/testimonials";
+import { queryKeys } from "@/api/query-keys";
 import {
   Avatar,
   AvatarFallback,
@@ -14,7 +21,8 @@ import { cn } from "@/lib/utils";
 type Locale = "english" | "indonesia";
 
 type Testimonial = {
-  id: number;
+  clientId: number;
+  id?: number;
   name: string;
   testimonialIdn: string;
   testimonialEn: string;
@@ -24,18 +32,6 @@ type Testimonial = {
 };
 
 type TestimonialField = "name" | "testimonialIdn" | "testimonialEn";
-
-const initialTestimonials: Testimonial[] = [
-  {
-    id: 1,
-    name: "indra v.2",
-    testimonialIdn: "testimonial indonesia",
-    testimonialEn: "testimonial english",
-    rating: 4.6,
-    profileImage: "",
-    isOpen: false,
-  },
-];
 
 const locales: Locale[] = ["english", "indonesia"];
 
@@ -49,20 +45,75 @@ const testimonialFields: Record<Locale, "testimonialEn" | "testimonialIdn"> = {
   indonesia: "testimonialIdn",
 };
 
+function normalizeTestimonials(
+  testimonials: TestimonialResponseItem[],
+): Testimonial[] {
+  return testimonials.map((testimonial) => ({
+    clientId: testimonial.id,
+    id: testimonial.id,
+    name: testimonial.name ?? "",
+    testimonialIdn: testimonial.testimonialIdn ?? "",
+    testimonialEn: testimonial.testimonialEn ?? "",
+    rating: testimonial.rating ?? 0,
+    profileImage: testimonial.profileImage ?? "",
+    isOpen: false,
+  }));
+}
+
+function buildTestimonialsPayload(testimonials: Testimonial[]) {
+  return testimonials.map(
+    ({ id, name, rating, testimonialIdn, testimonialEn, profileImage }) => ({
+      ...(id === undefined ? {} : { id }),
+      name,
+      rating,
+      testimonialIdn,
+      testimonialEn,
+      ...(profileImage ? { profileImage } : {}),
+    }),
+  );
+}
+
 const Testimonials = () => {
-  const [testimonials, setTestimonials] =
-    useState<Testimonial[]>(initialTestimonials);
+  const queryClient = useQueryClient();
+  const [draftTestimonials, setDraftTestimonials] = useState<
+    Testimonial[] | null
+  >(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const {
+    data: testimonialData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.testimonials.lists(),
+    queryFn: getTestimonials,
+  });
+  const updateMutation = useMutation({
+    mutationFn: updateTestimonialsBatch,
+    onSuccess: (updatedTestimonials) => {
+      queryClient.setQueryData(
+        queryKeys.testimonials.lists(),
+        updatedTestimonials,
+      );
+      setDraftTestimonials(null);
+      setHasChanges(false);
+    },
+  });
+  const apiTestimonials = useMemo(
+    () => normalizeTestimonials(testimonialData ?? []),
+    [testimonialData],
+  );
+  const testimonials = draftTestimonials ?? apiTestimonials;
 
   const markChanged = (nextTestimonials: Testimonial[]) => {
-    setTestimonials(nextTestimonials);
+    setDraftTestimonials(nextTestimonials);
     setHasChanges(true);
   };
 
-  const toggleReview = (id: number) => {
+  const toggleReview = (clientId: number) => {
     markChanged(
       testimonials.map((testimonial) =>
-        testimonial.id === id
+        testimonial.clientId === clientId
           ? { ...testimonial, isOpen: !testimonial.isOpen }
           : testimonial,
       ),
@@ -70,29 +121,31 @@ const Testimonials = () => {
   };
 
   const updateReview = (
-    id: number,
+    clientId: number,
     field: TestimonialField,
     value: string,
   ) => {
     markChanged(
       testimonials.map((testimonial) =>
-        testimonial.id === id ? { ...testimonial, [field]: value } : testimonial,
+        testimonial.clientId === clientId
+          ? { ...testimonial, [field]: value }
+          : testimonial,
       ),
     );
   };
 
-  const updateRating = (id: number, rating: number) => {
+  const updateRating = (clientId: number, rating: number) => {
     markChanged(
       testimonials.map((testimonial) =>
-        testimonial.id === id ? { ...testimonial, rating } : testimonial,
+        testimonial.clientId === clientId ? { ...testimonial, rating } : testimonial,
       ),
     );
   };
 
-  const updateImage = (id: number, profileImage: string) => {
+  const updateImage = (clientId: number, profileImage: string) => {
     markChanged(
       testimonials.map((testimonial) =>
-        testimonial.id === id
+        testimonial.clientId === clientId
           ? { ...testimonial, profileImage }
           : testimonial,
       ),
@@ -100,12 +153,13 @@ const Testimonials = () => {
   };
 
   const addReview = () => {
-    const nextId = Math.max(0, ...testimonials.map((item) => item.id)) + 1;
+    const nextClientId =
+      Math.max(0, ...testimonials.map((item) => item.clientId)) + 1;
 
     markChanged([
       ...testimonials,
       {
-        id: nextId,
+        clientId: nextClientId,
         name: "",
         testimonialIdn: "",
         testimonialEn: "",
@@ -116,12 +170,14 @@ const Testimonials = () => {
     ]);
   };
 
-  const removeReview = (id: number) => {
-    markChanged(testimonials.filter((testimonial) => testimonial.id !== id));
+  const removeReview = (clientId: number) => {
+    markChanged(
+      testimonials.filter((testimonial) => testimonial.clientId !== clientId),
+    );
   };
 
   const applyChanges = () => {
-    setHasChanges(false);
+    updateMutation.mutate(buildTestimonialsPayload(testimonials));
   };
 
   return (
@@ -134,14 +190,15 @@ const Testimonials = () => {
             type="button"
             variant="secondary"
             className="h-11 min-w-44 bg-muted text-muted-foreground"
-            disabled={!hasChanges}
+            disabled={!hasChanges || isLoading || updateMutation.isPending}
             onClick={applyChanges}
           >
-            Apply changes
+            {updateMutation.isPending ? "Applying..." : "Apply changes"}
           </Button>
           <Button
             type="button"
             className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
+            disabled={isLoading || updateMutation.isPending}
             onClick={addReview}
           >
             <Plus className="size-4" />
@@ -150,15 +207,42 @@ const Testimonials = () => {
         </div>
       </div>
 
+      {isLoading && (
+        <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+          Loading testimonials...
+        </div>
+      )}
+
+      {isError && (
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <span>Could not load testimonials from the API.</span>
+          <Button type="button" variant="secondary" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      )}
+
+      {updateMutation.isError && (
+        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive shadow-sm">
+          Could not apply testimonial changes.
+        </div>
+      )}
+
       <div className="grid gap-8 xl:grid-cols-2 xl:gap-10">
         {locales.map((locale) => (
           <section key={locale} className="space-y-6">
             <h2 className="text-base font-medium">{languageLabels[locale]}</h2>
 
             <div className="space-y-6">
+              {!isLoading && testimonials.length === 0 && (
+                <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+                  No testimonials yet.
+                </div>
+              )}
+
               {testimonials.map((testimonial) => (
                 <ReviewCard
-                  key={testimonial.id}
+                  key={testimonial.clientId}
                   locale={locale}
                   testimonial={testimonial}
                   onToggle={toggleReview}
@@ -205,7 +289,7 @@ const ReviewCard = ({
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        onUpdateImage(testimonial.id, reader.result);
+        onUpdateImage(testimonial.clientId, reader.result);
       }
     };
     reader.readAsDataURL(file);
@@ -220,7 +304,7 @@ const ReviewCard = ({
           testimonial.isOpen && "mb-5",
         )}
         aria-expanded={testimonial.isOpen}
-        onClick={() => onToggle(testimonial.id)}
+        onClick={() => onToggle(testimonial.clientId)}
       >
         {testimonial.isOpen ? (
           <span className="text-sm font-medium">User Image</span>
@@ -275,33 +359,41 @@ const ReviewCard = ({
               <Label>Rating</Label>
               <RatingStars
                 rating={testimonial.rating}
-                onChange={(rating) => onUpdateRating(testimonial.id, rating)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`${locale}-${testimonial.id}-name`}>Name</Label>
-              <Input
-                id={`${locale}-${testimonial.id}-name`}
-                value={testimonial.name}
-                placeholder="Type the user name"
-                onChange={(event) =>
-                  onUpdate(testimonial.id, "name", event.target.value)
+                onChange={(rating) =>
+                  onUpdateRating(testimonial.clientId, rating)
                 }
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${locale}-${testimonial.id}-testimonial`}>
+              <Label htmlFor={`${locale}-${testimonial.clientId}-name`}>
+                Name
+              </Label>
+              <Input
+                id={`${locale}-${testimonial.clientId}-name`}
+                value={testimonial.name}
+                placeholder="Type the user name"
+                onChange={(event) =>
+                  onUpdate(testimonial.clientId, "name", event.target.value)
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${locale}-${testimonial.clientId}-testimonial`}>
                 Testimonial
               </Label>
               <textarea
-                id={`${locale}-${testimonial.id}-testimonial`}
+                id={`${locale}-${testimonial.clientId}-testimonial`}
                 value={testimonialText}
                 placeholder="Type the feature description (Max 50 words)"
                 className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:ring-[3px]"
                 onChange={(event) =>
-                  onUpdate(testimonial.id, testimonialField, event.target.value)
+                  onUpdate(
+                    testimonial.clientId,
+                    testimonialField,
+                    event.target.value,
+                  )
                 }
               />
             </div>
@@ -310,7 +402,7 @@ const ReviewCard = ({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => onRemove(testimonial.id)}
+                onClick={() => onRemove(testimonial.clientId)}
               >
                 Remove Review
               </Button>
