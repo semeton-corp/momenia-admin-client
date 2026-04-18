@@ -7,6 +7,7 @@ import {
   updateTestimonialsBatch,
   type TestimonialResponseItem,
 } from "@/api/landing-pages/testimonials";
+import { uploadObjectWithPresignedUrl } from "@/api/objects";
 import { queryKeys } from "@/api/query-keys";
 import {
   Avatar,
@@ -17,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import LoadingScreen from "@/components/ui/loading-screen";
+import { extractImageKey } from "@/utils/extractImageKey";
 
 type Locale = "english" | "indonesia";
 
@@ -28,6 +31,7 @@ type Testimonial = {
   testimonialEn: string;
   rating: number;
   profileImage: string;
+  profileImagePreview?: string;
   isOpen: boolean;
 };
 
@@ -60,6 +64,19 @@ function normalizeTestimonials(
   }));
 }
 
+function buildComparableTestimonials(testimonials: Testimonial[]) {
+  return testimonials.map(
+    ({ id, name, rating, testimonialIdn, testimonialEn, profileImage }) => ({
+      ...(id === undefined ? {} : { id }),
+      name,
+      rating,
+      testimonialIdn,
+      testimonialEn,
+      profileImage,
+    }),
+  );
+}
+
 function buildTestimonialsPayload(testimonials: Testimonial[]) {
   return testimonials.map(
     ({ id, name, rating, testimonialIdn, testimonialEn, profileImage }) => ({
@@ -68,9 +85,33 @@ function buildTestimonialsPayload(testimonials: Testimonial[]) {
       rating,
       testimonialIdn,
       testimonialEn,
-      ...(profileImage ? { profileImage } : {}),
+      ...(profileImage
+        ? { profileImage: extractImageKey(profileImage) }
+        : {}),
     }),
   );
+}
+
+function areTestimonialsEqual(
+  firstTestimonials: ReturnType<typeof buildComparableTestimonials>,
+  currentTestimonials: ReturnType<typeof buildComparableTestimonials>,
+) {
+  if (firstTestimonials.length !== currentTestimonials.length) {
+    return false;
+  }
+
+  return firstTestimonials.every((firstTestimonial, index) => {
+    const currentTestimonial = currentTestimonials[index];
+
+    return (
+      firstTestimonial.id === currentTestimonial.id &&
+      firstTestimonial.name === currentTestimonial.name &&
+      firstTestimonial.rating === currentTestimonial.rating &&
+      firstTestimonial.testimonialIdn === currentTestimonial.testimonialIdn &&
+      firstTestimonial.testimonialEn === currentTestimonial.testimonialEn &&
+      firstTestimonial.profileImage === currentTestimonial.profileImage
+    );
+  });
 }
 
 const Testimonials = () => {
@@ -78,7 +119,8 @@ const Testimonials = () => {
   const [draftTestimonials, setDraftTestimonials] = useState<
     Testimonial[] | null
   >(null);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [uploadingImageIds, setUploadingImageIds] = useState<number[]>([]);
+  const [imageUploadError, setImageUploadError] = useState(false);
   const {
     data: testimonialData,
     isLoading,
@@ -96,7 +138,6 @@ const Testimonials = () => {
         updatedTestimonials,
       );
       setDraftTestimonials(null);
-      setHasChanges(false);
     },
   });
   const apiTestimonials = useMemo(
@@ -104,10 +145,22 @@ const Testimonials = () => {
     [testimonialData],
   );
   const testimonials = draftTestimonials ?? apiTestimonials;
+  const firstTestimonials = useMemo(
+    () => buildComparableTestimonials(apiTestimonials),
+    [apiTestimonials],
+  );
+  const currentTestimonials = useMemo(
+    () => buildComparableTestimonials(testimonials),
+    [testimonials],
+  );
+  const hasChanges = useMemo(
+    () => !areTestimonialsEqual(firstTestimonials, currentTestimonials),
+    [firstTestimonials, currentTestimonials],
+  );
+  const isUploadingImage = uploadingImageIds.length > 0;
 
   const markChanged = (nextTestimonials: Testimonial[]) => {
     setDraftTestimonials(nextTestimonials);
-    setHasChanges(true);
   };
 
   const toggleReview = (clientId: number) => {
@@ -142,14 +195,53 @@ const Testimonials = () => {
     );
   };
 
-  const updateImage = (clientId: number, profileImage: string) => {
+  const updateImage = (
+    clientId: number,
+    profileImagePreview: string,
+    profileImageFile: File,
+  ) => {
+    setImageUploadError(false);
+    setUploadingImageIds((ids) => [...ids, clientId]);
     markChanged(
       testimonials.map((testimonial) =>
         testimonial.clientId === clientId
-          ? { ...testimonial, profileImage }
+          ? { ...testimonial, profileImagePreview }
           : testimonial,
       ),
     );
+
+    uploadObjectWithPresignedUrl(profileImageFile, "landing-page")
+      .then((uploadedImage) => {
+        setDraftTestimonials((currentTestimonials) =>
+          (currentTestimonials ?? testimonials).map((testimonial) =>
+            testimonial.clientId === clientId
+              ? {
+                ...testimonial,
+                profileImage: uploadedImage.key,
+                profileImagePreview,
+              }
+              : testimonial,
+          ),
+        );
+      })
+      .catch(() => {
+        setImageUploadError(true);
+
+        setDraftTestimonials((currentTestimonials) =>
+          (currentTestimonials ?? testimonials).map((testimonial) =>
+            testimonial.clientId === clientId
+              ? {
+                ...testimonial,
+                profileImagePreview: undefined, // remove preview
+                profileImage: "", // ensure empty
+              }
+              : testimonial,
+          ),
+        );
+      })
+      .finally(() => {
+        setUploadingImageIds((ids) => ids.filter((id) => id !== clientId));
+      });
   };
 
   const addReview = () => {
@@ -182,6 +274,7 @@ const Testimonials = () => {
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-5 md:px-6">
+      {isUploadingImage && <LoadingScreen />}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <h1 className="text-xl font-semibold tracking-normal">Reviews</h1>
 
@@ -189,16 +282,30 @@ const Testimonials = () => {
           <Button
             type="button"
             variant="secondary"
-            className="h-11 min-w-44 bg-muted text-muted-foreground"
-            disabled={!hasChanges || isLoading || updateMutation.isPending}
+            className={cn(
+              "h-11 min-w-44",
+              hasChanges
+                ? "bg-[#4f46e5] text-white hover:bg-[#4338ca]"
+                : "bg-muted text-muted-foreground",
+            )}
+            disabled={
+              !hasChanges ||
+              isLoading ||
+              isUploadingImage ||
+              updateMutation.isPending
+            }
             onClick={applyChanges}
           >
-            {updateMutation.isPending ? "Applying..." : "Apply changes"}
+            {isUploadingImage
+              ? "Uploading image..."
+              : updateMutation.isPending
+                ? "Applying..."
+                : "Apply changes"}
           </Button>
           <Button
             type="button"
             className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-            disabled={isLoading || updateMutation.isPending}
+            disabled={isLoading || isUploadingImage || updateMutation.isPending}
             onClick={addReview}
           >
             <Plus className="size-4" />
@@ -225,6 +332,12 @@ const Testimonials = () => {
       {updateMutation.isError && (
         <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive shadow-sm">
           Could not apply testimonial changes.
+        </div>
+      )}
+
+      {imageUploadError && (
+        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive shadow-sm">
+          Could not upload testimonial image.
         </div>
       )}
 
@@ -266,7 +379,11 @@ type ReviewCardProps = {
   onToggle: (id: number) => void;
   onUpdate: (id: number, field: TestimonialField, value: string) => void;
   onUpdateRating: (id: number, rating: number) => void;
-  onUpdateImage: (id: number, profileImage: string) => void;
+  onUpdateImage: (
+    id: number,
+    profileImagePreview: string,
+    profileImageFile: File,
+  ) => void;
   onRemove: (id: number) => void;
 };
 
@@ -289,7 +406,7 @@ const ReviewCard = ({
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        onUpdateImage(testimonial.clientId, reader.result);
+        onUpdateImage(testimonial.clientId, reader.result, file);
       }
     };
     reader.readAsDataURL(file);
@@ -339,7 +456,7 @@ const ReviewCard = ({
               onClick={() => imageInputRef.current?.click()}
               aria-label="Choose profile image"
             >
-              {testimonial.profileImage ? (
+              {testimonial.profileImagePreview || testimonial.profileImage ? (
                 <ProfileImage testimonial={testimonial} />
               ) : (
                 <Plus className="size-5" />
@@ -416,10 +533,11 @@ const ReviewCard = ({
 
 const ProfileImage = ({ testimonial }: { testimonial: Testimonial }) => {
   const fallback = testimonial.name.trim().slice(0, 2).toUpperCase() || "RV";
+  const imageUrl = testimonial.profileImagePreview ?? testimonial.profileImage;
 
   return (
     <Avatar className="size-13">
-      <AvatarImage src={testimonial.profileImage} alt={testimonial.name} />
+      <AvatarImage src={imageUrl} alt={testimonial.name} />
       <AvatarFallback>{fallback}</AvatarFallback>
     </Avatar>
   );

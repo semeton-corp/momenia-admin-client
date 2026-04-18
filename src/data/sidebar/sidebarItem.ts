@@ -1,7 +1,7 @@
 import {
   IconDashboard,
   IconListDetails,
-  
+
 } from "@tabler/icons-react";
 import { AppWindow, BookUser } from "lucide-react";
 
@@ -24,7 +24,7 @@ export const sidebarItems = {
       icon: IconListDetails,
       items: [
         { title: "Dashboard", url: "/landing/dashboard" },
-        { title: "Banner", url: "/landing/banner" },
+        // { title: "Banner", url: "/landing/banner" },
         { title: "Features", url: "/landing/features" },
         { title: "Catalog Memoria", url: "/landing/catalogs" },
         { title: "Testimonials", url: "/landing/testimonials" },
