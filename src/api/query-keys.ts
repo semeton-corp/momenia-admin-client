@@ -13,4 +13,8 @@ export const queryKeys = {
     all: ["testimonials"] as const,
     lists: () => [...queryKeys.testimonials.all, "list"] as const,
   },
+  features:{
+    all: ["features"] as const,
+    lists: () => [...queryKeys.features.all, "list"] as const
+  }
 };
