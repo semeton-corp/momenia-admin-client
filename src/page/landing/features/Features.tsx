@@ -1,10 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Grid2X2, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { FeatureCard } from "@/components/ui/features/feature-card";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/api/query-keys";
@@ -76,8 +73,6 @@ const Features = () => {
   const {
     data: featuresData,
     isLoading,
-    isError,
-    refetch,
   } = useQuery({
     queryKey: queryKeys.features.lists(),
     queryFn: getFeatures,
@@ -98,11 +93,7 @@ const Features = () => {
     [firstFeatures, currentFeatures],
   );
 
-  const [uploadingIds, setUploadingIds] = useState<number[]>([]);
-  const [uploadError, setUploadError] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-
-  const isUploading = uploadingIds.length > 0;
 
 
   const updateMutation = useMutation({
@@ -138,9 +129,6 @@ const Features = () => {
     iconPreview: string,
     file: File,
   ) => {
-    setUploadError(false);
-    setUploadingIds((ids) => [...ids, index]);
-
     markChanged(
       features.map((f, i) =>
         i === index ? { ...f, iconPreview } : f
@@ -153,33 +141,16 @@ const Features = () => {
 
         setDraftFeatures((current) =>
           (current ?? features).map((f, i) =>
-            i === index
-              ? {
-                ...f,
-                icon: fullUrl,
-                iconPreview,
-              }
-              : f,
+            i === index ? { ...f, icon: fullUrl, iconPreview } : f,
           ),
         );
       })
       .catch(() => {
-        setUploadError(true);
-
         setDraftFeatures((current) =>
           (current ?? features).map((f, i) =>
-            i === index
-              ? {
-                ...f,
-                icon: "",
-                iconPreview: undefined,
-              }
-              : f,
+            i === index ? { ...f, icon: "", iconPreview: undefined } : f,
           ),
         );
-      })
-      .finally(() => {
-        setUploadingIds((ids) => ids.filter((x) => x !== index));
       });
   };
 
