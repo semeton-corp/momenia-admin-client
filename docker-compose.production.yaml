@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    image: memoria-admin-client:production
+    container_name: memoria-admin-client-production
+    ports:
+      - "80:80"
+    restart: unless-stopped
