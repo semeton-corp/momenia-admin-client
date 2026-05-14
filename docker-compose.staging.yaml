@@ -1,11 +1,10 @@
-version: "3"
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile.staging
     image: memoria-admin-client:staging
-    container_name: cms-app-staging
+    container_name: memoria-admin-client-staging
     ports:
       - "81:80"
     restart: unless-stopped
