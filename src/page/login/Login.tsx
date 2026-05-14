@@ -44,7 +44,7 @@ export default function Login() {
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <section className="w-full max-w-sm rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-        <div>TEST CI/CD
+        <div>TEST CI/CD 2
         </div>
         <div className="space-y-2 text-center">
           <p className="text-sm font-medium text-muted-foreground">Memoria Admin</p>
