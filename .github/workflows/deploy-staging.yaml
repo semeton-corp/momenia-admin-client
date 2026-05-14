@@ -24,7 +24,7 @@ jobs:
             git reset --hard origin/develop
 
             echo "Rebuild and restart docker..."
-            docker-compose -f docker-compose.staging.yml down
-            docker-compose -f docker-compose.staging.yml up -d --build
+            docker-compose -f docker-compose.staging.yaml down
+            docker-compose -f docker-compose.staging.yaml up -d --build
 
             echo "Done 🚀"
