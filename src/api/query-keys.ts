@@ -13,8 +13,21 @@ export const queryKeys = {
     all: ["testimonials"] as const,
     lists: () => [...queryKeys.testimonials.all, "list"] as const,
   },
-  features:{
+  features: {
     all: ["features"] as const,
-    lists: () => [...queryKeys.features.all, "list"] as const
-  }
+    lists: () => [...queryKeys.features.all, "list"] as const,
+  },
+  invitationTemplates: {
+    all: ["invitation-templates"] as const,
+    lists: (params?: unknown) => [...queryKeys.invitationTemplates.all, "list", params] as const,
+    detail: (id: string) => [...queryKeys.invitationTemplates.all, "detail", id] as const,
+  },
+  invitationTemplateCategories: {
+    all: ["invitation-template-categories"] as const,
+    lists: () => [...queryKeys.invitationTemplateCategories.all, "list"] as const,
+  },
+  invitationTemplateTags: {
+    all: ["invitation-template-tags"] as const,
+    lists: () => [...queryKeys.invitationTemplateTags.all, "list"] as const,
+  },
 };

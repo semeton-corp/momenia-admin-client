@@ -8,6 +8,9 @@ import Testimonials from "@/page/landing/testimonials/Testimonials";
 import Login from "@/page/login/Login";
 import Transactions from "@/page/transactions/Transactions";
 import Users from "@/page/users/Users";
+import Templates from "@/page/templates/Templates";
+import TemplateMaker from "@/page/templates/TemplateMaker";
+import AddTemplate from "@/page/templates/AddTemplate";
 import { ensureAuthenticated } from "@/lib/auth";
 import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
 
@@ -36,6 +39,28 @@ export const appRouter = createBrowserRouter([
   {
     path: "/auth/callback",
     element: <AuthCallback />,
+  },
+  {
+    path: "/templates",
+    element: <AdminLayout />,
+    loader: requireAuth,
+    children: [
+      {
+        index: true,
+        element: <Templates />,
+        handle: { title: "Templates" },
+      },
+      {
+        path: "add",
+        element: <AddTemplate />,
+        handle: { title: "Add Template" },
+      },
+      {
+        path: "maker",
+        element: <TemplateMaker />,
+        handle: { title: "Template Maker" },
+      },
+    ],
   },
   {
     path: "/",

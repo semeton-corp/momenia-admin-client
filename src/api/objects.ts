@@ -1,6 +1,6 @@
 import { apiClient } from "@/api/http-client";
 
-export type ObjectCategory = "landing-page" | "avatar" | "other";
+export type ObjectCategory = "landing-page" | "avatar" | "invitation-template" | "other";
 
 export type PresignedUploadRequest = {
   category: ObjectCategory;

@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 const REFRESH_PATH =
-  import.meta.env.VITE_ADMIN_REFRESH_PATH ?? "/api/v1/admins/refresh-token";
+  import.meta.env.VITE_ADMIN_REFRESH_PATH ?? "/api/v1/sessions/refresh";
 
 const ACCESS_TOKEN_KEY = "memoria_admin_access_token";
 const REFRESH_TOKEN_KEY = "memoria_admin_refresh_token";
@@ -210,9 +210,11 @@ export async function refreshAccessToken() {
         Accept: "application/json",
         "Content-Type": "application/json",
         ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
-        Authorization: `Bearer ${refreshToken}`,
       },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({
+        refreshToken,
+        userAgent: navigator.userAgent,
+      }),
     });
 
     const contentType = response.headers.get("content-type");
