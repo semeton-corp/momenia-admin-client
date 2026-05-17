@@ -58,6 +58,8 @@ export default function Templates() {
 
   const templates = response?.data ?? [];
 
+  const templates = response?.data ?? []
+
   const handleCardClick = (template: InvitationTemplate) => {
     setSelectedTemplateId(template.id);
   };
