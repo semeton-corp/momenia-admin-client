@@ -51,17 +51,4 @@ export const queryKeys = {
     all: ["invitation-template-tags"] as const,
     lists: () => [...queryKeys.invitationTemplateTags.all, "list"] as const,
   },
-  landingPageCatalogs: {
-    all: ["landing-page-catalogs"] as const,
-    lists: () => [...queryKeys.landingPageCatalogs.all, "list"] as const,
-  },
-  invitationTemplateDurations: {
-    all: ["invitation-template-durations"] as const,
-    lists: () => [...queryKeys.invitationTemplateDurations.all, "list"] as const,
-    detail: (id: string) => [...queryKeys.invitationTemplateDurations.all, "detail", id] as const,
-  },
-  contentInvitationTemplates: {
-    all: ["content-invitation-templates"] as const,
-    lists: () => [...queryKeys.contentInvitationTemplates.all, "list"] as const,
-  },
 };

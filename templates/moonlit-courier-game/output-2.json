@@ -1,0 +1,296 @@
+{
+  "name": "Moonlit Courier",
+  "descriptionEn": "A playable pixel platformer invitation — run the hooded courier with WASD or the mobile joystick, raise checkpoint flags and open the invitation at each stop.",
+  "descriptionIdn": "Undangan platformer pixel yang bisa dimainkan — gerakkan kurir berkerudung dengan WASD atau joystick HP, kibarkan bendera checkpoint dan buka info undangan di tiap pos.",
+  "theme_defaults": {
+    "font_body": "Poppins",
+    "font_title": "Fraunces",
+    "color_accent": "#ff6b6b",
+    "color_primary": "#2b2340",
+    "color_background": "#1b2340"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "label": "Poster",
+      "sections": [
+        {
+          "id": "poster_moonlit",
+          "section_type_id": "poster_section"
+        }
+      ]
+    },
+    {
+      "id": "main",
+      "label": "Game",
+      "sections": [
+        {
+          "id": "game_moonlit",
+          "section_type_id": "game_section"
+        }
+      ]
+    }
+  ],
+  "schema": {
+    "fields": [
+      {
+        "key": "headline",
+        "type": "text",
+        "label": "Nama Pasangan",
+        "section": "poster_section",
+        "required": true,
+        "placeholder": "Budi & Rina"
+      },
+      {
+        "key": "bgm_url",
+        "type": "text",
+        "label": "URL Musik Latar (MP3)",
+        "section": "game_section",
+        "required": false,
+        "placeholder": ""
+      },
+      {
+        "key": "desktop_background",
+        "type": "image",
+        "label": "Background Desktop",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_fe1e0ea7-4680-4d1d-809f-04a8a2344c98"
+      },
+      {
+        "key": "hero_idle",
+        "type": "image",
+        "label": "Hero Diam",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_8dcc269c-58f1-4efc-baa5-39ee12f882dc"
+      },
+      {
+        "key": "hero_run1",
+        "type": "image",
+        "label": "Hero Lari 1",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_cbcf3d89-bd31-4ac1-a6be-5540c322ddcd"
+      },
+      {
+        "key": "hero_run2",
+        "type": "image",
+        "label": "Hero Lari 2",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_cd867752-0364-4a1d-8680-76378d486216"
+      },
+      {
+        "key": "hero_run3",
+        "type": "image",
+        "label": "Hero Lari 3",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_ba2059f6-d025-4976-bca2-9182bce0a1e7"
+      },
+      {
+        "key": "hero_run4",
+        "type": "image",
+        "label": "Hero Lari 4",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_5551866c-5c09-4bd3-832f-792b32b780cb"
+      },
+      {
+        "key": "hero_jump",
+        "type": "image",
+        "label": "Hero Lompat",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_e50b6d03-fce3-45c2-8720-52232eaf1347"
+      },
+      {
+        "key": "tile_ground",
+        "type": "image",
+        "label": "Tile Tanah",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_7f29fad3-aab4-4f82-8222-eb5c5d439f8d"
+      },
+      {
+        "key": "tile_platform",
+        "type": "image",
+        "label": "Tile Panggung",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_75c8c6e2-8548-46c0-8f68-97f40ccd76ab"
+      },
+      {
+        "key": "tile_float",
+        "type": "image",
+        "label": "Panggung Gantung",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_71da134a-8ed9-43aa-b8f8-9a095beebaf1"
+      },
+      {
+        "key": "flag_off",
+        "type": "image",
+        "label": "Bendera Mati",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_f341940f-f35c-430f-be17-d8f5f169ed74"
+      },
+      {
+        "key": "flag_on",
+        "type": "image",
+        "label": "Bendera Nyala",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_d98e8c2d-b63c-468c-85e2-17a52cba78c1"
+      },
+      {
+        "key": "lantern",
+        "type": "image",
+        "label": "Lentera",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_ce2d21d8-0e72-4304-890a-8074971eed9a"
+      },
+      {
+        "key": "coin_heart",
+        "type": "image",
+        "label": "Koin Hati",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_7dfef242-8643-46c3-a758-b7a2430bdf1f"
+      },
+      {
+        "key": "door_finish",
+        "type": "image",
+        "label": "Gerbang Finish",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_af0badd7-9b9b-4bb6-b570-343085cf1984"
+      },
+      {
+        "key": "bg_hills",
+        "type": "image",
+        "label": "Latar Bukit",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_52cb4b4f-ad78-40e6-9ecc-1c3c2d24a77d"
+      },
+      {
+        "key": "bride_name",
+        "type": "text",
+        "label": "Nama Pengantin Wanita",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "Rina Astuti"
+      },
+      {
+        "key": "groom_name",
+        "type": "text",
+        "label": "Nama Pengantin Pria",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "Budi Santoso"
+      },
+      {
+        "key": "bride_photo",
+        "type": "image",
+        "label": "Foto Pengantin Wanita",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_d3b25674-e7fa-40c5-83e3-9d65d8771bd4"
+      },
+      {
+        "key": "groom_photo",
+        "type": "image",
+        "label": "Foto Pengantin Pria",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_334187c4-e93e-4517-bbf1-14f2bdbc4361"
+      },
+      {
+        "key": "couple_photo",
+        "type": "image",
+        "label": "Foto Pasangan",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_efc7bd33-aafd-48a4-8b4f-f6fbfd483312"
+      },
+      {
+        "key": "event_date",
+        "type": "date",
+        "label": "Tanggal Acara",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "2025-04-20"
+      },
+      {
+        "key": "event_time",
+        "type": "time",
+        "label": "Waktu Acara",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "15:00"
+      },
+      {
+        "key": "event_timezone",
+        "type": "select",
+        "label": "Time Zone",
+        "section": "game_section",
+        "required": false,
+        "options": [
+          "WIB",
+          "WIT",
+          "WITA"
+        ]
+      },
+      {
+        "key": "venue_name",
+        "type": "text",
+        "label": "Nama Venue",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "Gedung Balai Kartini"
+      },
+      {
+        "key": "venue_location",
+        "type": "location",
+        "label": "Titik Lokasi (Peta)",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "-6.2248, 106.8295"
+      },
+      {
+        "key": "gift_info",
+        "type": "text",
+        "label": "Info Kado / Amplop",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "Kehadiran Anda adalah kado terindah. Jika ingin berbagi tanda kasih: BCA 1234567890 a.n. Budi & Rina."
+      }
+    ]
+  },
+  "sectionTypes": {
+    "poster_section": {
+      "id": "poster_section",
+      "js": "(function(){\n  var root=document.querySelector('.s-poster_section');\n  if(!root||root.dataset.inited)return;root.dataset.inited='1';\n  var btn=root.querySelector('.js-start-game');\n  if(btn){btn.addEventListener('click',function(){if(typeof window.__memoriaGoTo==='function')window.__memoriaGoTo('main');});}\n})();\n",
+      "css": ".s-poster_section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 22px;background:linear-gradient(#1b2340 0 60%,#2a2f55 100%);color:#fff}.s-poster_section__moon{font-size:3rem}.s-poster_section img{width:120px;image-rendering:pixelated;margin:18px 0 6px}.s-poster_section h1{font:700 clamp(2.4rem,9vw,4rem)/1 var(--font-title);text-shadow:3px 3px 0 rgba(0,0,0,.4)}.s-poster_section p{margin-top:10px;font:500 .88rem/1.6 var(--font-body);opacity:.85;max-width:340px}.s-poster_section__keys{margin-top:10px;font:800 .66rem var(--font-body);letter-spacing:.16em;color:#ffe26f}.s-poster_section button{margin-top:22px;padding:15px 30px;font:800 .85rem var(--font-body);letter-spacing:.12em;color:var(--color-primary);background:#ffe26f;border:3px solid #0e1120;border-radius:16px;box-shadow:5px 5px 0 #0e1120;cursor:pointer}.s-poster_section button:active{transform:translate(2px,2px);box-shadow:3px 3px 0 #0e1120}\n",
+      "html": "<section class=\"s-poster_section\"><div class=\"s-poster_section__moon\">🌙</div><img data-field-img=\"hero_idle\" src=\"{{hero_idle}}\" alt=\"Kurir\"><h1>{{headline}}</h1><p>Undangan ini adalah level platformer. Antar kurir melewati 4 pos bendera sampai gerbang finish.</p><div class=\"s-poster_section__keys\">WASD / PANAH · SPASI LOMPAT · E BICARA · JOYSTICK DI HP</div><button class=\"js-start-game\" type=\"button\">MULAI MAIN ▶</button></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "game_section": {
+      "id": "game_section",
+      "js": "(function(){\n  var root=document.querySelector('.s-game_section');\n  if(!root||root.dataset.inited)return;root.dataset.inited='1';\n  function $(s){return root.querySelector(s);}\n  var cv=$('.js-canvas'),ctx=cv.getContext('2d');\n  var W=440,H=680,GROUND=580,WORLD=2200;\n  var overlay=$('.js-overlay');\n  var panels=Array.prototype.slice.call(root.querySelectorAll('.js-panel'));\n  var promptEl=$('.js-prompt'),heartsEl=$('.js-hearts');\n  var countdownEl=$('.js-countdown'),timer=null;\n  var IDS=['hero_idle','hero_run1','hero_run2','hero_run3','hero_run4','hero_jump','tile_ground','tile_platform','tile_float','flag_off','flag_on','lantern','coin_heart','door_finish','bg_hills'];\n  var IMG={};\n  IDS.forEach(function(id){var im=new Image();var el=root.querySelector('[data-imgid=\"'+id+'\"]');if(el){im.src=el.currentSrc||el.src||'';}IMG[id]=im;});\n  if('MutationObserver' in window){var pre=$('.js-preload');if(pre){new MutationObserver(function(muts){muts.forEach(function(m){var t=m.target;var id=t.getAttribute&&t.getAttribute('data-imgid');if(id&&IMG[id]){IMG[id].src=t.currentSrc||t.src||'';}});}).observe(pre,{attributes:true,subtree:true,attributeFilter:['src']});}}\n  function draw(img,x,y,w,h){if(img&&img.complete&&img.naturalWidth>0){try{ctx.drawImage(img,x,y,w,h);return true;}catch(e){}}return false;}\n  function box(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}\n  var grounds=[{x:0,w:520},{x:580,w:520},{x:1160,w:520},{x:1740,w:460}];\n  var plats=[{x:110,y:484,w:96,h:20},{x:640,y:476,w:64,h:32,float:true},{x:800,y:484,w:96,h:20},{x:1330,y:470,w:64,h:32,float:true},{x:1450,y:484,w:96,h:20},{x:1780,y:500,w:96,h:20},{x:1930,y:420,w:64,h:32,float:true}];\n  var flags=[{x:150,y:484,panel:'couple',done:false},{x:664,y:476,panel:'datetime',done:false},{x:1240,y:GROUND,panel:'venue',done:false},{x:1954,y:420,panel:'gift',done:false}];\n  var door={x:2080,y:GROUND,panel:'finale',done:false};\n  var coins=[{x:150,y:438,taken:false},{x:664,y:430,taken:false},{x:840,y:438,taken:false},{x:1240,y:498,taken:false},{x:1362,y:424,taken:false},{x:1490,y:438,taken:false},{x:1954,y:374,taken:false},{x:2100,y:520,taken:false}];\n  var lanterns=[{x:40,y:496},{x:760,y:396},{x:1290,y:496},{x:1700,y:300},{x:2000,y:496}];\n  var hearts=0,cam=0,T=0;\n  var P={x:24,y:GROUND-42,w:26,h:42,vy:0,face:1,ground:false,anim:0};\n  var safe={x:24,y:GROUND-42};\n  var input={l:0,r:0},jumpQueued=false;\n  function isField(t){return t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT');}\n  document.addEventListener('keydown',function(e){\n    if(isField(e.target))return;\n    if(overlay&&!overlay.hidden)return;\n    var k=e.key;\n    if(k==='ArrowLeft'||k==='a'||k==='A'){input.l=1;e.preventDefault();}\n    else if(k==='ArrowRight'||k==='d'||k==='D'){input.r=1;e.preventDefault();}\n    else if(k==='ArrowUp'||k==='w'||k==='W'||k===' '){jumpQueued=true;e.preventDefault();}\n    else if(k==='e'||k==='E'||k==='Enter'){doInteract();}\n  });\n  document.addEventListener('keyup',function(e){var k=e.key;if(k==='ArrowLeft'||k==='a'||k==='A')input.l=0;else if(k==='ArrowRight'||k==='d'||k==='D')input.r=0;});\n  root.querySelectorAll('.js-btn').forEach(function(b){\n    var k=b.getAttribute('data-k');\n    function on(e){e.preventDefault();if(k==='jump'){jumpQueued=true;}else if(k==='act'){doInteract();}else{input[k]=1;}}\n    function off(e){if(e)e.preventDefault();if(k!=='jump'&&k!=='act')input[k]=0;}\n    b.addEventListener('touchstart',on,{passive:false});\n    b.addEventListener('touchend',off);\n    b.addEventListener('touchcancel',off);\n    b.addEventListener('mousedown',on);\n    b.addEventListener('mouseup',off);\n    b.addEventListener('mouseleave',function(){if(k!=='jump'&&k!=='act')input[k]=0;});\n  });\n  cv.addEventListener('pointerdown',function(){try{cv.focus();}catch(e){}});\n  function near(){var cx=P.x+P.w/2,best=null,bd=1e9;flags.concat([door]).forEach(function(f){var d=Math.abs(cx-f.x);if(d<48&&d<bd){bd=d;best=f;}});return best;}\n  function doInteract(){var f=near();if(f){f.done=true;openPanel(f.panel);}}\n  function currentDateTime(){var dEl=root.querySelector('[data-field=\"event_date\"]');var tEl=root.querySelector('[data-field=\"event_time\"]');var d=dEl?dEl.textContent.trim():'';var t=tEl?tEl.textContent.trim():'00:00';var dt=new Date(d+'T'+(t.length===5?t+':00':t));return isNaN(dt.getTime())?null:dt;}\n  function tick(){if(!countdownEl)return;var target=currentDateTime();if(!target){countdownEl.textContent='';return;}var diff=target.getTime()-Date.now();if(diff<=0){countdownEl.textContent='Hari bahagia telah tiba!';return;}var s=Math.floor(diff/1000);var dd=Math.floor(s/86400),hh=Math.floor(s%86400/3600),mm=Math.floor(s%3600/60),ss=s%60;countdownEl.textContent=dd+' hari : '+hh+' jam : '+mm+' mnt : '+ss+' dtk';}\n  function openPanel(name){panels.forEach(function(p){p.hidden=p.getAttribute('data-panel')!==name;});overlay.hidden=false;if(name==='datetime'){tick();if(timer)clearInterval(timer);timer=setInterval(tick,1000);}var m=root.querySelector('.s-game_section__modal');if(m)m.scrollTop=0;}\n  function closePanel(){overlay.hidden=true;if(timer){clearInterval(timer);timer=null;}}\n  root.querySelectorAll('.js-close').forEach(function(b){b.addEventListener('click',closePanel);});\n  overlay.addEventListener('click',function(e){if(e.target===overlay)closePanel();});\n  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay&&!overlay.hidden)closePanel();});\n  function solidAt(pl){return P.vy>=0&&P.x+P.w>pl.x&&P.x<pl.x+pl.w;}\n  function collide(){\n    P.ground=false;\n    for(var i=0;i<plats.length;i++){var pl=plats[i];if(solidAt(pl)){var feet=P.y+P.h;if(feet>=pl.y&&feet<=pl.y+Math.max(14,P.vy+2)){P.y=pl.y-P.h;P.vy=0;P.ground=true;}}}\n    for(var g=0;g<grounds.length;g++){var gr=grounds[g];if(P.vy>=0&&P.x+P.w>gr.x&&P.x<gr.x+gr.w){var f2=P.y+P.h;if(f2>=GROUND&&f2<=GROUND+Math.max(14,P.vy+2)){P.y=GROUND-P.h;P.vy=0;P.ground=true;}}}\n    if(P.y+P.h>=H){P.y=H-P.h;P.vy=0;P.ground=true;}\n    if(P.ground){safe.x=P.x;safe.y=P.y;}\n  }\n  function update(dt){\n    var mv=0;if(input.l)mv-=1;if(input.r)mv+=1;\n    P.x+=mv*2.6;if(mv!==0)P.face=mv;\n    if(mv!==0&&P.ground)P.anim+=dt*8;\n    if(P.x<0)P.x=0;if(P.x>WORLD-P.w)P.x=WORLD-P.w;\n    P.vy+=0.55;if(P.vy>12)P.vy=12;\n    if(jumpQueued){if(P.ground){P.vy=-11.5;P.ground=false;}jumpQueued=false;}\n    P.y+=P.vy;collide();\n    if(P.y>H+60){P.x=safe.x;P.y=safe.y-10;P.vy=0;}\n    var cx=P.x+P.w/2,cy=P.y+P.h/2;\n    coins.forEach(function(c){if(!c.taken&&Math.abs(cx-c.x)<26&&Math.abs(cy-c.y)<30){c.taken=true;hearts++;if(heartsEl)heartsEl.textContent='♥ '+hearts+'/8';}});\n    T+=dt;var tx=P.x+P.w/2-W*0.38;\n    if(tx<0)tx=0;if(tx>WORLD-W)tx=WORLD-W;\n    cam+=(tx-cam)*Math.min(1,dt*6);\n  }\n  function heroFrame(){if(!P.ground)return IMG.hero_jump;if(input.l||input.r){var f=[IMG.hero_run1,IMG.hero_run2,IMG.hero_run3,IMG.hero_run4];return f[Math.floor(P.anim)%4];}return IMG.hero_idle;}\n  function vis(x,w){return x+w>cam-60&&x<cam+W+60;}\n  function render(){\n    ctx.clearRect(0,0,W,H);\n    box(0,0,W,H,'#1b2340');\n    var bg=IMG.bg_hills;\n    for(var L=0;L<2;L++){\n      var bw=880,bh=330,by=150,f=L===0?0.25:0.5;\n      var off=-((cam*f)%bw);\n      for(var bx=off-bw;bx<W+bw;bx+=bw){if(!draw(bg,bx,by,bw,bh)){box(bx,by,bw,40,'#2a2f55');}}\n    }\n    box(0,190,W,H-190,'#232a4a');\n    grounds.forEach(function(gr){\n      if(!vis(gr.x,gr.w))return;\n      for(var x=gr.x;x<gr.x+gr.w;x+=32){if(!draw(IMG.tile_ground,x-cam,GROUND,32,32))box(x-cam,GROUND,32,32,'#8a5a2b');}\n      box(gr.x-cam,GROUND,gr.w,H-GROUND,'rgba(0,0,0,0.18)');\n    });\n    plats.forEach(function(pl){\n      if(!vis(pl.x,pl.w))return;\n      if(pl.float){if(!draw(IMG.tile_float,pl.x-cam,pl.y,pl.w,pl.h))box(pl.x-cam,pl.y,pl.w,pl.h,'#b07a45');}\n      else{var ok=false;for(var x=pl.x;x<pl.x+pl.w;x+=32){if(draw(IMG.tile_platform,x-cam,pl.y,32,20))ok=true;}if(!ok)box(pl.x-cam,pl.y,pl.w,20,'#6fbf5f');}\n    });\n    lanterns.forEach(function(l,i){var lx=l.x+Math.sin(T*0.8+i*1.3)*10,ly=l.y+Math.sin(T*1.1+i*1.7)*12;if(vis(lx,24)&&!draw(IMG.lantern,lx-cam,ly,24,40))box(lx-cam+8,ly,8,24,'#f6c453');});\n    if(vis(door.x-24,48)&&!draw(IMG.door_finish,door.x-24-cam,door.y-72,48,72))box(door.x-24-cam,door.y-72,48,72,'#f6c453');\n    coins.forEach(function(c){if(c.taken||!vis(c.x-9,18))return;if(!draw(IMG.coin_heart,c.x-9-cam,c.y-9,18,18)){ctx.fillStyle='#ff6b6b';ctx.beginPath();ctx.arc(c.x-cam,c.y,7,0,7);ctx.fill();}});\n    flags.forEach(function(f){if(!vis(f.x-16,32))return;var im=f.done?IMG.flag_on:IMG.flag_off;if(!draw(im,f.x-16-cam,f.y-56,32,56))box(f.x-2-cam,f.y-56,4,56,'#b07a45');});\n    var img=heroFrame();\n    var px=P.x-cam,py=P.y;\n    if(P.face<0){ctx.save();ctx.translate(px+P.w/2,0);ctx.scale(-1,1);ctx.translate(-(px+P.w/2),0);}\n    if(!draw(img,px,py,P.w,P.h))box(px,py,P.w,P.h,'#3e3a7a');\n    if(P.face<0)ctx.restore();\n    var n=near();\n    if(promptEl)promptEl.hidden=!(n&&overlay.hidden);\n  }\n  var bgmAudio=$('.js-bgm'),bgmSrc=$('.js-bgm-src'),bgmBtn=$('.js-music'),bgmWanted=true;function bgmUrl(){return bgmSrc?bgmSrc.textContent.trim():'';}function bgmSync(){if(!bgmAudio)return;var u=bgmUrl();if(u&&bgmAudio.getAttribute('src')!==u)bgmAudio.setAttribute('src',u);}function bgmPlay(){if(!bgmAudio||!bgmUrl())return;bgmSync();try{var pr=bgmAudio.play();if(pr&&pr.catch)pr.catch(function(){});}catch(e){}}if(bgmSrc&&'MutationObserver' in window){new MutationObserver(function(){bgmSync();if(bgmWanted&&bgmAudio&&bgmAudio.paused)bgmPlay();}).observe(bgmSrc,{childList:true,characterData:true,subtree:true});}['pointerdown','touchstart'].forEach(function(ev){root.addEventListener(ev,function(){if(bgmWanted)bgmPlay();},{passive:true});});document.addEventListener('keydown',function(){if(bgmWanted)bgmPlay();});if(bgmBtn){bgmBtn.addEventListener('click',function(e){e.stopPropagation();bgmWanted=!bgmWanted;if(bgmAudio&&bgmUrl()){if(bgmWanted){bgmPlay();}else{bgmAudio.pause();}}bgmBtn.textContent=bgmWanted?'\\u266a':'\\u2715';bgmBtn.setAttribute('aria-pressed',bgmWanted?'true':'false');});}var last=0;\n  function loop(ts){var dt=Math.min(0.05,(ts-last)/1000||0.016);last=ts;if(overlay.hidden)update(dt);render();requestAnimationFrame(loop);}\n  requestAnimationFrame(loop);\n})();\n",
+      "css": ".s-game_section{background:var(--color-background);color:#fff;padding:14px 0 26px;min-height:100vh}.s-game_section__head{max-width:460px;margin:0 auto;padding:0 14px;text-align:center}.s-game_section__head h2{font:700 clamp(1.8rem,7vw,2.8rem)/1 var(--font-title)}.s-game_section__head p{margin-top:6px;font:500 .8rem/1.55 var(--font-body);opacity:.8}.s-game_section__stage{position:relative;max-width:460px;margin:12px auto 0}.s-game_section__frame{position:relative;overflow:hidden;border-top:4px solid #0e1120;border-bottom:4px solid #0e1120;background:#1b2340}@media(min-width:520px){.s-game_section__frame{border:4px solid #0e1120;border-radius:18px;box-shadow:8px 8px 0 rgba(0,0,0,.35)}}.s-game_section canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#1b2340;touch-action:none}.s-game_section__stats{position:absolute;top:10px;left:0;right:0;display:flex;gap:8px;justify-content:center;z-index:5;pointer-events:none}.s-game_section__stats span{font:800 .66rem var(--font-body);letter-spacing:.1em;background:rgba(14,17,32,.62);border:2px solid #ffe26f;color:#ffe26f;border-radius:999px;padding:6px 13px;backdrop-filter:blur(2px)}.s-game_section__prompt{position:absolute;top:52px;left:50%;transform:translateX(-50%);background:#ffe26f;color:var(--color-primary);font:800 .68rem var(--font-body);letter-spacing:.1em;border:3px solid #0e1120;border-radius:999px;padding:7px 14px;z-index:5;white-space:nowrap}.s-game_section__prompt[hidden]{display:none}.s-game_section__pad{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;z-index:6;pointer-events:none}.s-game_section__dpad,.s-game_section__acts{display:flex;gap:10px}.s-game_section__pad button{pointer-events:auto;width:60px;height:60px;border-radius:50%;border:3px solid #0e1120;background:#ffe26f;color:var(--color-primary);font:900 1.25rem/1 var(--font-body);cursor:pointer;opacity:.62;touch-action:none;-webkit-tap-highlight-color:transparent}.s-game_section__pad button:active{transform:scale(.93);opacity:.9}.s-game_section__pad .js-btn[data-k=\"act\"]{background:var(--color-accent);color:#fff}.s-game_section__preload{display:none!important}.s-game_section__overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,8,25,.65);padding:16px}.s-game_section__overlay[hidden]{display:none}.s-game_section__modal{width:min(440px,100%);max-height:84vh;overflow:auto;background:#fffaf3;border:3px solid var(--color-primary);border-radius:22px;box-shadow:8px 8px 0 var(--color-primary);padding:22px 18px;position:relative;color:var(--color-primary)}.s-game_section__modal h3{font:700 1.5rem var(--font-title);margin:6px 0 8px}.s-game_section__modal p{font:500 .9rem/1.65 var(--font-body)}.s-game_section__tag{display:inline-block;font:800 .6rem var(--font-body);letter-spacing:.16em;background:#ffe26f;border:2px solid var(--color-primary);border-radius:999px;padding:5px 11px}.s-game_section__big{font:700 1.2rem var(--font-title);margin:10px 0}.s-game_section__count{margin-top:10px;background:#b9e6ff;border:2px dashed var(--color-primary);border-radius:12px;padding:10px;font:800 .78rem var(--font-body)}.s-game_section__close{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:3px solid var(--color-primary);background:#fff;font-weight:900;cursor:pointer;z-index:2}.s-game_section__map{margin-top:10px;border:3px solid var(--color-primary);border-radius:14px;overflow:hidden}.s-game_section__map iframe{display:block;width:100%;height:210px;border:0}.s-game_section__pair{display:flex;gap:8px;margin-top:10px}.s-game_section__pair img{width:50%;height:130px;object-fit:cover;border-radius:12px;border:3px solid var(--color-primary)}.s-game_section__framephoto{width:100%;height:150px;object-fit:cover;border-radius:12px;border:3px solid var(--color-primary);margin-top:10px}.s-game_section label{display:block;margin:10px 0 6px;font:800 .62rem var(--font-body);letter-spacing:.14em}.s-game_section select,.s-game_section input,.s-game_section textarea{width:100%;padding:11px 13px;font:500 .9rem var(--font-body);color:var(--color-primary);background:#fff;border:3px solid var(--color-primary);border-radius:12px}.s-game_section__btn{width:100%;margin-top:12px;padding:13px;font:800 .75rem var(--font-body);letter-spacing:.12em;color:var(--color-primary);background:#ffe26f;border:3px solid var(--color-primary);border-radius:12px;box-shadow:4px 4px 0 var(--color-primary);cursor:pointer}.s-game_section__note{margin-top:10px;text-align:center;font:600 .8rem var(--font-body)}.s-game_section__note.ok{color:#2f9e6d}.s-game_section__note.err{color:#d8452f}.s-game_section__list{margin:12px 0 0;padding:0;list-style:none}.s-game_section__item{margin-bottom:10px;padding:14px;background:#fff;border:3px solid var(--color-primary);border-radius:14px}.s-game_section__item strong{display:block;font:700 1rem var(--font-title)}.s-game_section__item p{margin:6px 0;font-size:.86rem}.s-game_section__item time{font-size:.68rem;opacity:.6}.s-game_section__empty{padding:16px;text-align:center;font-size:.82rem;border:3px dashed var(--color-primary);border-radius:14px}\n.s-game_section__stats .js-music{pointer-events:auto;cursor:pointer;font:800 .8rem var(--font-body);background:rgba(14,17,32,.62);border:2px solid #ffe26f;color:#ffe26f;border-radius:999px;padding:6px 12px;opacity:.85}\n",
+      "html": "<section class=\"s-game_section\"><div class=\"s-game_section__head\"><h2>{{headline}}</h2><p>Lari ke kanan, lompat jurang, kibarkan 4 bendera, kumpulkan 8 hati, masuk gerbang finish.</p></div><div class=\"s-game_section__stage\"><div class=\"s-game_section__frame\"><canvas class=\"js-canvas\" width=\"440\" height=\"680\" tabindex=\"0\"></canvas><div class=\"s-game_section__stats\"><span class=\"js-hearts\">♥ 0/8</span><span>E = BICARA</span><button class=\"js-music\" type=\"button\" aria-label=\"Musik\" aria-pressed=\"true\">♪</button></div><div class=\"s-game_section__prompt js-prompt\" hidden>Tekan <b>E</b> / ✋</div><div class=\"s-game_section__pad\"><div class=\"s-game_section__dpad\"><button class=\"js-btn\" data-k=\"l\" type=\"button\" aria-label=\"Kiri\">◀</button><button class=\"js-btn\" data-k=\"r\" type=\"button\" aria-label=\"Kanan\">▶</button></div><div class=\"s-game_section__acts\"><button class=\"js-btn\" data-k=\"jump\" type=\"button\" aria-label=\"Lompat\">⤒</button><button class=\"js-btn\" data-k=\"act\" type=\"button\" aria-label=\"Interaksi\">✋</button></div></div></div></div><div class=\"s-game_section__preload js-preload\" aria-hidden=\"true\"><img data-imgid=\"hero_idle\" data-field-img=\"hero_idle\" src=\"{{hero_idle}}\" alt=\"\"><img data-imgid=\"hero_run1\" data-field-img=\"hero_run1\" src=\"{{hero_run1}}\" alt=\"\"><img data-imgid=\"hero_run2\" data-field-img=\"hero_run2\" src=\"{{hero_run2}}\" alt=\"\"><img data-imgid=\"hero_run3\" data-field-img=\"hero_run3\" src=\"{{hero_run3}}\" alt=\"\"><img data-imgid=\"hero_run4\" data-field-img=\"hero_run4\" src=\"{{hero_run4}}\" alt=\"\"><img data-imgid=\"hero_jump\" data-field-img=\"hero_jump\" src=\"{{hero_jump}}\" alt=\"\"><img data-imgid=\"tile_ground\" data-field-img=\"tile_ground\" src=\"{{tile_ground}}\" alt=\"\"><img data-imgid=\"tile_platform\" data-field-img=\"tile_platform\" src=\"{{tile_platform}}\" alt=\"\"><img data-imgid=\"tile_float\" data-field-img=\"tile_float\" src=\"{{tile_float}}\" alt=\"\"><img data-imgid=\"flag_off\" data-field-img=\"flag_off\" src=\"{{flag_off}}\" alt=\"\"><img data-imgid=\"flag_on\" data-field-img=\"flag_on\" src=\"{{flag_on}}\" alt=\"\"><img data-imgid=\"lantern\" data-field-img=\"lantern\" src=\"{{lantern}}\" alt=\"\"><img data-imgid=\"coin_heart\" data-field-img=\"coin_heart\" src=\"{{coin_heart}}\" alt=\"\"><img data-imgid=\"door_finish\" data-field-img=\"door_finish\" src=\"{{door_finish}}\" alt=\"\"><img data-imgid=\"bg_hills\" data-field-img=\"bg_hills\" src=\"{{bg_hills}}\" alt=\"\"></div><audio class=\"js-bgm\" loop preload=\"none\" src=\"{{bgm_url}}\"></audio><span class=\"js-bgm-src\" hidden>{{bgm_url}}</span><div class=\"s-game_section__overlay js-overlay\" hidden><div class=\"s-game_section__modal\" role=\"dialog\" aria-modal=\"true\"><button class=\"s-game_section__close js-close\" type=\"button\" aria-label=\"Tutup\">✕</button><article class=\"js-panel\" data-panel=\"couple\"><span class=\"s-game_section__tag\">POS 1 · MEMPELAI</span><h3>{{headline}}</h3><p><b data-field=\"bride_name\">{{bride_name}}</b> &amp; <b data-field=\"groom_name\">{{groom_name}}</b></p><img class=\"s-game_section__framephoto\" data-field-img=\"couple_photo\" src=\"{{couple_photo}}\" alt=\"Foto pasangan\"><div class=\"s-game_section__pair\"><img data-field-img=\"bride_photo\" src=\"{{bride_photo}}\" alt=\"{{bride_name}}\"><img data-field-img=\"groom_photo\" src=\"{{groom_photo}}\" alt=\"{{groom_name}}\"></div></article><article class=\"js-panel\" data-panel=\"datetime\" hidden><span class=\"s-game_section__tag\">POS 2 · WAKTU</span><h3>Save The Date</h3><p class=\"s-game_section__big\"><span data-field=\"event_date\">{{event_date}}</span> · <span data-field=\"event_time\">{{event_time}}</span> <span data-field=\"event_timezone\">{{event_timezone}}</span></p><div class=\"s-game_section__count js-countdown\">…</div></article><article class=\"js-panel\" data-panel=\"venue\" hidden><span class=\"s-game_section__tag\">POS 3 · LOKASI</span><h3 data-field=\"venue_name\">{{venue_name}}</h3><div class=\"s-game_section__map\"><iframe data-field-map=\"venue_location\" src=\"https://www.google.com/maps?q={{venue_location}}&amp;output=embed\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\" title=\"Lokasi acara\"></iframe></div></article><article class=\"js-panel\" data-panel=\"gift\" hidden><span class=\"s-game_section__tag\">POS 4 · KADO</span><h3>Tanda Kasih</h3><p data-field=\"gift_info\">{{gift_info}}</p></article><article class=\"js-panel\" data-panel=\"finale\" hidden><span class=\"s-game_section__tag\">FINISH · RSVP &amp; UCAPAN</span><h3>Konfirmasi Kehadiran</h3><form data-momenia-form=\"rsvp\"><label>Kehadiran</label><select name=\"status\"><option value=\"present\">Ya, saya hadir</option><option value=\"absent\">Maaf, berhalangan</option></select><label>Jumlah tamu</label><input type=\"number\" name=\"totalAttendee\" min=\"1\" value=\"1\"><button class=\"s-game_section__btn\" type=\"submit\">Kirim Konfirmasi</button><p class=\"s-game_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-game_section__note ok\" data-momenia-when=\"success\">Terima kasih! Sampai jumpa 🎉</p><p class=\"s-game_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form><h3 style=\"margin-top:18px\">Ucapan &amp; Doa</h3><form data-momenia-form=\"message\"><textarea name=\"message\" rows=\"3\" maxlength=\"500\" placeholder=\"Tulis ucapan dan doa...\" required></textarea><button class=\"s-game_section__btn\" type=\"submit\">Kirim Ucapan</button><p class=\"s-game_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-game_section__note ok\" data-momenia-when=\"success\">Terima kasih!</p><p class=\"s-game_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form><ul class=\"s-game_section__list\" data-momenia-list=\"messages\"><template data-momenia-item><li class=\"s-game_section__item\"><strong data-momenia-text=\"name\"></strong><p data-momenia-text=\"message\"></p><time data-momenia-text=\"messageAt\"></time></li></template><li class=\"s-game_section__empty\" data-momenia-when=\"empty\">Belum ada ucapan.</li></ul></article></div></div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    }
+  }
+}

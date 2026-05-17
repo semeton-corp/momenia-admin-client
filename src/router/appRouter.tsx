@@ -12,14 +12,9 @@ import TransactionDetail from "@/page/transactions/TransactionDetail";
 import Admins from "@/page/admins/Admins";
 import AddAdmin from "@/page/admins/AddAdmin";
 import Users from "@/page/users/Users";
-import UserDetail from "@/page/users/UserDetail";
 import Templates from "@/page/templates/Templates";
 import TemplateMaker from "@/page/templates/TemplateMaker";
-import AddTemplate from "@/page/templates/AddTemplate"
-import EditTemplate from "@/page/templates/EditTemplate";
-import TemplateReport from "@/page/templates/TemplateReport";
-import TemplateDurations from "@/page/templates/durations/TemplateDurations";
-import ContentInvitationTemplates from "@/page/templates/content-invitation-templates/ContentInvitationTemplates";
+import AddTemplate from "@/page/templates/AddTemplate";
 import { ensureAuthenticated } from "@/lib/auth";
 import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
 
@@ -68,26 +63,6 @@ export const appRouter = createBrowserRouter([
         path: "maker",
         element: <TemplateMaker />,
         handle: { title: "Template Maker" },
-      },
-      {
-        path: "edit",
-        element: <EditTemplate />,
-        handle: { title: "Edit Template" },
-      },
-      {
-        path: "report",
-        element: <TemplateReport />,
-        handle: { title: "Template Report" },
-      },
-      {
-        path: "durations",
-        element: <TemplateDurations />,
-        handle: { title: "Template Durations" },
-      },
-      {
-        path: "content-invitation-templates",
-        element: <ContentInvitationTemplates />,
-        handle: { title: "Content Invitation Templates" },
       },
     ],
   },

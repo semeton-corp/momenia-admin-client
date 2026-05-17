@@ -262,7 +262,7 @@ async function requestFreshAccessToken() {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        "x-idempotency-key": crypto.randomUUID(),
+        ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       },
       body: JSON.stringify({
         refreshToken,

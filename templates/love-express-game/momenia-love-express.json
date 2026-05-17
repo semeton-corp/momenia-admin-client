@@ -1,0 +1,368 @@
+{
+  "name": "Love Express — Journey to Forever",
+  "descriptionEn": "An interactive pixel-art wedding invitation. Guide the Love Courier through three story stations in order, discover the couple, date and venue, then reach the Love Express for RSVP and wishes.",
+  "descriptionIdn": "Undangan pernikahan pixel-art interaktif. Antar Love Courier melewati tiga stasiun cerita secara berurutan—mempelai, waktu, dan lokasi—lalu tiba di Love Express untuk RSVP dan ucapan.",
+  "theme_defaults": {
+    "font_body": "Poppins",
+    "font_title": "Fraunces",
+    "color_accent": "#e96b7d",
+    "color_primary": "#20264f",
+    "color_background": "#101735"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "label": "Poster",
+      "sections": [
+        {
+          "id": "poster_moonlit",
+          "section_type_id": "poster_section"
+        }
+      ]
+    },
+    {
+      "id": "main",
+      "label": "Game",
+      "sections": [
+        {
+          "id": "game_moonlit",
+          "section_type_id": "game_section"
+        }
+      ]
+    }
+  ],
+  "schema": {
+    "fields": [
+      {
+        "key": "headline",
+        "type": "text",
+        "label": "Nama Pasangan",
+        "section": "poster_section",
+        "required": true,
+        "placeholder": "Budi & Rina"
+      },
+      {
+        "key": "bgm_url",
+        "type": "text",
+        "label": "URL Musik Latar (MP3)",
+        "section": "game_section",
+        "required": false,
+        "placeholder": ""
+      },
+      {
+        "key": "desktop_background",
+        "type": "image",
+        "label": "Background Desktop",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_dea20fec-68a5-4bf2-943b-fc3c0aa2f082"
+      },
+      {
+        "key": "hero_idle",
+        "type": "image",
+        "label": "Hero Diam",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_3231b9b3-cd51-473b-9533-ed4df5a95b57"
+      },
+      {
+        "key": "hero_run1",
+        "type": "image",
+        "label": "Hero Lari 1",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_a395a8c3-e7e5-448d-9777-25bd8fe19133"
+      },
+      {
+        "key": "hero_run2",
+        "type": "image",
+        "label": "Hero Lari 2",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_896dcd29-ebc5-49f6-b6e2-47b172758d46"
+      },
+      {
+        "key": "hero_run3",
+        "type": "image",
+        "label": "Hero Lari 3",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_835500f1-8a6c-40cd-8f22-b1b2f7534115"
+      },
+      {
+        "key": "hero_run4",
+        "type": "image",
+        "label": "Hero Lari 4",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_353c8ca1-7701-4a9e-8f0a-bb8fc3641930"
+      },
+      {
+        "key": "hero_jump",
+        "type": "image",
+        "label": "Hero Lompat",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_0d750810-8373-4a70-9ca1-32c098f92629"
+      },
+      {
+        "key": "tile_ground",
+        "type": "image",
+        "label": "Tile Tanah",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_51732983-9462-44c4-bf3d-bdfc2e2fa411"
+      },
+      {
+        "key": "tile_platform",
+        "type": "image",
+        "label": "Tile Platform",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_2c954aa8-f308-42fb-b4ed-ecad42d4ca5c"
+      },
+      {
+        "key": "tile_float",
+        "type": "image",
+        "label": "Platform Gantung",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_5db7e617-fc87-4046-993c-fc590b69b9a5"
+      },
+      {
+        "key": "flag_off",
+        "type": "image",
+        "label": "Penanda Belum Aktif",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_94a628a4-197d-4dca-9ea9-6aa70c971668"
+      },
+      {
+        "key": "flag_on",
+        "type": "image",
+        "label": "Penanda Aktif",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_bc1208ea-764c-41db-ae09-49c04676f49c"
+      },
+      {
+        "key": "lamp_post",
+        "type": "image",
+        "label": "Lampu Stasiun",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_193646bd-8d05-4ee8-b7f9-fd361d21c6de"
+      },
+      {
+        "key": "coin_heart",
+        "type": "image",
+        "label": "Koin Hati",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_21efbfc8-a65b-4864-9b5a-c102a579c7bb"
+      },
+      {
+        "key": "door_finish",
+        "type": "image",
+        "label": "Gerbang Love Express",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_65455346-cd74-4f99-ba0a-95bc5ff67fe4"
+      },
+      {
+        "key": "bg_hills",
+        "type": "image",
+        "label": "Latar Love Express",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_dea20fec-68a5-4bf2-943b-fc3c0aa2f082"
+      },
+      {
+        "key": "lantern_fly1",
+        "type": "image",
+        "label": "Lantern Terbang 1",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_f7ea1e70-caab-44f2-9a6d-e54fe1e47244"
+      },
+      {
+        "key": "lantern_fly2",
+        "type": "image",
+        "label": "Lantern Terbang 2",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_4946db49-e8bf-424a-a351-6f059abfe5ea"
+      },
+      {
+        "key": "lantern_fly3",
+        "type": "image",
+        "label": "Lantern Terbang 3",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_fde2a202-99a9-444d-9718-56f20787ca3e"
+      },
+      {
+        "key": "lantern_fly4",
+        "type": "image",
+        "label": "Lantern Terbang 4",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_b11ef431-32bb-4bd7-bf2c-ff78b8080b76"
+      },
+      {
+        "key": "lantern_fly5",
+        "type": "image",
+        "label": "Lantern Terbang 5",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_107b925e-49c1-461f-857c-863fdf3ca506"
+      },
+      {
+        "key": "lantern_fly6",
+        "type": "image",
+        "label": "Lantern Terbang 6",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_6dd7a526-6970-4f10-9d14-19394c3fbfba"
+      },
+      {
+        "key": "bird_fly1",
+        "type": "image",
+        "label": "Burung Terbang 1",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_755314a7-b9da-4676-8174-5a8b4247224c"
+      },
+      {
+        "key": "bird_fly2",
+        "type": "image",
+        "label": "Burung Terbang 2",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_35487994-ccc6-41db-a086-8c55160327ec"
+      },
+      {
+        "key": "bird_fly3",
+        "type": "image",
+        "label": "Burung Terbang 3",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_54a9efe1-bc42-44c8-a67a-64f1a106db40"
+      },
+      {
+        "key": "bird_fly4",
+        "type": "image",
+        "label": "Burung Terbang 4",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_d174a511-22a9-4765-a991-4e3d604eced5"
+      },
+      {
+        "key": "bride_name",
+        "type": "text",
+        "label": "Nama Pengantin Wanita",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "Rina Astuti"
+      },
+      {
+        "key": "groom_name",
+        "type": "text",
+        "label": "Nama Pengantin Pria",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "Budi Santoso"
+      },
+      {
+        "key": "bride_photo",
+        "type": "image",
+        "label": "Foto Pengantin Wanita",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_d3b25674-e7fa-40c5-83e3-9d65d8771bd4"
+      },
+      {
+        "key": "groom_photo",
+        "type": "image",
+        "label": "Foto Pengantin Pria",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_334187c4-e93e-4517-bbf1-14f2bdbc4361"
+      },
+      {
+        "key": "couple_photo",
+        "type": "image",
+        "label": "Foto Pasangan",
+        "section": "game_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_efc7bd33-aafd-48a4-8b4f-f6fbfd483312"
+      },
+      {
+        "key": "event_date",
+        "type": "date",
+        "label": "Tanggal Acara",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "2026-12-20"
+      },
+      {
+        "key": "event_time",
+        "type": "time",
+        "label": "Waktu Acara",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "15:00"
+      },
+      {
+        "key": "event_timezone",
+        "type": "select",
+        "label": "Time Zone",
+        "section": "game_section",
+        "required": true,
+        "options": [
+          "WIB",
+          "WITA",
+          "WIT"
+        ]
+      },
+      {
+        "key": "venue_name",
+        "type": "text",
+        "label": "Nama Venue",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "Gedung Balai Kartini"
+      },
+      {
+        "key": "venue_location",
+        "type": "location",
+        "label": "Titik Lokasi (Peta)",
+        "section": "game_section",
+        "required": true,
+        "placeholder": "-6.2248, 106.8295"
+      }
+    ]
+  },
+  "sectionTypes": {
+    "poster_section": {
+      "id": "poster_section",
+      "js": "(function(){\n  var root=document.querySelector('.s-poster_section');\n  if(!root||root.dataset.inited)return;root.dataset.inited='1';\n  var btn=root.querySelector('.js-start-game');\n  if(btn){btn.addEventListener('click',function(){if(typeof window.__memoriaGoTo==='function')window.__memoriaGoTo('main');});}\n})();\n",
+      "css": ".s-poster_section{min-height:100vh;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:48px 22px;background:radial-gradient(circle at 76% 18%,rgba(255,221,160,.20),transparent 24%),linear-gradient(180deg,#101735 0%,#1b2351 56%,#2b2853 100%);color:#fff}.s-poster_section:before,.s-poster_section:after{content:'✦';position:absolute;color:#ffd88b;opacity:.75;text-shadow:58px 38px 0 #fff,130px -28px 0 #f7a8b8,-95px 64px 0 #fff,-170px -70px 0 #ffd88b}.s-poster_section:before{top:15%;left:18%;font-size:12px}.s-poster_section:after{right:18%;bottom:20%;font-size:9px}.s-poster_section__card{width:min(430px,100%);padding:30px 22px 26px;background:linear-gradient(180deg,rgba(31,39,88,.94),rgba(17,23,53,.94));border:2px solid rgba(255,216,139,.65);border-radius:28px;box-shadow:0 24px 80px rgba(0,0,0,.35),inset 0 0 0 6px rgba(255,255,255,.025)}.s-poster_section__eyebrow{font:800 .62rem var(--font-body);letter-spacing:.24em;color:#ffd88b}.s-poster_section__moon{font-size:3rem;filter:drop-shadow(0 0 18px rgba(255,217,139,.55));margin:4px 0}.s-poster_section img{width:118px;height:118px;object-fit:contain;image-rendering:pixelated;margin:4px auto 2px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28))}.s-poster_section h1{margin:8px 0 4px;font:700 clamp(2.35rem,9vw,4rem)/.98 var(--font-title);color:#fff6df;text-shadow:0 3px 0 rgba(0,0,0,.22)}.s-poster_section__subtitle{font:600 .9rem/1.65 var(--font-body);color:#f5c6cf;max-width:330px;margin:12px auto}.s-poster_section__route{display:flex;align-items:center;justify-content:center;gap:7px;margin:17px 0 0;font:800 .58rem var(--font-body);letter-spacing:.08em;color:#ffd88b;flex-wrap:wrap}.s-poster_section__route i{display:block;width:20px;height:1px;background:rgba(255,216,139,.55)}.s-poster_section__keys{margin-top:13px;font:700 .59rem/1.65 var(--font-body);letter-spacing:.11em;color:#b9c8ff}.s-poster_section button{margin-top:20px;padding:15px 28px;font:900 .76rem var(--font-body);letter-spacing:.14em;color:#20264f;background:linear-gradient(180deg,#ffe8a9,#f3bd62);border:2px solid #fff0bc;border-radius:999px;box-shadow:0 7px 0 #9d6237,0 13px 30px rgba(0,0,0,.24);cursor:pointer}.s-poster_section button:active{transform:translateY(4px);box-shadow:0 3px 0 #9d6237,0 8px 20px rgba(0,0,0,.24)}\n",
+      "html": "<section class=\"s-poster_section\"><div class=\"s-poster_section__card\"><div class=\"s-poster_section__eyebrow\">MOMENIA PRESENTS</div><div class=\"s-poster_section__moon\">☾</div><img data-field-img=\"hero_idle\" src=\"{{hero_idle}}\" alt=\"Love Courier\"><h1>{{headline}}</h1><p class=\"s-poster_section__subtitle\">Naiklah ke <b>Love Express</b>. Temukan tiga stasiun cerita kami secara berurutan sebelum tiba di tujuan akhir.</p><div class=\"s-poster_section__route\"><span>OUR STORY</span><i></i><span>SAVE THE DATE</span><i></i><span>DESTINATION</span></div><div class=\"s-poster_section__keys\">WASD / PANAH · SPASI LOMPAT · E INTERAKSI · MOBILE CONTROLS</div><button class=\"js-start-game\" type=\"button\">MULAI PERJALANAN ♥</button></div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "game_section": {
+      "id": "game_section",
+      "js": "(function(){\n  var root=document.querySelector('.s-game_section');\n  if(!root||root.dataset.inited)return;root.dataset.inited='1';\n  function $(s){return root.querySelector(s);}\n  var cv=$('.js-canvas'),ctx=cv&&cv.getContext('2d');if(!cv||!ctx)return;\n  var W=440,H=680,GROUND=580,WORLD=2200;\n  var overlay=$('.js-overlay'),panels=Array.prototype.slice.call(root.querySelectorAll('.js-panel'));\n  var promptEl=$('.js-prompt'),heartsEl=$('.js-hearts'),progressEl=$('.js-progress');\n  var countdownEl=$('.js-countdown'),timer=null;\n  var IDS=['hero_idle','hero_run1','hero_run2','hero_run3','hero_run4','hero_jump','tile_ground','tile_platform','tile_float','flag_off','flag_on','lamp_post','coin_heart','door_finish','bg_hills','lantern_fly1','lantern_fly2','lantern_fly3','lantern_fly4','lantern_fly5','lantern_fly6','bird_fly1','bird_fly2','bird_fly3','bird_fly4'];\n  var IMG={};IDS.forEach(function(id){var im=new Image(),el=root.querySelector('[data-imgid=\"'+id+'\"]');if(el)im.src=el.currentSrc||el.src||'';IMG[id]=im;});\n  if('MutationObserver' in window){var pre=$('.js-preload');if(pre)new MutationObserver(function(muts){muts.forEach(function(m){var t=m.target,id=t.getAttribute&&t.getAttribute('data-imgid');if(id&&IMG[id])IMG[id].src=t.currentSrc||t.src||'';});}).observe(pre,{attributes:true,subtree:true,attributeFilter:['src']});}\n  function draw(img,x,y,w,h){if(img&&img.complete&&img.naturalWidth>0){try{ctx.drawImage(img,x,y,w,h);return true;}catch(e){}}return false;}\n  function box(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}\n  var grounds=[{x:0,w:520},{x:580,w:520},{x:1160,w:520},{x:1740,w:460}];\n  var plats=[{x:110,y:484,w:96,h:20},{x:650,y:468,w:72,h:32,float:true},{x:810,y:484,w:96,h:20},{x:1338,y:462,w:72,h:32,float:true},{x:1470,y:484,w:96,h:20},{x:1790,y:500,w:96,h:20},{x:1940,y:420,w:72,h:32,float:true}];\n  var flags=[{x:150,y:484,panel:'couple',step:0,done:false},{x:680,y:468,panel:'datetime',step:1,done:false},{x:1260,y:GROUND,panel:'venue',step:2,done:false}];\n  var door={x:2080,y:GROUND,panel:'finale'};\n  var coins=[{x:150,y:438,taken:false},{x:680,y:418,taken:false},{x:850,y:438,taken:false},{x:1260,y:515,taken:false},{x:1372,y:412,taken:false},{x:1510,y:438,taken:false},{x:1972,y:365,taken:false},{x:2100,y:520,taken:false}];\n  var lamps=[{x:40,y:488},{x:760,y:392},{x:1290,y:488},{x:1690,y:475},{x:2010,y:488}];\n  var flyLanterns=[{x:260,y:245,s:.72,p:.2},{x:540,y:190,s:.55,p:1.4},{x:920,y:270,s:.68,p:2.7},{x:1210,y:180,s:.5,p:4.2},{x:1580,y:245,s:.7,p:5.3},{x:1870,y:170,s:.56,p:6.4}];\n  var birds=[{x:390,y:230,s:.65,v:18,p:.2},{x:1050,y:150,s:.55,v:25,p:2.1},{x:1650,y:210,s:.62,v:20,p:4.4}];\n  var hearts=0,cam=0,T=0,currentStep=0,toastUntil=0,toastText='';\n  var P={x:24,y:GROUND-42,w:28,h:44,vy:0,face:1,ground:false,anim:0},safe={x:24,y:GROUND-42};\n  var input={l:0,r:0},jumpQueued=false;\n  function isField(t){return t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT');}\n  document.addEventListener('keydown',function(e){if(isField(e.target))return;if(overlay&&!overlay.hidden)return;var k=e.key;if(k==='ArrowLeft'||k==='a'||k==='A'){input.l=1;e.preventDefault();}else if(k==='ArrowRight'||k==='d'||k==='D'){input.r=1;e.preventDefault();}else if(k==='ArrowUp'||k==='w'||k==='W'||k===' '){jumpQueued=true;e.preventDefault();}else if(k==='e'||k==='E'||k==='Enter'){doInteract();}});\n  document.addEventListener('keyup',function(e){var k=e.key;if(k==='ArrowLeft'||k==='a'||k==='A')input.l=0;else if(k==='ArrowRight'||k==='d'||k==='D')input.r=0;});\n  root.querySelectorAll('.js-btn').forEach(function(b){var k=b.getAttribute('data-k');function on(e){e.preventDefault();if(k==='jump')jumpQueued=true;else if(k==='act')doInteract();else input[k]=1;}function off(e){if(e)e.preventDefault();if(k!=='jump'&&k!=='act')input[k]=0;}b.addEventListener('touchstart',on,{passive:false});b.addEventListener('touchend',off);b.addEventListener('touchcancel',off);b.addEventListener('mousedown',on);b.addEventListener('mouseup',off);b.addEventListener('mouseleave',off);});\n  function near(){var cx=P.x+P.w/2,best=null,bd=1e9;flags.concat([door]).forEach(function(f){var d=Math.abs(cx-f.x);if(d<52&&d<bd){bd=d;best=f;}});return best;}\n  function toast(t){toastText=t;toastUntil=T+2.1;}\n  function doInteract(){var f=near();if(!f)return;if(f===door){if(currentStep<flags.length){toast('Selesaikan semua stasiun terlebih dahulu ♥');return;}openPanel('finale');return;}if(f.step!==currentStep){if(f.step<currentStep)openPanel(f.panel);else toast('Stasiun ini masih terkunci. Ikuti perjalanan secara berurutan.');return;}f.done=true;currentStep++;updateProgress();openPanel(f.panel);}\n  function updateProgress(){if(progressEl)progressEl.textContent=currentStep+'/3 STASIUN';}\n  function timezoneOffset(tz){return tz==='WIT'?9:tz==='WITA'?8:7;}\n  function currentDateTime(){var dEl=root.querySelector('[data-field=\"event_date\"]'),tEl=root.querySelector('[data-field=\"event_time\"]'),zEl=root.querySelector('[data-field=\"event_timezone\"]');var d=dEl?dEl.textContent.trim():'',t=tEl?tEl.textContent.trim():'00:00',z=zEl?zEl.textContent.trim():'WIB';if(!d)return null;var parts=d.split('-'),tp=t.split(':');if(parts.length!==3)return null;var utc=Date.UTC(+parts[0],+parts[1]-1,+parts[2],+(tp[0]||0)-timezoneOffset(z),+(tp[1]||0),0);var dt=new Date(utc);return isNaN(dt.getTime())?null:dt;}\n  function tick(){if(!countdownEl)return;var target=currentDateTime();if(!target){countdownEl.textContent='';return;}var diff=target.getTime()-Date.now();if(diff<=0){countdownEl.textContent='Hari bahagia telah tiba!';return;}var s=Math.floor(diff/1000),dd=Math.floor(s/86400),hh=Math.floor(s%86400/3600),mm=Math.floor(s%3600/60),ss=s%60;countdownEl.textContent=dd+' hari · '+hh+' jam · '+mm+' menit · '+ss+' detik';}\n  function openPanel(name){panels.forEach(function(p){p.hidden=p.getAttribute('data-panel')!==name;});overlay.hidden=false;if(name==='datetime'){tick();if(timer)clearInterval(timer);timer=setInterval(tick,1000);}var m=root.querySelector('.s-game_section__modal');if(m)m.scrollTop=0;}\n  function closePanel(){overlay.hidden=true;if(timer){clearInterval(timer);timer=null;}}\n  root.querySelectorAll('.js-close').forEach(function(b){b.addEventListener('click',closePanel);});overlay.addEventListener('click',function(e){if(e.target===overlay)closePanel();});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay&&!overlay.hidden)closePanel();});\n  function solidAt(pl){return P.vy>=0&&P.x+P.w>pl.x&&P.x<pl.x+pl.w;}\n  function collide(){P.ground=false;for(var i=0;i<plats.length;i++){var pl=plats[i];if(solidAt(pl)){var feet=P.y+P.h;if(feet>=pl.y&&feet<=pl.y+Math.max(14,P.vy+2)){P.y=pl.y-P.h;P.vy=0;P.ground=true;}}}for(var g=0;g<grounds.length;g++){var gr=grounds[g];if(P.vy>=0&&P.x+P.w>gr.x&&P.x<gr.x+gr.w){var f2=P.y+P.h;if(f2>=GROUND&&f2<=GROUND+Math.max(14,P.vy+2)){P.y=GROUND-P.h;P.vy=0;P.ground=true;}}}if(P.ground){safe.x=P.x;safe.y=P.y;}}\n  function update(dt){var mv=0;if(input.l)mv--;if(input.r)mv++;P.x+=mv*2.7;if(mv!==0)P.face=mv;if(mv!==0&&P.ground)P.anim+=dt*9;if(P.x<0)P.x=0;if(P.x>WORLD-P.w)P.x=WORLD-P.w;P.vy+=.56;if(P.vy>12)P.vy=12;if(jumpQueued){if(P.ground){P.vy=-11.7;P.ground=false;}jumpQueued=false;}P.y+=P.vy;collide();if(P.y>H+70){P.x=safe.x;P.y=safe.y-12;P.vy=0;}var cx=P.x+P.w/2,cy=P.y+P.h/2;coins.forEach(function(c){if(!c.taken&&Math.abs(cx-c.x)<27&&Math.abs(cy-c.y)<31){c.taken=true;hearts++;if(heartsEl)heartsEl.textContent='♥ '+hearts+'/8';}});birds.forEach(function(b){b.x+=b.v*dt;if(b.x>WORLD+100)b.x=-120;});T+=dt;var tx=P.x+P.w/2-W*.38;if(tx<0)tx=0;if(tx>WORLD-W)tx=WORLD-W;cam+=(tx-cam)*Math.min(1,dt*6);}\n  function heroFrame(){if(!P.ground)return IMG.hero_jump;if(input.l||input.r){var f=[IMG.hero_run1,IMG.hero_run2,IMG.hero_run3,IMG.hero_run4];return f[Math.floor(P.anim)%4];}return IMG.hero_idle;}\n  function vis(x,w){return x+w>cam-80&&x<cam+W+80;}\n  function render(){ctx.clearRect(0,0,W,H);box(0,0,W,H,'#101735');var bg=IMG.bg_hills;var bw=1000,bh=390,off=-((cam*.18)%bw);for(var bx=off-bw;bx<W+bw;bx+=bw){if(!draw(bg,bx,70,bw,bh))box(bx,70,bw,bh,'#1b2351');}var grad=ctx.createLinearGradient(0,280,0,H);grad.addColorStop(0,'rgba(16,23,53,.04)');grad.addColorStop(1,'rgba(10,15,40,.86)');ctx.fillStyle=grad;ctx.fillRect(0,280,W,H-280);\n    flyLanterns.forEach(function(l,i){var y=l.y+Math.sin(T*.9+l.p)*16,x=l.x+Math.sin(T*.35+l.p)*22;if(!vis(x,36))return;var frames=[IMG.lantern_fly1,IMG.lantern_fly2,IMG.lantern_fly3,IMG.lantern_fly4,IMG.lantern_fly5,IMG.lantern_fly6],im=frames[Math.floor((T*5+i)%frames.length)];draw(im,x-cam*.45,y,42*l.s,58*l.s);});\n    birds.forEach(function(b,i){if(!vis(b.x,50))return;var fr=[IMG.bird_fly1,IMG.bird_fly2,IMG.bird_fly3,IMG.bird_fly4],im=fr[Math.floor((T*7+b.p)%4)];draw(im,b.x-cam*.62,b.y+Math.sin(T*1.4+b.p)*8,48*b.s,34*b.s);});\n    grounds.forEach(function(gr){if(!vis(gr.x,gr.w))return;for(var x=gr.x;x<gr.x+gr.w;x+=64){if(!draw(IMG.tile_ground,x-cam,GROUND,64,64))box(x-cam,GROUND,64,64,'#28305b');}});\n    plats.forEach(function(pl){if(!vis(pl.x,pl.w))return;if(pl.float){if(!draw(IMG.tile_float,pl.x-cam,pl.y,pl.w,pl.h))box(pl.x-cam,pl.y,pl.w,pl.h,'#28305b');}else{if(!draw(IMG.tile_platform,pl.x-cam,pl.y,pl.w,pl.h))box(pl.x-cam,pl.y,pl.w,pl.h,'#d6a04a');}});\n    lamps.forEach(function(l,i){var ly=l.y+Math.sin(T*.55+i)*2;if(vis(l.x,40))draw(IMG.lamp_post,l.x-cam,ly,34,86);});\n    coins.forEach(function(c){if(c.taken||!vis(c.x-12,24))return;var yy=c.y+Math.sin(T*3+c.x)*4;if(!draw(IMG.coin_heart,c.x-12-cam,yy-12,24,24)){ctx.fillStyle='#e96b7d';ctx.beginPath();ctx.arc(c.x-cam,yy,8,0,7);ctx.fill();}});\n    flags.forEach(function(f){if(!vis(f.x-18,36))return;var im=f.done?IMG.flag_on:IMG.flag_off;draw(im,f.x-18-cam,f.y-64,38,64);if(f.step===currentStep&&!f.done){ctx.strokeStyle='#ffd88b';ctx.lineWidth=2;ctx.beginPath();ctx.arc(f.x-cam,f.y-70,13+Math.sin(T*3)*2,0,Math.PI*2);ctx.stroke();}});\n    if(vis(door.x-45,90)){draw(IMG.door_finish,door.x-52-cam,door.y-105,104,105);if(currentStep<3){ctx.fillStyle='rgba(16,23,53,.55)';ctx.fillRect(door.x-34-cam,door.y-82,68,68);ctx.font='800 22px sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffd88b';ctx.fillText('🔒',door.x-cam,door.y-38);}}\n    var img=heroFrame(),px=P.x-cam,py=P.y;if(P.face<0){ctx.save();ctx.translate(px+P.w/2,0);ctx.scale(-1,1);ctx.translate(-(px+P.w/2),0);}draw(img,px,py,P.w,P.h);if(P.face<0)ctx.restore();\n    var n=near();if(promptEl){if(n){promptEl.hidden=false;promptEl.textContent=(n===door&&currentStep<3)?'🔒 Selesaikan 3 stasiun':'Tekan E / ✋';}else promptEl.hidden=true;}\n    if(T<toastUntil){ctx.save();ctx.font='700 12px Poppins,sans-serif';ctx.textAlign='center';var tw=Math.min(360,ctx.measureText(toastText).width+32);ctx.fillStyle='rgba(18,24,55,.94)';ctx.strokeStyle='#ffd88b';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect((W-tw)/2,82,tw,46,14);ctx.fill();ctx.stroke();ctx.fillStyle='#fff6df';ctx.fillText(toastText,W/2,110);ctx.restore();}}\n  var bgmAudio=$('.js-bgm'),bgmSrc=$('.js-bgm-src'),bgmBtn=$('.js-music'),bgmWanted=true;function bgmUrl(){return bgmSrc?bgmSrc.textContent.trim():'';}function bgmSync(){if(!bgmAudio)return;var u=bgmUrl();if(u&&bgmAudio.getAttribute('src')!==u)bgmAudio.setAttribute('src',u);}function bgmPlay(){if(!bgmAudio||!bgmUrl())return;bgmSync();try{var pr=bgmAudio.play();if(pr&&pr.catch)pr.catch(function(){});}catch(e){}}if(bgmSrc&&'MutationObserver' in window)new MutationObserver(function(){bgmSync();if(bgmWanted&&bgmAudio&&bgmAudio.paused)bgmPlay();}).observe(bgmSrc,{childList:true,characterData:true,subtree:true});['pointerdown','touchstart'].forEach(function(ev){root.addEventListener(ev,function(){if(bgmWanted)bgmPlay();},{passive:true});});document.addEventListener('keydown',function(){if(bgmWanted)bgmPlay();});if(bgmBtn)bgmBtn.addEventListener('click',function(e){e.stopPropagation();bgmWanted=!bgmWanted;if(bgmAudio&&bgmUrl()){if(bgmWanted)bgmPlay();else bgmAudio.pause();}bgmBtn.textContent=bgmWanted?'♪':'×';bgmBtn.setAttribute('aria-pressed',bgmWanted?'true':'false');});\n  updateProgress();var last=0;function loop(ts){var dt=Math.min(.05,(ts-last)/1000||.016);last=ts;if(overlay.hidden)update(dt);render();requestAnimationFrame(loop);}requestAnimationFrame(loop);\n})();\n",
+      "css": ".s-game_section{background:linear-gradient(180deg,#101735,#151a3d);color:#fff;padding:14px 0 30px;min-height:100vh}.s-game_section__head{max-width:460px;margin:0 auto;padding:8px 18px 0;text-align:center}.s-game_section__eyebrow{font:900 .57rem var(--font-body);letter-spacing:.22em;color:#ffd88b}.s-game_section__head h2{margin:4px 0 0;font:700 clamp(1.9rem,7vw,2.8rem)/1 var(--font-title);color:#fff6df}.s-game_section__head p{margin:8px auto 0;font:500 .78rem/1.55 var(--font-body);color:#cbd3ff;max-width:380px}.s-game_section__stage{position:relative;max-width:460px;margin:12px auto 0}.s-game_section__frame{position:relative;overflow:hidden;border-top:2px solid #ffd88b;border-bottom:2px solid #ffd88b;background:#101735;box-shadow:0 18px 45px rgba(0,0,0,.28)}@media(min-width:520px){.s-game_section__frame{border:2px solid #ffd88b;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.38),inset 0 0 0 4px rgba(255,255,255,.025)}}.s-game_section canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#101735;touch-action:none}.s-game_section__stats{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;justify-content:center;z-index:5;pointer-events:none}.s-game_section__stats span,.s-game_section__stats button{font:900 .58rem var(--font-body);letter-spacing:.07em;background:rgba(16,23,53,.76);border:1px solid rgba(255,216,139,.88);color:#ffd88b;border-radius:999px;padding:6px 10px;backdrop-filter:blur(5px)}.s-game_section__stats .js-music{pointer-events:auto;cursor:pointer;font-size:.8rem;min-width:32px}.s-game_section__prompt{position:absolute;top:49px;left:50%;transform:translateX(-50%);background:#ffe8a9;color:#20264f;font:900 .62rem var(--font-body);letter-spacing:.08em;border:2px solid #9d6237;border-radius:999px;padding:7px 13px;z-index:5;white-space:nowrap;box-shadow:0 5px 16px rgba(0,0,0,.2)}.s-game_section__prompt[hidden]{display:none}.s-game_section__pad{position:absolute;left:0;right:0;bottom:13px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;z-index:6;pointer-events:none}.s-game_section__dpad,.s-game_section__acts{display:flex;gap:9px}.s-game_section__pad button{pointer-events:auto;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,232,169,.9);background:rgba(32,38,79,.72);color:#ffe8a9;font:900 1.15rem/1 var(--font-body);cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.18);touch-action:none;-webkit-tap-highlight-color:transparent}.s-game_section__pad button:active{transform:scale(.92);background:#e96b7d;color:white}.s-game_section__pad .js-btn[data-k=\"act\"]{background:rgba(233,107,125,.82);color:#fff}.s-game_section__preload{display:none!important}.s-game_section__overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(7,10,28,.72);backdrop-filter:blur(5px);padding:16px}.s-game_section__overlay[hidden]{display:none}.s-game_section__modal{width:min(440px,100%);max-height:84vh;overflow:auto;background:linear-gradient(180deg,#242b5a,#171d43);border:2px solid #ffd88b;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.48),inset 0 0 0 5px rgba(255,255,255,.025);padding:24px 19px;position:relative;color:#fff6df}.s-game_section__modal:before{content:'';position:absolute;inset:7px;border:1px solid rgba(255,216,139,.16);border-radius:17px;pointer-events:none}.s-game_section__modal h3{font:700 1.55rem var(--font-title);margin:8px 0;color:#fff6df}.s-game_section__modal p{font:500 .9rem/1.7 var(--font-body);color:#dfe4ff}.s-game_section__tag{display:inline-block;font:900 .57rem var(--font-body);letter-spacing:.17em;background:#e96b7d;color:#fff;border:1px solid #f6a9b6;border-radius:999px;padding:6px 11px}.s-game_section__big{font:700 1.22rem var(--font-title)!important;margin:12px 0;color:#ffe8a9!important}.s-game_section__count{margin-top:12px;background:rgba(255,216,139,.09);border:1px dashed #ffd88b;border-radius:14px;padding:12px;font:900 .76rem var(--font-body);color:#ffd88b}.s-game_section__close{position:absolute;top:11px;right:11px;width:36px;height:36px;border-radius:50%;border:1px solid #ffd88b;background:#141a3d;color:#ffd88b;font-weight:900;cursor:pointer;z-index:3}.s-game_section__map{margin-top:12px;border:2px solid #ffd88b;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}.s-game_section__map iframe{display:block;width:100%;height:210px;border:0}.s-game_section__pair{display:flex;gap:8px;margin-top:10px}.s-game_section__pair img{width:50%;height:130px;object-fit:cover;border-radius:14px;border:1px solid #ffd88b}.s-game_section__framephoto{width:100%;height:160px;object-fit:cover;border-radius:14px;border:1px solid #ffd88b;margin-top:12px}.s-game_section label{display:block;margin:11px 0 6px;font:900 .59rem var(--font-body);letter-spacing:.13em;color:#ffd88b}.s-game_section select,.s-game_section input,.s-game_section textarea{width:100%;box-sizing:border-box;padding:11px 13px;font:500 .9rem var(--font-body);color:#20264f;background:#fff9ec;border:1px solid #ffd88b;border-radius:12px}.s-game_section__btn{width:100%;margin-top:13px;padding:13px;font:900 .72rem var(--font-body);letter-spacing:.12em;color:#20264f;background:linear-gradient(180deg,#ffe8a9,#f4bd62);border:1px solid #fff0bc;border-radius:12px;box-shadow:0 5px 0 #9d6237;cursor:pointer}.s-game_section__note{margin-top:10px;text-align:center;font:600 .78rem var(--font-body)!important}.s-game_section__note.ok{color:#8fe0b0!important}.s-game_section__note.err{color:#ff9b9b!important}.s-game_section__list{margin:14px 0 0;padding:0;list-style:none}.s-game_section__item{margin-bottom:10px;padding:14px;background:rgba(255,249,236,.07);border:1px solid rgba(255,216,139,.4);border-radius:14px}.s-game_section__item strong{display:block;font:700 1rem var(--font-title);color:#ffe8a9}.s-game_section__item p{margin:6px 0;font-size:.85rem}.s-game_section__item time{font-size:.67rem;opacity:.62}.s-game_section__empty{padding:16px;text-align:center;font-size:.8rem;border:1px dashed rgba(255,216,139,.45);border-radius:14px;color:#cbd3ff}.s-game_section__journey{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0 0}.s-game_section__journey span{font:800 .55rem var(--font-body);letter-spacing:.08em;border:1px solid rgba(255,216,139,.35);border-radius:10px;padding:8px 5px;text-align:center;color:#ffd88b;background:rgba(255,216,139,.05)}\n",
+      "html": "<section class=\"s-game_section\"><div class=\"s-game_section__head\"><div class=\"s-game_section__eyebrow\">LOVE EXPRESS · JOURNEY TO FOREVER</div><h2>{{headline}}</h2><p>Ikuti tiga stasiun secara berurutan. Setiap checkpoint membuka bagian undangan berikutnya. Koin hati adalah bonus perjalanan.</p><div class=\"s-game_section__journey\"><span>01 · MEMPELAI</span><span>02 · WAKTU</span><span>03 · LOKASI</span></div></div><div class=\"s-game_section__stage\"><div class=\"s-game_section__frame\"><canvas class=\"js-canvas\" width=\"440\" height=\"680\" tabindex=\"0\"></canvas><div class=\"s-game_section__stats\"><span class=\"js-hearts\">♥ 0/8</span><span class=\"js-progress\">0/3 STASIUN</span><button class=\"js-music\" type=\"button\" aria-label=\"Musik\" aria-pressed=\"true\">♪</button></div><div class=\"s-game_section__prompt js-prompt\" hidden>Tekan E / ✋</div><div class=\"s-game_section__pad\"><div class=\"s-game_section__dpad\"><button class=\"js-btn\" data-k=\"l\" type=\"button\" aria-label=\"Kiri\">◀</button><button class=\"js-btn\" data-k=\"r\" type=\"button\" aria-label=\"Kanan\">▶</button></div><div class=\"s-game_section__acts\"><button class=\"js-btn\" data-k=\"jump\" type=\"button\" aria-label=\"Lompat\">⤒</button><button class=\"js-btn\" data-k=\"act\" type=\"button\" aria-label=\"Interaksi\">✋</button></div></div></div></div><div class=\"s-game_section__preload js-preload\" aria-hidden=\"true\"><img data-imgid=\"hero_idle\" data-field-img=\"hero_idle\" src=\"{{hero_idle}}\" alt=\"\"><img data-imgid=\"hero_run1\" data-field-img=\"hero_run1\" src=\"{{hero_run1}}\" alt=\"\"><img data-imgid=\"hero_run2\" data-field-img=\"hero_run2\" src=\"{{hero_run2}}\" alt=\"\"><img data-imgid=\"hero_run3\" data-field-img=\"hero_run3\" src=\"{{hero_run3}}\" alt=\"\"><img data-imgid=\"hero_run4\" data-field-img=\"hero_run4\" src=\"{{hero_run4}}\" alt=\"\"><img data-imgid=\"hero_jump\" data-field-img=\"hero_jump\" src=\"{{hero_jump}}\" alt=\"\"><img data-imgid=\"tile_ground\" data-field-img=\"tile_ground\" src=\"{{tile_ground}}\" alt=\"\"><img data-imgid=\"tile_platform\" data-field-img=\"tile_platform\" src=\"{{tile_platform}}\" alt=\"\"><img data-imgid=\"tile_float\" data-field-img=\"tile_float\" src=\"{{tile_float}}\" alt=\"\"><img data-imgid=\"flag_off\" data-field-img=\"flag_off\" src=\"{{flag_off}}\" alt=\"\"><img data-imgid=\"flag_on\" data-field-img=\"flag_on\" src=\"{{flag_on}}\" alt=\"\"><img data-imgid=\"lamp_post\" data-field-img=\"lamp_post\" src=\"{{lamp_post}}\" alt=\"\"><img data-imgid=\"coin_heart\" data-field-img=\"coin_heart\" src=\"{{coin_heart}}\" alt=\"\"><img data-imgid=\"door_finish\" data-field-img=\"door_finish\" src=\"{{door_finish}}\" alt=\"\"><img data-imgid=\"bg_hills\" data-field-img=\"bg_hills\" src=\"{{bg_hills}}\" alt=\"\"><img data-imgid=\"lantern_fly1\" data-field-img=\"lantern_fly1\" src=\"{{lantern_fly1}}\" alt=\"\"><img data-imgid=\"lantern_fly2\" data-field-img=\"lantern_fly2\" src=\"{{lantern_fly2}}\" alt=\"\"><img data-imgid=\"lantern_fly3\" data-field-img=\"lantern_fly3\" src=\"{{lantern_fly3}}\" alt=\"\"><img data-imgid=\"lantern_fly4\" data-field-img=\"lantern_fly4\" src=\"{{lantern_fly4}}\" alt=\"\"><img data-imgid=\"lantern_fly5\" data-field-img=\"lantern_fly5\" src=\"{{lantern_fly5}}\" alt=\"\"><img data-imgid=\"lantern_fly6\" data-field-img=\"lantern_fly6\" src=\"{{lantern_fly6}}\" alt=\"\"><img data-imgid=\"bird_fly1\" data-field-img=\"bird_fly1\" src=\"{{bird_fly1}}\" alt=\"\"><img data-imgid=\"bird_fly2\" data-field-img=\"bird_fly2\" src=\"{{bird_fly2}}\" alt=\"\"><img data-imgid=\"bird_fly3\" data-field-img=\"bird_fly3\" src=\"{{bird_fly3}}\" alt=\"\"><img data-imgid=\"bird_fly4\" data-field-img=\"bird_fly4\" src=\"{{bird_fly4}}\" alt=\"\"></div><audio class=\"js-bgm\" loop preload=\"none\" src=\"{{bgm_url}}\"></audio><span class=\"js-bgm-src\" hidden>{{bgm_url}}</span><div class=\"s-game_section__overlay js-overlay\" hidden><div class=\"s-game_section__modal\" role=\"dialog\" aria-modal=\"true\"><button class=\"s-game_section__close js-close\" type=\"button\" aria-label=\"Tutup\">✕</button><article class=\"js-panel\" data-panel=\"couple\"><span class=\"s-game_section__tag\">STASIUN 01 · OUR STORY</span><h3>{{headline}}</h3><p>Perjalanan ini dimulai dari dua hati yang memilih tujuan yang sama.</p><p><b data-field=\"bride_name\">{{bride_name}}</b> &amp; <b data-field=\"groom_name\">{{groom_name}}</b></p><img class=\"s-game_section__framephoto\" data-field-img=\"couple_photo\" src=\"{{couple_photo}}\" alt=\"Foto pasangan\"><div class=\"s-game_section__pair\"><img data-field-img=\"bride_photo\" src=\"{{bride_photo}}\" alt=\"{{bride_name}}\"><img data-field-img=\"groom_photo\" src=\"{{groom_photo}}\" alt=\"{{groom_name}}\"></div></article><article class=\"js-panel\" data-panel=\"datetime\" hidden><span class=\"s-game_section__tag\">STASIUN 02 · DEPARTURE TIME</span><h3>Save The Date</h3><p>Kereta menuju hari bahagia akan berangkat pada:</p><p class=\"s-game_section__big\"><span data-field=\"event_date\">{{event_date}}</span> · <span data-field=\"event_time\">{{event_time}}</span> <span data-field=\"event_timezone\">{{event_timezone}}</span></p><div class=\"s-game_section__count js-countdown\">…</div></article><article class=\"js-panel\" data-panel=\"venue\" hidden><span class=\"s-game_section__tag\">STASIUN 03 · FINAL DESTINATION</span><h3 data-field=\"venue_name\">{{venue_name}}</h3><p>Tujuan terakhir sebelum kita merayakan bersama.</p><div class=\"s-game_section__map\"><iframe data-field-map=\"venue_location\" src=\"https://www.google.com/maps?q={{venue_location}}&amp;output=embed\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\" title=\"Lokasi acara\"></iframe></div></article><article class=\"js-panel\" data-panel=\"finale\" hidden><span class=\"s-game_section__tag\">YOU'VE ARRIVED · RSVP</span><h3>Sampai di Love Express ♥</h3><p>Terima kasih sudah mengikuti perjalanan kami. Sekarang beri tahu apakah kamu akan hadir di hari bahagia kami.</p><form data-momenia-form=\"rsvp\"><label>Kehadiran</label><select name=\"status\"><option value=\"present\">Ya, saya hadir</option><option value=\"absent\">Maaf, berhalangan</option></select><label>Jumlah tamu</label><input type=\"number\" name=\"totalAttendee\" min=\"1\" value=\"1\"><button class=\"s-game_section__btn\" type=\"submit\">KIRIM KONFIRMASI ♥</button><p class=\"s-game_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-game_section__note ok\" data-momenia-when=\"success\">Terima kasih! Sampai jumpa di tujuan akhir ✨</p><p class=\"s-game_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form><h3 style=\"margin-top:22px\">Ucapan &amp; Doa</h3><form data-momenia-form=\"message\"><textarea name=\"message\" rows=\"3\" maxlength=\"500\" placeholder=\"Tulis ucapan dan doa...\" required></textarea><button class=\"s-game_section__btn\" type=\"submit\">KIRIM UCAPAN</button><p class=\"s-game_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-game_section__note ok\" data-momenia-when=\"success\">Terima kasih atas ucapannya ♥</p><p class=\"s-game_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form><ul class=\"s-game_section__list\" data-momenia-list=\"messages\"><template data-momenia-item><li class=\"s-game_section__item\"><strong data-momenia-text=\"name\"></strong><p data-momenia-text=\"message\"></p><time data-momenia-text=\"messageAt\"></time></li></template><li class=\"s-game_section__empty\" data-momenia-when=\"empty\">Belum ada ucapan.</li></ul></article></div></div></section>",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    }
+  }
+}
