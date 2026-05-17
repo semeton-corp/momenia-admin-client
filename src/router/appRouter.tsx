@@ -11,7 +11,14 @@ import Users from "@/page/users/Users";
 import { ensureAuthenticated } from "@/lib/auth";
 import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
 
-async function requireAuth() {
+async function requireAuth({ request }: { request: Request }) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+
+  if (code) {
+    throw redirect(`/auth/callback${url.search}`);
+  }
+
   const isAuthenticated = await ensureAuthenticated();
 
   if (!isAuthenticated) {
