@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useMutation } from "@tanstack/react-query"
 import { createInvitationTemplate } from "@/api/cms/invitation-templates"
 import { getInvitationTemplateCategories, type InvitationTemplateCategory } from "@/api/cms/invitation-template-categories"
-import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
+import { getInvitationTemplateTags, type InvitationTemplateTag } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
 import { ImageUploader } from "@/components/ImageUploader"
 import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
@@ -53,8 +53,8 @@ function makeBlankTemplate(): Template {
     name: "",
     theme_defaults: {
       color_primary: "#1a1a1a",
-      color_accent: "#d4af37",
-      color_background: "#ffffff",
+      color_accent: "#c9a96e",
+      color_background: "#fafaf8",
       font_title: "Playfair Display",
       font_body: "Inter",
     },
@@ -68,8 +68,8 @@ function makeBlankTemplate(): Template {
 
 const EXAMPLE_THEME = JSON.stringify({
   color_primary: "#1a1a1a",
-  color_accent: "#d4af37",
-  color_background: "#ffffff",
+  color_accent: "#c9a96e",
+  color_background: "#fafaf8",
   font_title: "Playfair Display",
   font_body: "Inter",
 }, null, 2)
@@ -651,7 +651,6 @@ export default function AddTemplate() {
   const [themeJson, setThemeJson] = useState(JSON.stringify(makeBlankTemplate().theme_defaults, null, 2))
   const [schemaJson, setSchemaJson] = useState(JSON.stringify({ fields: [] }, null, 2))
   const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState<"draft" | "active" | "inactive">("draft")
 
   const createMutation = useMutation({
     mutationFn: createInvitationTemplate,
@@ -819,7 +818,7 @@ export default function AddTemplate() {
       ...(form.price ? { price: form.price } : {}),
       ...(form.priceAfterDiscount ? { priceAfterDiscount: form.priceAfterDiscount } : {}),
       version: 1,
-      status: status as "draft" | "active" | "inactive",
+      status: "DRAFT" as const,
       template: { ...templateBody, sectionTypes },
     })
   }
@@ -1100,11 +1099,6 @@ export default function AddTemplate() {
 
         <div className="flex items-center gap-2">
           {submitError && <span className="text-xs text-destructive">{submitError}</span>}
-          <select value={status} onChange={(e) => setStatus(e.target.value as "draft" | "active" | "inactive")} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:border-muted-foreground focus:border-indigo-500 focus:outline-none transition-colors">
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
           <button onClick={handlePreviewTemplate} className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Preview

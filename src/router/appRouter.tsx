@@ -87,26 +87,6 @@ export const appRouter = createBrowserRouter([
         element: <TemplateMaker />,
         handle: { title: "Template Maker" },
       },
-      {
-        path: "edit",
-        element: <EditTemplate />,
-        handle: { title: "Edit Template" },
-      },
-      {
-        path: "report",
-        element: <TemplateReport />,
-        handle: { title: "Template Report" },
-      },
-      {
-        path: "durations",
-        element: <TemplateDurations />,
-        handle: { title: "Template Durations" },
-      },
-      {
-        path: "content-invitation-templates",
-        element: <ContentInvitationTemplates />,
-        handle: { title: "Content Invitation Templates" },
-      },
     ],
   },
   {
