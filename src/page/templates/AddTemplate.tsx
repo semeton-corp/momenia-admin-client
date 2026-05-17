@@ -34,8 +34,8 @@ function makeBlankTemplate(): Template {
     name: "",
     theme_defaults: {
       color_primary: "#1a1a1a",
-      color_accent: "#c9a96e",
-      color_background: "#fafaf8",
+      color_accent: "#d4af37",
+      color_background: "#ffffff",
       font_title: "Playfair Display",
       font_body: "Inter",
     },
@@ -49,17 +49,68 @@ function makeBlankTemplate(): Template {
 
 const EXAMPLE_THEME = JSON.stringify({
   color_primary: "#1a1a1a",
-  color_accent: "#c9a96e",
-  color_background: "#fafaf8",
+  color_accent: "#d4af37",
+  color_background: "#ffffff",
   font_title: "Playfair Display",
   font_body: "Inter",
 }, null, 2)
 
 const EXAMPLE_SCHEMA = JSON.stringify({
   fields: [
-    { key: "bride_name", label: "Nama Mempelai 1", type: "text", section: "couple", required: true, placeholder: "Siti Rahayu" },
-    { key: "groom_name", label: "Nama Mempelai 2", type: "text", section: "couple", required: true, placeholder: "Budi Santoso" },
-    { key: "event_date", label: "Tanggal Acara", type: "date", section: "event", required: true },
+    {
+      key: "headline",
+      label: "Nama Pasangan",
+      type: "text",
+      section: "hero_section",
+      required: true,
+      placeholder: "Budi & Rina",
+    },
+    {
+      key: "couple_photo",
+      label: "Foto Pasangan",
+      type: "image",
+      section: "cover_section",
+      required: false,
+      placeholder: "https://example.com/couple.jpg",
+    },
+    {
+      key: "bride_name",
+      label: "Nama Pengantin Wanita",
+      type: "text",
+      section: "couple_section",
+      required: true,
+      placeholder: "Rina Astuti",
+    },
+    {
+      key: "groom_name",
+      label: "Nama Pengantin Pria",
+      type: "text",
+      section: "couple_section",
+      required: true,
+      placeholder: "Budi Santoso",
+    },
+    {
+      key: "event_date",
+      label: "Tanggal Acara",
+      type: "date",
+      section: "details_section",
+      required: true,
+    },
+    {
+      key: "event_time",
+      label: "Waktu Acara",
+      type: "time",
+      section: "details_section",
+      required: true,
+    },
+    {
+      key: "venue_name",
+      label: "Nama Venue",
+      type: "text",
+      section: "details_section",
+      required: true,
+      placeholder: "Gedung Balai Kartini",
+    },
   ],
 }, null, 2)
 
@@ -226,11 +277,11 @@ function PriceInput({ label, value, onChange }: { label: string; value: string; 
 
 // ─── ImageUploader ────────────────────────────────────────────────────────────
 
-function ImageUploader({ label, previewUrl, uploading, onFileSelect }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void }) {
+function ImageUploader({ label, previewUrl, uploading, onFileSelect, error }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void; error?: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <div className="flex-1">
-      <label className="mb-2 block text-sm font-medium text-foreground">{label}</label>
+      <label className="mb-2 block text-sm font-medium text-foreground">{label} <span className="text-destructive">*</span></label>
       <div onClick={() => !uploading && inputRef.current?.click()} className={`relative flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-muted-foreground/50 ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}>
         {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-cover" /> : (
           <>
@@ -248,6 +299,7 @@ function ImageUploader({ label, previewUrl, uploading, onFileSelect }: { label: 
       <div className="mt-2 flex justify-center">
         <button type="button" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading} className="rounded-lg border border-border px-4 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60">{uploading ? "Uploading..." : "Upload Files"}</button>
       </div>
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) onFileSelect(file); e.target.value = "" }} />
     </div>
   )
@@ -267,7 +319,10 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
     if (el.value !== value) el.value = value
   }, [value])
 
-  const validate = (v: string) => { try { JSON.parse(v); setError(null) } catch { setError("Invalid JSON") } }
+  const validate = (v: string) => {
+    if (!v.trim()) { setError(null); return }
+    try { JSON.parse(v); setError(null) } catch (e) { setError(`Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`) }
+  }
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const v = e.target.value; lastExternalRef.current = v; onChange(v); validate(v) }
   const loadExample = () => {
     if (!example || !ref.current) return
@@ -522,6 +577,7 @@ export default function AddTemplate() {
   const [themeJson, setThemeJson] = useState(JSON.stringify(makeBlankTemplate().theme_defaults, null, 2))
   const [schemaJson, setSchemaJson] = useState(JSON.stringify({ fields: [] }, null, 2))
   const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<"draft" | "active" | "inactive">("draft")
 
   const createMutation = useMutation({
     mutationFn: createInvitationTemplate,
@@ -553,6 +609,8 @@ export default function AddTemplate() {
   const validateStep1 = (): FormErrors => {
     const next: FormErrors = {}
     if (!form.name.trim()) next.name = "Template title is required"
+    if (!uploads.mobileThumbnailKey) next.name = "Mobile thumbnail is required"
+    if (!uploads.desktopThumbnailKey) next.name = "Desktop thumbnail is required"
     if (!category.name.trim()) next.category = "Category is required"
     if (tags.length === 0) next.tags = "At least one tag is required"
     return next
@@ -619,7 +677,7 @@ export default function AddTemplate() {
       ...(form.price ? { price: form.price } : {}),
       ...(form.priceAfterDiscount ? { priceAfterDiscount: form.priceAfterDiscount } : {}),
       version: 1,
-      status: "DRAFT" as const,
+      status: status as "draft" | "active" | "inactive",
       template: { ...templateBody, sectionTypes },
     })
   }
@@ -661,8 +719,8 @@ export default function AddTemplate() {
           </div>
 
           <div className="flex gap-6">
-            <ImageUploader label="Mobile Thumbnail" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} />
-            <ImageUploader label="Desktop Thumbnail" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} />
+            <ImageUploader label="Mobile Thumbnail" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.name && !uploads.mobileThumbnailKey ? "Mobile thumbnail is required" : undefined} />
+            <ImageUploader label="Desktop Thumbnail" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.name && !uploads.desktopThumbnailKey ? "Desktop thumbnail is required" : undefined} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -715,6 +773,11 @@ export default function AddTemplate() {
 
         <div className="flex items-center gap-2">
           {submitError && <span className="text-xs text-destructive">{submitError}</span>}
+          <select value={status} onChange={(e) => setStatus(e.target.value as "draft" | "active" | "inactive")} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:border-muted-foreground focus:border-indigo-500 focus:outline-none transition-colors">
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
           <button onClick={handlePreviewTemplate} className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Preview

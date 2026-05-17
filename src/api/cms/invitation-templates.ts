@@ -45,7 +45,7 @@ export type CreateInvitationTemplatePayload = {
   version?: number
   price?: string
   priceAfterDiscount?: string
-  status?: InvitationTemplateStatus
+  status?: "draft" | "active" | "inactive"
   template?: TemplateBody
 }
 
@@ -53,8 +53,13 @@ export type CreateInvitationTemplateResponse = {
   id: string
 }
 
+export type GetInvitationTemplatesResponse = {
+  data: InvitationTemplate[]
+  nextCursor: string
+}
+
 export function getInvitationTemplates(params?: GetInvitationTemplatesParams) {
-  return apiClient.get<InvitationTemplate[]>("/api/v1/cms/invitation-templates", { params })
+  return apiClient.get<GetInvitationTemplatesResponse>("/api/v1/cms/invitation-templates", { params })
 }
 
 export function createInvitationTemplate(payload: CreateInvitationTemplatePayload) {

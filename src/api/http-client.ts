@@ -3,7 +3,7 @@ import { clearAuthTokens, getAccessToken, refreshAccessToken } from "@/lib/auth"
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
-type QueryParams = Record<string, string | number | boolean | null | undefined>;
+type QueryParams = Record<string, string | number | boolean | null | undefined | (string | number)[]>;
 
 type ApiRequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
@@ -29,7 +29,11 @@ function buildUrl(path: string, params?: QueryParams) {
 
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      url.searchParams.set(key, String(value));
+      if (Array.isArray(value)) {
+        value.forEach((v) => url.searchParams.append(key, String(v)));
+      } else {
+        url.searchParams.set(key, String(value));
+      }
     }
   });
 
