@@ -26,6 +26,7 @@ export type InvitationTemplate = {
   priceAfterDiscount?: string
   descriptionEn?: string
   descriptionIdn?: string
+  version?: number
   createdAt?: string
   updatedAt?: string
   template?: TemplateBody
@@ -81,4 +82,8 @@ export function getInvitationTemplateDetail(id: string) {
 
 export function createInvitationTemplate(payload: CreateInvitationTemplatePayload) {
   return apiClient.post<CreateInvitationTemplateResponse>("/api/v1/invitation-templates", payload)
+}
+
+export function updateInvitationTemplate(id: string, payload: CreateInvitationTemplatePayload) {
+  return apiClient.put<CreateInvitationTemplateResponse>(`/api/v1/invitation-templates/${id}`, payload)
 }
