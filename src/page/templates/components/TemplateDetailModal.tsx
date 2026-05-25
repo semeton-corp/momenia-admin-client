@@ -4,6 +4,7 @@ import * as React from "react"
 import { type InvitationTemplate } from "@/api/cms/invitation-templates"
 import { Heart, Star, Smartphone, Monitor, Eye, X, ArrowLeft, ChevronDown, ChevronRight, Info } from "lucide-react"
 import { createPortal } from "react-dom"
+import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 
 export type TemplateDetail = InvitationTemplate & {
@@ -39,6 +40,7 @@ function getCategoryName(category: TemplateDetail["category"]): string {
 }
 
 export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
+  const navigate = useNavigate()
   const [view, setView] = React.useState<"mobile" | "desktop">("mobile")
   const [step, setStep] = React.useState<"detail" | "addons">("detail")
   const [isFavourite, setIsFavourite] = React.useState(false)
@@ -301,7 +303,10 @@ export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
                   <button className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors">
                     Activate Template
                   </button>
-                  <button className="flex-1 h-14 rounded-2xl bg-white border border-zinc-200 px-4 text-base font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors">
+                  <button
+                    className="flex-1 h-14 rounded-2xl bg-white border border-zinc-200 px-4 text-base font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors"
+                    onClick={() => navigate(`/templates/edit?id=${template.id}`)}
+                  >
                     Edit Template
                   </button>
                   <button className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors">
