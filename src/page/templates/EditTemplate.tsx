@@ -1,15 +1,13 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getInvitationTemplateDetail, updateInvitationTemplate } from "@/api/cms/invitation-templates"
-import { queryKeys } from "@/api/query-keys"
+import { useQuery } from "@tanstack/react-query"
+import { getInvitationTemplateDetail } from "@/api/cms/invitation-templates"
 import { getInvitationTemplateCategories, type InvitationTemplateCategory } from "@/api/cms/invitation-template-categories"
 import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
-import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
+import { renderInvitation } from "@/lib/template/renderer"
 import { createDefaultInvitation } from "@/lib/template/mock-data"
-import { useDebouncedValue } from "@/hooks/use-debounced-value"
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -137,7 +135,7 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
 function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onChange: (v: SelectedItem[]) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown } = useCombobox(getInvitationTemplateTags, 300)
+  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown } = useCombobox(getInvitationTemplateTags)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -151,13 +149,7 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
   }
   const removeTag = (name: string) => onChange(value.filter((t) => t.name !== name))
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) {
-      e.preventDefault()
-      if (loading) return
-      const trimmed = inputText.trim()
-      const match = suggestions.find((t) => t.name.toLowerCase() === trimmed.toLowerCase())
-      addTag(match ? { id: match.id, name: match.name } : { id: null, name: trimmed })
-    }
+    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }
     if (e.key === "Backspace" && !inputText && value.length > 0) removeTag(value[value.length - 1].name)
   }
 
@@ -301,7 +293,7 @@ function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectio
 
 // ─── FileTree ─────────────────────────────────────────────────────────────────
 
-function FileTree({ template, sectionTypes: _sectionTypes, selection, onSelect, onAddSectionType, onAddSectionToPage, onRemoveSectionFromPage, onReorderSection, onDeleteSectionType: _onDeleteSectionType, onAddPage, onDeletePage }: {
+function FileTree({ template, sectionTypes, selection, onSelect, onAddSectionType, onAddSectionToPage, onRemoveSectionFromPage, onReorderSection, onDeleteSectionType, onAddPage, onDeletePage }: {
   template: Template; sectionTypes: Record<string, SectionTypeDef>; selection: Selection
   onSelect: (s: Selection) => void; onAddSectionType: (id: string) => void; onAddSectionToPage: (pageId: string, sectionTypeId: string) => void
   onRemoveSectionFromPage: (pageId: string, sectionId: string) => void; onReorderSection: (pageId: string, fromIdx: number, toIdx: number) => void
@@ -404,15 +396,12 @@ function FileTree({ template, sectionTypes: _sectionTypes, selection, onSelect, 
 
 // ─── PreviewWithPageControl ───────────────────────────────────────────────────
 
-function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: string }) {
+function PreviewWithPageControl({ html, page }: { html: string; page: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(812)
   const isLoadedRef = useRef(false)
   const pageRef = useRef(page)
   pageRef.current = page
-
-  // Reloading the iframe on every keystroke freezes the editor on large pastes.
-  const html = useDebouncedValue(liveHtml, 500)
 
   useEffect(() => {
     const handler = (e: MessageEvent) => { if (e.data?.type === "memoriaResize" && typeof e.data.height === "number") setHeight(e.data.height) }
@@ -457,7 +446,6 @@ type FormErrors = Partial<Record<keyof FormState | "category" | "tags", string>>
 
 export default function EditTemplate() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const id = searchParams.get("id") ?? ""
 
@@ -480,7 +468,6 @@ export default function EditTemplate() {
   const [submitError, setSubmitError] = useState("")
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<"draft" | "active" | "inactive">("draft")
-  const [version, setVersion] = useState<number | undefined>(undefined)
 
   const [template, setTemplate] = useState<Template>(makeBlankTemplate)
   const [sectionTypes, setSectionTypes] = useState<Record<string, SectionTypeDef>>({})
@@ -512,15 +499,10 @@ export default function EditTemplate() {
       setTags(detail.tags.map((t) => ({ id: t.id, name: t.name })))
     }
 
-    const toKey = (url: string | null | undefined) => {
-      if (!url) return ""
-      const match = url.match(/invitation-template\/.+/)
-      return match ? match[0] : url
-    }
     setUploads({
-      mobileThumbnailKey: toKey(detail.mobileThumbnail),
+      mobileThumbnailKey: detail.mobileThumbnail ?? "",
       mobileThumbnailPreview: detail.mobileThumbnail ?? "",
-      desktopThumbnailKey: toKey(detail.desktopThumbnail),
+      desktopThumbnailKey: detail.desktopThumbnail ?? "",
       desktopThumbnailPreview: detail.desktopThumbnail ?? "",
     })
 
@@ -528,8 +510,6 @@ export default function EditTemplate() {
     if (rawStatus === "PUBLISHED") setStatus("active")
     else if (rawStatus === "DRAFT") setStatus("draft")
     else if (rawStatus) setStatus(rawStatus as "draft" | "active" | "inactive")
-
-    if (detail.version !== undefined) setVersion(detail.version)
 
     if (detail.template) {
       const t = detail.template
@@ -589,13 +569,7 @@ export default function EditTemplate() {
     return { ...createDefaultInvitation(), theme: parsedTheme, sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [] }
   }, [template, themeJson])
 
-  const previewHtml = useMemo(() => {
-    try {
-      return renderInvitation(template, previewInvitation, sectionTypes)
-    } catch (e) {
-      return renderPreviewError(e)
-    }
-  }, [template, previewInvitation, sectionTypes])
+  const previewHtml = useMemo(() => renderInvitation(template, previewInvitation, sectionTypes), [template, previewInvitation, sectionTypes])
 
   const handleThemeJson = useCallback((v: string) => { setThemeJson(v); try { setTemplate((t) => ({ ...t, theme_defaults: JSON.parse(v) })) } catch { /* noop */ } }, [])
   const handleSchemaJson = useCallback((v: string) => { setSchemaJson(v); try { setTemplate((t) => ({ ...t, schema: JSON.parse(v) })) } catch { /* noop */ } }, [])
@@ -617,44 +591,12 @@ export default function EditTemplate() {
   }, [])
   const handleTabChange = useCallback((tab: CodeTab) => { setSelection((s) => s?.kind === "section" ? { ...s, tab } : s) }, [])
 
-  const handleSaveTemplate = async () => {
+  const handleSaveTemplate = () => {
     setSaving(true)
     setSubmitError("")
-    try {
-      let parsedSchema = template.schema
-      try { parsedSchema = JSON.parse(schemaJson) } catch { /* keep current */ }
-      let parsedTheme = template.theme_defaults
-      try { parsedTheme = JSON.parse(themeJson) } catch { /* keep current */ }
-
-      const payload = {
-        name: form.name.trim(),
-        descriptionEn: form.descriptionEn || undefined,
-        descriptionIdn: form.descriptionIdn || undefined,
-        mobileThumbnail: uploads.mobileThumbnailKey || undefined,
-        desktopThumbnail: uploads.desktopThumbnailKey || undefined,
-        ...(category.id !== null ? { categoryId: category.id } : { newCategory: category.name || undefined }),
-        tagIds: tags.filter((t) => t.id !== null).map((t) => t.id as number),
-        newTags: tags.filter((t) => t.id === null).map((t) => t.name),
-        price: form.price || undefined,
-        priceAfterDiscount: form.priceAfterDiscount || undefined,
-        status,
-        version,
-        template: {
-          theme_defaults: parsedTheme,
-          pages: template.pages,
-          schema: parsedSchema,
-          sectionTypes,
-        },
-      }
-
-      await updateInvitationTemplate(id, payload)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.invitationTemplates.all })
-      navigate("/templates")
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to update template. Please try again.")
-    } finally {
-      setSaving(false)
-    }
+    // TODO: call update API here
+    console.log("Update payload ready — wire up update API call")
+    setSaving(false)
   }
 
   const handlePreviewTemplate = () => {
