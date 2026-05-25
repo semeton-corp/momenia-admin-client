@@ -31,6 +31,8 @@ export default function Templates() {
     queryKey: ["invitationTemplate", selectedTemplateId],
     queryFn: () => getInvitationTemplateDetail(selectedTemplateId!),
     enabled: !!selectedTemplateId,
+    staleTime: 0,
+    gcTime: 0,
   })
 
   const templates = response?.data ?? []
