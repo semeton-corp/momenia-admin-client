@@ -1,8 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getInvitationTemplateDetail, updateInvitationTemplate } from "@/api/cms/invitation-templates"
-import { queryKeys } from "@/api/query-keys"
+import { useQuery } from "@tanstack/react-query"
+import { getInvitationTemplateDetail } from "@/api/cms/invitation-templates"
 import { getInvitationTemplateCategories, type InvitationTemplateCategory } from "@/api/cms/invitation-template-categories"
 import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
@@ -341,7 +340,7 @@ function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectio
 
 // ─── FileTree ─────────────────────────────────────────────────────────────────
 
-function FileTree({ template, sectionTypes: _sectionTypes, selection, onSelect, onAddSectionType, onAddSectionToPage, onRemoveSectionFromPage, onReorderSection, onDeleteSectionType: _onDeleteSectionType, onAddPage, onDeletePage }: {
+function FileTree({ template, sectionTypes, selection, onSelect, onAddSectionType, onAddSectionToPage, onRemoveSectionFromPage, onReorderSection, onDeleteSectionType, onAddPage, onDeletePage }: {
   template: Template; sectionTypes: Record<string, SectionTypeDef>; selection: Selection
   onSelect: (s: Selection) => void; onAddSectionType: (id: string) => void; onAddSectionToPage: (pageId: string, sectionTypeId: string) => void
   onRemoveSectionFromPage: (pageId: string, sectionId: string) => void; onReorderSection: (pageId: string, fromIdx: number, toIdx: number) => void
@@ -500,7 +499,6 @@ type FormErrors = Partial<Record<keyof FormState | "category" | "tags" | "mobile
 
 export default function EditTemplate() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const id = searchParams.get("id") ?? ""
 
@@ -523,7 +521,6 @@ export default function EditTemplate() {
   const [submitError, setSubmitError] = useState("")
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<"draft" | "active" | "inactive">("draft")
-  const [version, setVersion] = useState<number | undefined>(undefined)
 
   const [template, setTemplate] = useState<Template>(makeBlankTemplate)
   const [sectionTypes, setSectionTypes] = useState<Record<string, SectionTypeDef>>({})
@@ -555,15 +552,10 @@ export default function EditTemplate() {
       setTags(detail.tags.map((t) => ({ id: t.id, name: t.name })))
     }
 
-    const toKey = (url: string | null | undefined) => {
-      if (!url) return ""
-      const match = url.match(/invitation-template\/.+/)
-      return match ? match[0] : url
-    }
     setUploads({
-      mobileThumbnailKey: toKey(detail.mobileThumbnail),
+      mobileThumbnailKey: detail.mobileThumbnail ?? "",
       mobileThumbnailPreview: detail.mobileThumbnail ?? "",
-      desktopThumbnailKey: toKey(detail.desktopThumbnail),
+      desktopThumbnailKey: detail.desktopThumbnail ?? "",
       desktopThumbnailPreview: detail.desktopThumbnail ?? "",
     })
 
@@ -571,8 +563,6 @@ export default function EditTemplate() {
     if (rawStatus === "PUBLISHED") setStatus("active")
     else if (rawStatus === "DRAFT") setStatus("draft")
     else if (rawStatus) setStatus(rawStatus as "draft" | "active" | "inactive")
-
-    if (detail.version !== undefined) setVersion(detail.version)
 
     if (detail.template) {
       const t = detail.template
@@ -723,41 +713,9 @@ export default function EditTemplate() {
     if (jsonIssue) { setSubmitError(`Fix ${jsonIssue.pane} before saving — ${jsonIssue.message}`); return }
     setSaving(true)
     setSubmitError("")
-    try {
-      let parsedSchema = template.schema
-      try { parsedSchema = JSON.parse(schemaJson) } catch { /* keep current */ }
-      let parsedTheme = template.theme_defaults
-      try { parsedTheme = JSON.parse(themeJson) } catch { /* keep current */ }
-
-      const payload = {
-        name: form.name.trim(),
-        descriptionEn: form.descriptionEn || undefined,
-        descriptionIdn: form.descriptionIdn || undefined,
-        mobileThumbnail: uploads.mobileThumbnailKey || undefined,
-        desktopThumbnail: uploads.desktopThumbnailKey || undefined,
-        ...(category.id !== null ? { categoryId: category.id } : { newCategory: category.name || undefined }),
-        tagIds: tags.filter((t) => t.id !== null).map((t) => t.id as number),
-        newTags: tags.filter((t) => t.id === null).map((t) => t.name),
-        price: form.price || undefined,
-        priceAfterDiscount: form.priceAfterDiscount || undefined,
-        status,
-        version,
-        template: {
-          theme_defaults: parsedTheme,
-          pages: template.pages,
-          schema: parsedSchema,
-          sectionTypes,
-        },
-      }
-
-      await updateInvitationTemplate(id, payload)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.invitationTemplates.all })
-      navigate("/templates")
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to update template. Please try again.")
-    } finally {
-      setSaving(false)
-    }
+    // TODO: call update API here
+    console.log("Update payload ready — wire up update API call")
+    setSaving(false)
   }
 
   const handlePreviewTemplate = () => {
