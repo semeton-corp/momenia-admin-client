@@ -11,6 +11,7 @@ import Users from "@/page/users/Users";
 import Templates from "@/page/templates/Templates";
 import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate";
+import TemplateReport from "@/page/templates/TemplateReport";
 import { ensureAuthenticated } from "@/lib/auth";
 import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
 
@@ -59,6 +60,11 @@ export const appRouter = createBrowserRouter([
         path: "maker",
         element: <TemplateMaker />,
         handle: { title: "Template Maker" },
+      },
+      {
+        path: "report",
+        element: <TemplateReport />,
+        handle: { title: "Template Report" },
       },
     ],
   },

@@ -33,8 +33,11 @@ export const sidebarItems = {
     },
     {
       title: "Templates",
-      url: "/templates",
       icon: AppWindow,
+      items: [
+        { title: "Template List", url: "/templates" },
+        { title: "Report", url: "/templates/report" },
+      ],
     },
     {
       title: "Users",

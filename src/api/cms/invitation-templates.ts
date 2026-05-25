@@ -3,13 +3,24 @@ import type { Template, SectionTypeDef } from "@/lib/template/types"
 
 export type InvitationTemplateStatus = "PUBLISHED" | "DRAFT"
 
+export type InvitationTemplateCategory = {
+  id: number
+  name: string
+}
+
+export type InvitationTemplateTag = {
+  id: number
+  name: string
+}
+
 export type InvitationTemplate = {
   id: string
   name: string
   mobileThumbnail: string | null
   desktopThumbnail?: string | null
   status?: InvitationTemplateStatus
-  category?: string
+  category?: string | InvitationTemplateCategory
+  tags?: InvitationTemplateTag[]
   categoryId?: number
   price?: string
   priceAfterDiscount?: string
@@ -17,6 +28,7 @@ export type InvitationTemplate = {
   descriptionIdn?: string
   createdAt?: string
   updatedAt?: string
+  template?: TemplateBody
 }
 
 export type GetInvitationTemplatesParams = {
@@ -60,6 +72,10 @@ export type GetInvitationTemplatesResponse = {
 
 export function getInvitationTemplates(params?: GetInvitationTemplatesParams) {
   return apiClient.get<GetInvitationTemplatesResponse>("/api/v1/cms/invitation-templates", { params })
+}
+
+export function getInvitationTemplateDetail(id: string) {
+  return apiClient.get<InvitationTemplate>(`/api/v1/cms/invitation-templates/${id}`)
 }
 
 export function createInvitationTemplate(payload: CreateInvitationTemplatePayload) {

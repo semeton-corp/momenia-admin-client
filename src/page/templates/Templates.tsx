@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { getInvitationTemplates, type InvitationTemplate } from "@/api/cms/invitation-templates"
+import { getInvitationTemplates, getInvitationTemplateDetail, type InvitationTemplate } from "@/api/cms/invitation-templates"
 import { queryKeys } from "@/api/query-keys"
-import { TemplatesHeader, TemplatesFilters, TemplateCard } from "./components"
+import { TemplatesHeader, TemplatesFilters, TemplateCard, TemplateDetailModal } from "./components"
 
 export default function Templates() {
   const navigate = useNavigate()
@@ -12,6 +12,7 @@ export default function Templates() {
   const [sortField, setSortField] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [selectedStatuses, setSelectedStatuses] = useState<("draft" | "active" | "inactive")[]>(["draft", "active"])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
 
   const queryParams = {
     keyword: keyword || undefined,
@@ -26,10 +27,17 @@ export default function Templates() {
     queryFn: () => getInvitationTemplates(queryParams),
   })
 
+  const { data: selectedTemplate, isLoading: isLoadingTemplate } = useQuery({
+    queryKey: ["invitationTemplate", selectedTemplateId],
+    queryFn: () => getInvitationTemplateDetail(selectedTemplateId!),
+    enabled: !!selectedTemplateId,
+  })
+
   const templates = response?.data ?? []
 
   const handleCardClick = (template: InvitationTemplate) => {
-    navigate(`/templates/maker?id=${template.id}`)
+    console.log("Card clicked, fetching details for:", template.id)
+    setSelectedTemplateId(template.id)
   }
 
   return (
@@ -105,6 +113,12 @@ export default function Templates() {
           ))}
         </div>
       )}
+
+      <TemplateDetailModal
+        template={selectedTemplate ?? null}
+        onClose={() => setSelectedTemplateId(null)}
+        isLoading={isLoadingTemplate}
+      />
     </div>
   )
 }
