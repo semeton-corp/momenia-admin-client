@@ -38,6 +38,7 @@ export type GetInvitationTemplatesParams = {
   categoryId?: string
   cursor?: string
   keyword?: string
+  statuses?: string[]
 }
 
 export type TemplateBody = Omit<Template, "id" | "name"> & {
