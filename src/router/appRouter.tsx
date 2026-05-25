@@ -87,6 +87,11 @@ export const appRouter = createBrowserRouter([
         element: <TemplateMaker />,
         handle: { title: "Template Maker" },
       },
+      {
+        path: "report",
+        element: <TemplateReport />,
+        handle: { title: "Template Report" },
+      },
     ],
   },
   {

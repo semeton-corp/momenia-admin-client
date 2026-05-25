@@ -21,13 +21,11 @@ export const sidebarItems = {
       ],
     },
     {
-      title: "Templates Management",
+      title: "Templates",
       icon: AppWindow,
       items: [
-        { title: "Overview", url: "/templates/report" },
-        { title: "Templates", url: "/templates" },
-        { title: "Durations", url: "/templates/durations" },
-        { title: "Content Invitation Templates", url: "/templates/content-invitation-templates" },
+        { title: "Template List", url: "/templates" },
+        { title: "Report", url: "/templates/report" },
       ],
     },
     {
