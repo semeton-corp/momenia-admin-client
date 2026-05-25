@@ -96,15 +96,15 @@ export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
           )}
 
           {!isLoading && template && step === "detail" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 overflow-hidden rounded-4xl h-full gap-0">
+            <div className="grid grid-cols-[2fr_3fr] overflow-hidden rounded-4xl h-full gap-0">
               {/* ── Left: Preview ── */}
-              <div className="flex h-full flex-col items-center gap-4 bg-white p-6 border-r border-zinc-100">
+              <div className="flex h-full flex-col items-center gap-4 bg-zinc-50 p-5 border-r border-zinc-100">
                 {/* Phone / Desktop preview */}
                 <div className="flex flex-1 w-full items-center justify-center">
                   {view === "mobile" ? (
                     <div
                       className="relative mx-auto"
-                      style={{ width: "220px", aspectRatio: "270 / 526" }}
+                      style={{ width: "250px", aspectRatio: "270 / 526" }}
                     >
                       <div
                         className="absolute overflow-hidden"
@@ -297,12 +297,17 @@ export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
                 )}
 
                 {/* CTA */}
-                <button
-                  className="h-15 w-full shrink-0 rounded-xl bg-indigo-600 px-4 py-3 text-base font-semibold text-white hover:bg-indigo-700 transition-colors"
-                  onClick={() => setStep("addons")}
-                >
-                  See add ons and Payment
-                </button>
+                <div className="flex gap-3 shrink-0">
+                  <button className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors">
+                    Activate Template
+                  </button>
+                  <button className="flex-1 h-14 rounded-2xl bg-white border border-zinc-200 px-4 text-base font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors">
+                    Edit Template
+                  </button>
+                  <button className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors">
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           )}
