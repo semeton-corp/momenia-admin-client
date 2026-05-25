@@ -25,7 +25,9 @@ export function TemplateCard({ template, onClick }: { template: InvitationTempla
       <div className="text-center space-y-0.5 pb-1">
         <p className="font-semibold text-sm text-foreground truncate">{template.name}</p>
         {template.category && (
-          <p className="text-xs text-muted-foreground">{template.category}</p>
+          <p className="text-xs text-muted-foreground">
+            {typeof template.category === "string" ? template.category : template.category.name}
+          </p>
         )}
         {formattedDate && (
           <p className="text-[10px] text-muted-foreground">Last modified {formattedDate}</p>

@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { type InvitationTemplate, updateInvitationTemplate } from "@/api/cms/invitation-templates"
+import { type InvitationTemplate } from "@/api/cms/invitation-templates"
 import { Heart, Star, Smartphone, Monitor, Eye, X, ArrowLeft, ChevronDown, ChevronRight, Info } from "lucide-react"
 import { createPortal } from "react-dom"
-import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 
 export type TemplateDetail = InvitationTemplate & {
@@ -14,11 +13,9 @@ export type TemplateDetail = InvitationTemplate & {
 }
 
 type Props = {
-  open: boolean
   template: TemplateDetail | null
   onClose: () => void
   isLoading?: boolean
-  onStatusChange?: () => void
 }
 
 const FEATURE_ADDONS = [
@@ -41,13 +38,11 @@ function getCategoryName(category: TemplateDetail["category"]): string {
   return category.name
 }
 
-export function TemplateDetailModal({ open, template, onClose, isLoading, onStatusChange }: Props) {
-  const navigate = useNavigate()
+export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
   const [view, setView] = React.useState<"mobile" | "desktop">("mobile")
-  const [statusUpdating, setStatusUpdating] = React.useState(false)
   const [step, setStep] = React.useState<"detail" | "addons">("detail")
   const [isFavourite, setIsFavourite] = React.useState(false)
-  const [_selectedFeatures, setSelectedFeatures] = React.useState<Set<string>>(new Set())
+  const [selectedFeatures, setSelectedFeatures] = React.useState<Set<string>>(new Set())
   const [selectedDuration, setSelectedDuration] = React.useState("basic2week")
   const [expandedAddon, setExpandedAddon] = React.useState<string | null>(null)
 
@@ -60,7 +55,7 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
     setExpandedAddon(null)
   }, [template?.id])
 
-  if (!open) return null
+  if (!template && !isLoading) return null
 
   const toggleFeature = (key: string) => {
     setSelectedFeatures((prev) => {
@@ -81,18 +76,18 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
-        <div className="relative pointer-events-auto w-full max-w-4xl rounded-4xl bg-white p-5 shadow-2xl focus:outline-none max-h-[85vh] min-h-105 overflow-hidden flex flex-col">
+        <div className="pointer-events-auto w-full max-w-4xl rounded-4xl bg-white p-5 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 max-h-[85vh] overflow-hidden flex flex-col">
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 z-20 flex items-center justify-center rounded-full w-9 h-9 bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
+            className="absolute right-5 top-5 z-10 rounded-full p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
 
-          {(isLoading || !template) && (
-            <div className="flex flex-1 items-center justify-center">
+          {isLoading && (
+            <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
                 <p className="text-zinc-600">Loading template details...</p>
@@ -101,15 +96,15 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
           )}
 
           {!isLoading && template && step === "detail" && (
-            <div className="grid grid-cols-[2fr_3fr] overflow-hidden rounded-4xl h-full gap-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 overflow-hidden rounded-4xl h-full gap-0">
               {/* ── Left: Preview ── */}
-              <div className="flex h-full flex-col items-center gap-4 bg-zinc-50 p-5 border-r border-zinc-100">
+              <div className="flex h-full flex-col items-center gap-4 bg-white p-6 border-r border-zinc-100">
                 {/* Phone / Desktop preview */}
                 <div className="flex flex-1 w-full items-center justify-center">
                   {view === "mobile" ? (
                     <div
                       className="relative mx-auto"
-                      style={{ width: "250px", aspectRatio: "270 / 526" }}
+                      style={{ width: "220px", aspectRatio: "270 / 526" }}
                     >
                       <div
                         className="absolute overflow-hidden"
@@ -302,85 +297,12 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
                 )}
 
                 {/* CTA */}
-                {(() => {
-                  const status = template.status?.toLowerCase()
-                  const handleStatus = async (next: "draft" | "active" | "inactive") => {
-                    setStatusUpdating(true)
-                    try {
-                      const cat = template.category
-                      await updateInvitationTemplate(template.id, {
-                        name: template.name,
-                        descriptionEn: template.descriptionEn,
-                        descriptionIdn: template.descriptionIdn,
-                        mobileThumbnail: (() => { const u = template.mobileThumbnail; if (!u) return undefined; const m = u.match(/invitation-template\/.+/); return m ? m[0] : u })(),
-                        desktopThumbnail: (() => { const u = template.desktopThumbnail; if (!u) return undefined; const m = u.match(/invitation-template\/.+/); return m ? m[0] : u })(),
-                        ...(cat ? (typeof cat === "string" ? { newCategory: cat } : { categoryId: cat.id }) : {}),
-                        tagIds: template.tags?.filter((t) => t.id !== null).map((t) => t.id) ?? [],
-                        price: template.price,
-                        priceAfterDiscount: template.priceAfterDiscount,
-                        version: template.version,
-                        template: template.template,
-                        status: next,
-                      })
-                      onStatusChange?.()
-                    } finally {
-                      setStatusUpdating(false)
-                    }
-                  }
-                  const editBtn = (
-                    <button
-                      className="flex-1 h-14 rounded-2xl bg-white border border-zinc-200 px-4 text-base font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors disabled:opacity-60"
-                      onClick={() => navigate(`/templates/edit?id=${template.id}`)}
-                      disabled={statusUpdating}
-                    >
-                      Edit Template
-                    </button>
-                  )
-                  if (status === "active") return (
-                    <div className="flex gap-3 shrink-0">
-                      {editBtn}
-                      <button
-                        className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
-                        onClick={() => handleStatus("inactive")}
-                        disabled={statusUpdating}
-                      >
-                        {statusUpdating ? "Updating..." : "Inactivate Template"}
-                      </button>
-                    </div>
-                  )
-                  if (status === "inactive") return (
-                    <div className="flex gap-3 shrink-0">
-                      <button
-                        className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
-                        onClick={() => handleStatus("active")}
-                        disabled={statusUpdating}
-                      >
-                        {statusUpdating ? "Updating..." : "Activate Template"}
-                      </button>
-                      {editBtn}
-                    </div>
-                  )
-                  // draft
-                  return (
-                    <div className="flex gap-3 shrink-0">
-                      <button
-                        className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
-                        onClick={() => handleStatus("active")}
-                        disabled={statusUpdating}
-                      >
-                        {statusUpdating ? "Updating..." : "Activate Template"}
-                      </button>
-                      {editBtn}
-                      <button
-                        className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
-                        onClick={() => handleStatus("inactive")}
-                        disabled={statusUpdating}
-                      >
-                        {statusUpdating ? "Updating..." : "Delete"}
-                      </button>
-                    </div>
-                  )
-                })()}
+                <button
+                  className="h-15 w-full shrink-0 rounded-xl bg-indigo-600 px-4 py-3 text-base font-semibold text-white hover:bg-indigo-700 transition-colors"
+                  onClick={() => setStep("addons")}
+                >
+                  See add ons and Payment
+                </button>
               </div>
             </div>
           )}

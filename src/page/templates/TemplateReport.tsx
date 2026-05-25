@@ -1,11 +1,11 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { getInvitationTemplates } from "@/api/cms/invitation-templates"
 import { queryKeys } from "@/api/query-keys"
-import { formatApiDate } from "@/utils/formatApiDate"
 
 export default function TemplateReport() {
-  const sortField = "createdAt"
-  const sortOrder: "asc" | "desc" = "desc"
+  const [sortField, setSortField] = useState("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   const queryParams = {
     sortField,
@@ -20,17 +20,11 @@ export default function TemplateReport() {
 
   const templates = response?.data ?? []
 
-  const getStatusLabel = (status: string | undefined) => {
-    if (status === "PUBLISHED") return "active"
-    if (status === "DRAFT") return "draft"
-    return status ?? "inactive"
-  }
-
   const stats = {
     total: templates.length,
-    draft: templates.filter((t) => getStatusLabel(t.status) === "draft").length,
-    active: templates.filter((t) => getStatusLabel(t.status) === "active").length,
-    inactive: templates.filter((t) => getStatusLabel(t.status) === "inactive").length,
+    draft: templates.filter((t) => t.status === "draft" || t.status === "DRAFT").length,
+    active: templates.filter((t) => t.status === "active" || t.status === "PUBLISHED").length,
+    inactive: templates.filter((t) => t.status === "inactive").length,
   }
 
   if (isLoading) {
@@ -99,36 +93,37 @@ export default function TemplateReport() {
             {templates.map((template) => (
               <tr key={template.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                 <td className="px-6 py-4 text-sm font-medium">{template.name}</td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {!template.category
-                    ? "—"
-                    : typeof template.category === "string"
-                    ? template.category
-                    : template.category.name}
-                </td>
+                <td className="px-6 py-4 text-sm text-muted-foreground">{template.category || "—"}</td>
                 <td className="px-6 py-4 text-sm">
-                  {(() => {
-                    const label = getStatusLabel(template.status)
-                    return (
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          label === "draft"
-                            ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                            : label === "active"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                        }`}
-                      >
-                        {label}
-                      </span>
-                    )
-                  })()}
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      template.status === "draft" || template.status === "DRAFT"
+                        ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        : template.status === "active" || template.status === "PUBLISHED"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                        : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                    }`}
+                  >
+                    {template.status === "PUBLISHED" ? "Active" : template.status}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {formatApiDate(template.createdAt)}
+                  {template.createdAt
+                    ? new Date(template.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "—"}
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {formatApiDate(template.updatedAt)}
+                  {template.updatedAt
+                    ? new Date(template.updatedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "—"}
                 </td>
               </tr>
             ))}
