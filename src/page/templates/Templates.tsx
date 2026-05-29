@@ -45,7 +45,7 @@ export default function Templates() {
 
   return (
     <div className="px-6 py-8">
-      <TemplatesHeader templates={templates} />
+      <TemplatesHeader />
 
       <TemplatesFilters
         keyword={keyword}
