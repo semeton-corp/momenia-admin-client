@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { type InvitationTemplate } from "@/api/cms/invitation-templates"
+import { type InvitationTemplate, updateInvitationTemplate } from "@/api/cms/invitation-templates"
 import { Heart, Star, Smartphone, Monitor, Eye, X, ArrowLeft, ChevronDown, ChevronRight, Info } from "lucide-react"
 import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
@@ -17,6 +17,7 @@ type Props = {
   template: TemplateDetail | null
   onClose: () => void
   isLoading?: boolean
+  onStatusChange?: () => void
 }
 
 const FEATURE_ADDONS = [
@@ -39,9 +40,10 @@ function getCategoryName(category: TemplateDetail["category"]): string {
   return category.name
 }
 
-export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
+export function TemplateDetailModal({ template, onClose, isLoading, onStatusChange }: Props) {
   const navigate = useNavigate()
   const [view, setView] = React.useState<"mobile" | "desktop">("mobile")
+  const [statusUpdating, setStatusUpdating] = React.useState(false)
   const [step, setStep] = React.useState<"detail" | "addons">("detail")
   const [isFavourite, setIsFavourite] = React.useState(false)
   const [selectedFeatures, setSelectedFeatures] = React.useState<Set<string>>(new Set())
@@ -299,20 +301,85 @@ export function TemplateDetailModal({ template, onClose, isLoading }: Props) {
                 )}
 
                 {/* CTA */}
-                <div className="flex gap-3 shrink-0">
-                  <button className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors">
-                    Activate Template
-                  </button>
-                  <button
-                    className="flex-1 h-14 rounded-2xl bg-white border border-zinc-200 px-4 text-base font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors"
-                    onClick={() => navigate(`/templates/edit?id=${template.id}`)}
-                  >
-                    Edit Template
-                  </button>
-                  <button className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors">
-                    Delete
-                  </button>
-                </div>
+                {(() => {
+                  const status = template.status?.toLowerCase()
+                  const handleStatus = async (next: "draft" | "active" | "inactive") => {
+                    setStatusUpdating(true)
+                    try {
+                      const cat = template.category
+                      await updateInvitationTemplate(template.id, {
+                        name: template.name,
+                        descriptionEn: template.descriptionEn,
+                        descriptionIdn: template.descriptionIdn,
+                        mobileThumbnail: (() => { const u = template.mobileThumbnail; if (!u) return undefined; const m = u.match(/invitation-template\/.+/); return m ? m[0] : u })(),
+                        desktopThumbnail: (() => { const u = template.desktopThumbnail; if (!u) return undefined; const m = u.match(/invitation-template\/.+/); return m ? m[0] : u })(),
+                        ...(cat ? (typeof cat === "string" ? { newCategory: cat } : { categoryId: cat.id }) : {}),
+                        tagIds: template.tags?.filter((t) => t.id !== null).map((t) => t.id) ?? [],
+                        price: template.price,
+                        priceAfterDiscount: template.priceAfterDiscount,
+                        version: template.version,
+                        template: template.template,
+                        status: next,
+                      })
+                      onStatusChange?.()
+                    } finally {
+                      setStatusUpdating(false)
+                    }
+                  }
+                  const editBtn = (
+                    <button
+                      className="flex-1 h-14 rounded-2xl bg-white border border-zinc-200 px-4 text-base font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors disabled:opacity-60"
+                      onClick={() => navigate(`/templates/edit?id=${template.id}`)}
+                      disabled={statusUpdating}
+                    >
+                      Edit Template
+                    </button>
+                  )
+                  if (status === "active") return (
+                    <div className="flex gap-3 shrink-0">
+                      {editBtn}
+                      <button
+                        className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
+                        onClick={() => handleStatus("inactive")}
+                        disabled={statusUpdating}
+                      >
+                        {statusUpdating ? "Updating..." : "Inactivate Template"}
+                      </button>
+                    </div>
+                  )
+                  if (status === "inactive") return (
+                    <div className="flex gap-3 shrink-0">
+                      <button
+                        className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                        onClick={() => handleStatus("active")}
+                        disabled={statusUpdating}
+                      >
+                        {statusUpdating ? "Updating..." : "Activate Template"}
+                      </button>
+                      {editBtn}
+                    </div>
+                  )
+                  // draft
+                  return (
+                    <div className="flex gap-3 shrink-0">
+                      <button
+                        className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                        onClick={() => handleStatus("active")}
+                        disabled={statusUpdating}
+                      >
+                        {statusUpdating ? "Updating..." : "Activate Template"}
+                      </button>
+                      {editBtn}
+                      <button
+                        className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
+                        onClick={() => handleStatus("inactive")}
+                        disabled={statusUpdating}
+                      >
+                        {statusUpdating ? "Updating..." : "Delete"}
+                      </button>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           )}
