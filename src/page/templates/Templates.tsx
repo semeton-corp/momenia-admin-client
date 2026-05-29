@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getInvitationTemplates, getInvitationTemplateDetail, type InvitationTemplate } from "@/api/cms/invitation-templates"
 import { queryKeys } from "@/api/query-keys"
 import { TemplatesHeader, TemplatesFilters, TemplateCard, TemplateDetailModal } from "./components"
 
 export default function Templates() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [keyword, setKeyword] = useState("")
   const [sortField, setSortField] = useState("createdAt")
@@ -120,6 +121,7 @@ export default function Templates() {
         template={selectedTemplate ?? null}
         onClose={() => setSelectedTemplateId(null)}
         isLoading={isLoadingTemplate}
+        onStatusChange={() => queryClient.invalidateQueries({ queryKey: queryKeys.invitationTemplates.all })}
       />
     </div>
   )

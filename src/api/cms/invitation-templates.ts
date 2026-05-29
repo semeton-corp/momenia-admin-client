@@ -87,3 +87,7 @@ export function createInvitationTemplate(payload: CreateInvitationTemplatePayloa
 export function updateInvitationTemplate(id: string, payload: CreateInvitationTemplatePayload) {
   return apiClient.put<CreateInvitationTemplateResponse>(`/api/v1/invitation-templates/${id}`, payload)
 }
+
+export function updateInvitationTemplateStatus(id: string, status: "draft" | "active" | "inactive") {
+  return apiClient.put<CreateInvitationTemplateResponse>(`/api/v1/invitation-templates/${id}`, { status })
+}
