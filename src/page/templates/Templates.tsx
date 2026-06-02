@@ -39,7 +39,6 @@ export default function Templates() {
   const templates = response?.data ?? []
 
   const handleCardClick = (template: InvitationTemplate) => {
-    console.log("Card clicked, fetching details for:", template.id)
     setSelectedTemplateId(template.id)
   }
 
@@ -57,11 +56,6 @@ export default function Templates() {
         selectedStatuses={selectedStatuses}
         setSelectedStatuses={setSelectedStatuses}
       />
-
-      {/* Debug */}
-      <div className="mb-4 p-2 bg-muted rounded text-xs text-muted-foreground">
-        Loading: {String(isLoading)} | Error: {String(isError)} | Count: {templates.length}
-      </div>
 
       {/* States */}
       {isLoading && (
@@ -118,6 +112,7 @@ export default function Templates() {
       )}
 
       <TemplateDetailModal
+        open={!!selectedTemplateId}
         template={selectedTemplate ?? null}
         onClose={() => setSelectedTemplateId(null)}
         isLoading={isLoadingTemplate}
