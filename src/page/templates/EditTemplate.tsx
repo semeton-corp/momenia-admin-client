@@ -136,7 +136,7 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
 function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onChange: (v: SelectedItem[]) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown } = useCombobox(getInvitationTemplateTags)
+  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown } = useCombobox(getInvitationTemplateTags, 300)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -150,7 +150,13 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
   }
   const removeTag = (name: string) => onChange(value.filter((t) => t.name !== name))
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }
+    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) {
+      e.preventDefault()
+      if (loading) return
+      const trimmed = inputText.trim()
+      const match = suggestions.find((t) => t.name.toLowerCase() === trimmed.toLowerCase())
+      addTag(match ? { id: match.id, name: match.name } : { id: null, name: trimmed })
+    }
     if (e.key === "Backspace" && !inputText && value.length > 0) removeTag(value[value.length - 1].name)
   }
 

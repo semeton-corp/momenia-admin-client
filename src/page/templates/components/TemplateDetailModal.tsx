@@ -14,6 +14,7 @@ export type TemplateDetail = InvitationTemplate & {
 }
 
 type Props = {
+  open: boolean
   template: TemplateDetail | null
   onClose: () => void
   isLoading?: boolean
@@ -40,7 +41,7 @@ function getCategoryName(category: TemplateDetail["category"]): string {
   return category.name
 }
 
-export function TemplateDetailModal({ template, onClose, isLoading, onStatusChange }: Props) {
+export function TemplateDetailModal({ open, template, onClose, isLoading, onStatusChange }: Props) {
   const navigate = useNavigate()
   const [view, setView] = React.useState<"mobile" | "desktop">("mobile")
   const [statusUpdating, setStatusUpdating] = React.useState(false)
@@ -59,7 +60,7 @@ export function TemplateDetailModal({ template, onClose, isLoading, onStatusChan
     setExpandedAddon(null)
   }, [template?.id])
 
-  if (!template && !isLoading) return null
+  if (!open) return null
 
   const toggleFeature = (key: string) => {
     setSelectedFeatures((prev) => {
@@ -80,18 +81,18 @@ export function TemplateDetailModal({ template, onClose, isLoading, onStatusChan
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
-        <div className="pointer-events-auto w-full max-w-4xl rounded-4xl bg-white p-5 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="relative pointer-events-auto w-full max-w-4xl rounded-4xl bg-white p-5 shadow-2xl focus:outline-none max-h-[85vh] min-h-105 overflow-hidden flex flex-col">
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute right-5 top-5 z-10 rounded-full p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+            className="absolute right-4 top-4 z-20 flex items-center justify-center rounded-full w-9 h-9 bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
 
-          {isLoading && (
-            <div className="flex items-center justify-center h-full">
+          {(isLoading || !template) && (
+            <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
                 <p className="text-zinc-600">Loading template details...</p>

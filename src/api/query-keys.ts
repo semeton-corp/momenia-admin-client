@@ -51,4 +51,8 @@ export const queryKeys = {
     all: ["invitation-template-tags"] as const,
     lists: () => [...queryKeys.invitationTemplateTags.all, "list"] as const,
   },
+  landingPageCatalogs: {
+    all: ["landing-page-catalogs"] as const,
+    lists: () => [...queryKeys.landingPageCatalogs.all, "list"] as const,
+  },
 };
