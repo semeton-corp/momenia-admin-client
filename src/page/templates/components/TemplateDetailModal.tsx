@@ -47,7 +47,7 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
   const [statusUpdating, setStatusUpdating] = React.useState(false)
   const [step, setStep] = React.useState<"detail" | "addons">("detail")
   const [isFavourite, setIsFavourite] = React.useState(false)
-  const [selectedFeatures, setSelectedFeatures] = React.useState<Set<string>>(new Set())
+  const [_selectedFeatures, setSelectedFeatures] = React.useState<Set<string>>(new Set())
   const [selectedDuration, setSelectedDuration] = React.useState("basic2week")
   const [expandedAddon, setExpandedAddon] = React.useState<string | null>(null)
 

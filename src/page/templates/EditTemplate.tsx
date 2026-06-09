@@ -300,7 +300,7 @@ function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectio
 
 // ─── FileTree ─────────────────────────────────────────────────────────────────
 
-function FileTree({ template, sectionTypes, selection, onSelect, onAddSectionType, onAddSectionToPage, onRemoveSectionFromPage, onReorderSection, onDeleteSectionType, onAddPage, onDeletePage }: {
+function FileTree({ template, sectionTypes: _sectionTypes, selection, onSelect, onAddSectionType, onAddSectionToPage, onRemoveSectionFromPage, onReorderSection, onDeleteSectionType: _onDeleteSectionType, onAddPage, onDeletePage }: {
   template: Template; sectionTypes: Record<string, SectionTypeDef>; selection: Selection
   onSelect: (s: Selection) => void; onAddSectionType: (id: string) => void; onAddSectionToPage: (pageId: string, sectionTypeId: string) => void
   onRemoveSectionFromPage: (pageId: string, sectionId: string) => void; onReorderSection: (pageId: string, fromIdx: number, toIdx: number) => void
