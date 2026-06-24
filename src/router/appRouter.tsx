@@ -97,6 +97,11 @@ export const appRouter = createBrowserRouter([
         element: <TemplateReport />,
         handle: { title: "Template Report" },
       },
+      {
+        path: "durations",
+        element: <TemplateDurations />,
+        handle: { title: "Template Durations" },
+      },
     ],
   },
   {
