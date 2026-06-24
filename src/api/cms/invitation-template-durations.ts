@@ -1,18 +1,16 @@
 import { apiClient } from "@/api/http-client"
 
-export type InvitationTemplateDurationUnit = "day" | "week" | "month" | "year"
-
 export type InvitationTemplateDuration = {
   id: string
-  duration: number
-  unit: InvitationTemplateDurationUnit
+  value: number
+  duration: "day" | "week" | "month" | "year"
   price: string
   isActive: boolean
 }
 
 export type InvitationTemplateDurationPayload = {
-  duration: number
-  unit: InvitationTemplateDurationUnit
+  value: number
+  duration: "day" | "week" | "month" | "year"
   price: string
   isActive: boolean
 }
