@@ -36,6 +36,7 @@ export const sidebarItems = {
       icon: AppWindow,
       items: [
         { title: "Template List", url: "/templates" },
+        { title: "Durations", url: "/templates/durations" },
         { title: "Report", url: "/templates/report" },
       ],
     },

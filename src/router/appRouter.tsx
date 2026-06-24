@@ -14,6 +14,7 @@ import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate"
 import EditTemplate from "@/page/templates/EditTemplate";
 import TemplateReport from "@/page/templates/TemplateReport";
+import TemplateDurations from "@/page/templates/durations/TemplateDurations";
 import { ensureAuthenticated } from "@/lib/auth";
 import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
 
@@ -72,6 +73,11 @@ export const appRouter = createBrowserRouter([
         path: "report",
         element: <TemplateReport />,
         handle: { title: "Template Report" },
+      },
+      {
+        path: "durations",
+        element: <TemplateDurations />,
+        handle: { title: "Template Durations" },
       },
     ],
   },
