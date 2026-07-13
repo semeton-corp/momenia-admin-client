@@ -54,10 +54,13 @@ async function parseResponse(response: Response) {
   return response.text();
 }
 
+const IDEMPOTENT_METHODS = new Set(["POST", "PUT", "PATCH"]);
+
 async function request<T>(path: string, options: ApiRequestOptions = {}, retried = false): Promise<T> {
   const { body, headers, params, token, ...requestOptions } = options;
   const isFormData = body instanceof FormData;
   const accessToken = token ?? getAccessToken();
+  const method = (requestOptions.method ?? "GET").toUpperCase();
 
   const response = await fetch(buildUrl(path, params), {
     ...requestOptions,
@@ -66,6 +69,7 @@ async function request<T>(path: string, options: ApiRequestOptions = {}, retried
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(IDEMPOTENT_METHODS.has(method) ? { "x-idempotency-key": crypto.randomUUID() } : {}),
       ...headers,
     },
     body: isFormData ? body : body === undefined ? undefined : JSON.stringify(body),
