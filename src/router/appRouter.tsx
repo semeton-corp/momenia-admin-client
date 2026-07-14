@@ -9,6 +9,7 @@ import Testimonials from "@/page/landing/testimonials/Testimonials";
 import Login from "@/page/login/Login";
 import Transactions from "@/page/transactions/Transactions";
 import Users from "@/page/users/Users";
+import AddAdmin from "@/page/users/AddAdmin";
 import Templates from "@/page/templates/Templates";
 import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate"
@@ -99,6 +100,11 @@ export const appRouter = createBrowserRouter([
         path: "users",
         element: <Users />,
         handle: { title: "Users" },
+      },
+      {
+        path: "users/add",
+        element: <AddAdmin />,
+        handle: { title: "Add Admin" },
       },
       {
         path: "transactions",
