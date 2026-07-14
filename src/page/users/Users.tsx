@@ -1,12 +1,20 @@
-import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
-import { Search } from "lucide-react"
-import { getCmsUsers, type CmsUser } from "@/api/cms/users"
-import { queryKeys } from "@/api/query-keys"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useDebouncedValue } from "@/hooks/use-debounced-value"
-import { formatApiDateTime } from "@/utils/formatApiDate"
+import { Link } from "react-router-dom";
+
+const Users = () => {
+  return (
+    <div>
+      <div className="flex items-center justify-between px-6 py-4">
+        <h1 className="text-sm font-semibold text-foreground">Users</h1>
+        <Link
+          to="/users/add"
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+        >
+          Add Admin
+        </Link>
+      </div>
+    </div>
+  );
+};
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 

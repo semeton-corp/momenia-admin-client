@@ -1,9 +1,8 @@
 import { apiClient } from "@/api/http-client"
 
 export type CreateAdminPayload = {
-  name: string
   email: string
-  password: string
+  provider: "google"
 }
 
 export type Admin = {
