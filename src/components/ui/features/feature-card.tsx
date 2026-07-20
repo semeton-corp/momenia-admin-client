@@ -178,7 +178,7 @@ export const FeatureCard = ({
 
 const FeatureIcon = ({ feature }: { feature: Feature }) => {
     return (
-        <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-accent text-primary">
+        <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef2ff]">
             {feature.iconPreview ?? feature.icon ? (
                 <img src={feature.iconPreview ?? feature.icon} className="size-full object-cover" />
             ) : (
