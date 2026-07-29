@@ -535,12 +535,15 @@ function FileTree({
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
-function PreviewWithPageControl({ html, page }: { html: string; page: string }) {
+function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(812)
   const isLoadedRef = useRef(false)
   const pageRef = useRef(page)
   pageRef.current = page
+
+  // Reloading the iframe on every keystroke freezes the editor on large pastes.
+  const html = useDebouncedValue(liveHtml, 500)
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
