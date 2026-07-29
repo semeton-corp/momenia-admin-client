@@ -2,8 +2,9 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { MOCK_TEMPLATE, SECTION_TYPES, createDefaultInvitation } from "@/lib/template/mock-data"
-import { renderInvitation } from "@/lib/template/renderer"
+import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
 import { getTemplate, saveTemplate } from "@/lib/template/template-store"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -484,12 +485,15 @@ function FileTree({
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
-function PreviewWithPageControl({ html, page }: { html: string; page: string }) {
+function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(812)
   const isLoadedRef = useRef(false)
   const pageRef = useRef(page)
   pageRef.current = page
+
+  // Reloading the iframe on every keystroke freezes the editor on large pastes.
+  const html = useDebouncedValue(liveHtml, 500)
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -589,10 +593,13 @@ export default function TemplateMaker() {
     return { ...createDefaultInvitation(), theme: parsedTheme, sectionOrder }
   }, [template, themeJson])
 
-  const previewHtml = useMemo(
-    () => renderInvitation(template, previewInvitation, sectionTypes),
-    [template, previewInvitation, sectionTypes]
-  )
+  const previewHtml = useMemo(() => {
+    try {
+      return renderInvitation(template, previewInvitation, sectionTypes)
+    } catch (e) {
+      return renderPreviewError(e)
+    }
+  }, [template, previewInvitation, sectionTypes])
 
   const handleThemeJson = useCallback((v: string) => {
     setThemeJson(v)

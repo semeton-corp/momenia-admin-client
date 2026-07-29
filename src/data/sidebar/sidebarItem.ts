@@ -23,7 +23,6 @@ export const sidebarItems = {
       title: "Landing page",
       icon: IconListDetails,
       items: [
-        { title: "Dashboard", url: "/landing/dashboard" },
         // { title: "Banner", url: "/landing/banner" },
         { title: "Features", url: "/landing/features" },
         { title: "Catalog Memoria", url: "/landing/catalogs" },

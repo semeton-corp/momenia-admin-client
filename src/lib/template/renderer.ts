@@ -6,27 +6,54 @@ import type {
   Theme,
 } from "./types"
 
+const FALLBACK_THEME: Theme = {
+  color_primary: "#1a1a1a",
+  color_accent: "#d4af37",
+  color_background: "#ffffff",
+  font_title: "Playfair Display",
+  font_body: "Inter",
+}
+
+/**
+ * Standalone document shown in the preview pane when rendering blows up, so a
+ * bad paste degrades to a visible message instead of crashing the editor.
+ */
+export function renderPreviewError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  const safe = message.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!)
+
+  return `<!DOCTYPE html>
+<html><body style="margin:0;padding:24px;font:13px/1.6 ui-monospace,monospace;background:#1a1a1a;color:#f87171">
+  <strong>Preview failed to render</strong>
+  <p style="margin-top:12px;color:#d4d4d4;white-space:pre-wrap">${safe}</p>
+</body></html>`
+}
+
 export function renderSection(
   sectionDef: SectionTypeDef,
   _sectionConfig: SectionConfig,
   userData: Record<string, string>,
 ): { html: string; css: string; js: string } {
-  let html = sectionDef.html
+  let html = sectionDef.html ?? ""
 
   Object.entries(userData).forEach(([key, val]) => {
     html = html.replaceAll(`{{${key}}}`, val ?? "")
   })
 
-  return { html, css: sectionDef.css, js: sectionDef.js }
+  return { html, css: sectionDef.css ?? "", js: sectionDef.js ?? "" }
 }
 
 export function buildThemeCSS(theme: Theme): string {
+  // The editor lets users paste arbitrary JSON into theme.json, so the parsed
+  // value may be null or missing keys — fall back instead of throwing.
+  const t = { ...FALLBACK_THEME, ...(theme ?? {}) }
+
   return `:root {
-    --color-primary: ${theme.color_primary};
-    --color-accent: ${theme.color_accent};
-    --color-background: ${theme.color_background};
-    --font-title: '${theme.font_title}', serif;
-    --font-body: '${theme.font_body}', sans-serif;
+    --color-primary: ${t.color_primary};
+    --color-accent: ${t.color_accent};
+    --color-background: ${t.color_background};
+    --font-title: '${t.font_title}', serif;
+    --font-body: '${t.font_body}', sans-serif;
   }`
 }
 
@@ -100,13 +127,14 @@ export function renderInvitation(
   sectionTypes: Record<string, SectionTypeDef>,
   guestName?: string
 ): string {
-  const { pages } = template
+  const pages = Array.isArray(template?.pages) ? template.pages : []
   const { theme, userData, sectionOrder } = invitation
 
   const effectiveUserData = { ...userData }
   if (guestName) effectiveUserData.guest_name = guestName
 
   const themeCSS = buildThemeCSS(theme)
+  const safeTheme = { ...FALLBACK_THEME, ...(theme ?? {}) }
   const allCSS: string[] = []
   const allJS: string[] = []
   const pageBlocks: string[] = []
@@ -114,11 +142,13 @@ export function renderInvitation(
   for (const page of pages) {
     const isMain = page.id === "main"
 
+    const pageSections = Array.isArray(page?.sections) ? page.sections : []
+
     const orderedSections = isMain
-      ? sectionOrder
-          .map((id) => page.sections.find((s) => s.id === id))
-          .filter((s): s is (typeof page.sections)[number] => Boolean(s))
-      : page.sections
+      ? (sectionOrder ?? [])
+          .map((id) => pageSections.find((s) => s.id === id))
+          .filter((s): s is (typeof pageSections)[number] => Boolean(s))
+      : pageSections
 
     const sectionsHTML: string[] = []
     for (const sectionConfig of orderedSections) {
@@ -135,8 +165,8 @@ export function renderInvitation(
     )
   }
 
-  const fontTitle = encodeURIComponent(theme.font_title)
-  const fontBody = encodeURIComponent(theme.font_body)
+  const fontTitle = encodeURIComponent(safeTheme.font_title)
+  const fontBody = encodeURIComponent(safeTheme.font_body)
 
   return `<!DOCTYPE html>
 <html lang="id">
