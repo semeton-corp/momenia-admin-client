@@ -6,8 +6,9 @@ import { getInvitationTemplateCategories, type InvitationTemplateCategory } from
 import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
-import { renderInvitation } from "@/lib/template/renderer"
+import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
 import { createDefaultInvitation } from "@/lib/template/mock-data"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -505,12 +506,15 @@ function FileTree({ template, sectionTypes, selection, onSelect, onAddSectionTyp
   )
 }
 
-function PreviewWithPageControl({ html, page }: { html: string; page: string }) {
+function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(812)
   const isLoadedRef = useRef(false)
   const pageRef = useRef(page)
   pageRef.current = page
+
+  // Reloading the iframe on every keystroke freezes the editor on large pastes.
+  const html = useDebouncedValue(liveHtml, 500)
 
   useEffect(() => {
     const handler = (e: MessageEvent) => { if (e.data?.type === "memoriaResize" && typeof e.data.height === "number") setHeight(e.data.height) }
@@ -634,7 +638,13 @@ export default function AddTemplate() {
     return { ...createDefaultInvitation(), theme: parsedTheme, sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [] }
   }, [template, themeJson])
 
-  const previewHtml = useMemo(() => renderInvitation(template, previewInvitation, sectionTypes), [template, previewInvitation, sectionTypes])
+  const previewHtml = useMemo(() => {
+    try {
+      return renderInvitation(template, previewInvitation, sectionTypes)
+    } catch (e) {
+      return renderPreviewError(e)
+    }
+  }, [template, previewInvitation, sectionTypes])
 
   const handleThemeJson = useCallback((v: string) => { setThemeJson(v); try { setTemplate((t) => ({ ...t, theme_defaults: JSON.parse(v) })) } catch { /* noop */ } }, [])
   const handleSchemaJson = useCallback((v: string) => { setSchemaJson(v); try { setTemplate((t) => ({ ...t, schema: JSON.parse(v) })) } catch { /* noop */ } }, [])

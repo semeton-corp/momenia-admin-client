@@ -14,6 +14,7 @@ export const sidebarItems = {
       title: "Landing Page Management",
       icon: IconListDetails,
       items: [
+        // { title: "Banner", url: "/landing/banner" },
         { title: "Features", url: "/landing/features" },
         { title: "Catalog Recommendations", url: "/landing/catalogs" },
         { title: "Testimonials", url: "/landing/testimonials" },
