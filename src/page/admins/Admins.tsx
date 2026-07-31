@@ -7,6 +7,7 @@ import { deleteAdmin, getAdmins, type Admin } from "@/api/admins"
 import { queryKeys } from "@/api/query-keys"
 import { ApiError } from "@/api/http-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { formatApiDateTime } from "@/utils/formatApiDate"
 
 function getInitials(admin: Admin) {
   const name = admin.name.trim()
@@ -20,27 +21,6 @@ function getInitials(admin: Admin) {
   }
 
   return admin.email.slice(0, 2).toUpperCase()
-}
-
-function formatCreatedAt(value?: string) {
-  if (!value) {
-    return "-"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return "-"
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(date)
 }
 
 export default function Admins() {
@@ -137,7 +117,7 @@ export default function Admins() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{admin.email}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatCreatedAt(admin.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatApiDateTime(admin.createdAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => setDeleteTarget(admin)}

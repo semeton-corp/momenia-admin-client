@@ -8,6 +8,7 @@ import Features from "@/page/landing/features/Features";
 import Testimonials from "@/page/landing/testimonials/Testimonials";
 import Login from "@/page/login/Login";
 import Transactions from "@/page/transactions/Transactions";
+import TransactionDetail from "@/page/transactions/TransactionDetail";
 import Admins from "@/page/admins/Admins";
 import AddAdmin from "@/page/admins/AddAdmin";
 import Users from "@/page/users/Users";
@@ -121,7 +122,12 @@ export const appRouter = createBrowserRouter([
       {
         path: "transactions",
         element: <Transactions />,
-        handle: { title: "Transactions" },
+        handle: { title: "Transaction Management" },
+      },
+      {
+        path: "transactions/:id",
+        element: <TransactionDetail />,
+        handle: { title: "Transaction Detail" },
       },
       {
         path: "landing/faq",

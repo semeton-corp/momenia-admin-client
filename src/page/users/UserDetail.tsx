@@ -6,6 +6,7 @@ import { getCmsUserDetail, type CmsUserDetail } from "@/api/cms/users"
 import { queryKeys } from "@/api/query-keys"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { formatApiDateTime } from "@/utils/formatApiDate"
 
 const TEMPLATE_HISTORY_PAGE_SIZE = 5
 
@@ -25,26 +26,6 @@ function getInitials(user?: CmsUserDetail) {
   }
 
   return "US"
-}
-
-function formatDateTime(value?: string) {
-  if (!value || value.startsWith("0001-01-01")) {
-    return "-"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return "-"
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
 }
 
 function statusClass(status: string) {
@@ -149,7 +130,7 @@ export default function UserDetail() {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Registration Date</p>
-              <p className="mt-1 text-sm text-muted-foreground">{formatDateTime(user.createdAt)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{formatApiDateTime(user.createdAt)}</p>
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Whatsapp Number</p>
@@ -188,7 +169,7 @@ export default function UserDetail() {
                     ) : templates.map((template) => (
                       <tr key={template.id} className="border-b border-border hover:bg-muted/30 transition-colors last:border-0">
                         <td className="px-4 py-3 text-sm text-foreground">{template.name || "Untitled template"}</td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">{formatDateTime(template.purchasedAt)}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{formatApiDateTime(template.purchasedAt)}</td>
                         <td className="px-4 py-3">
                           <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", statusClass(template.status))}>
                             {template.status || "unknown"}
