@@ -1,26 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 const REFRESH_PATH =
   import.meta.env.VITE_ADMIN_REFRESH_PATH ?? "/api/v1/sessions/refresh";
 
-const ACCESS_TOKEN_KEY = "memoria_admin_access_token";
-const REFRESH_TOKEN_KEY = "memoria_admin_refresh_token";
-const LEGACY_ACCESS_TOKEN_KEYS = ["accessToken", "access_token", "adminAccessToken"];
-const LEGACY_REFRESH_TOKEN_KEYS = ["refreshToken", "refresh_token", "adminRefreshToken"];
-const ACCESS_TOKEN_RESPONSE_KEYS = [
-  ACCESS_TOKEN_KEY,
-  "accessToken",
-  "access_token",
-  "adminAccessToken",
-];
-const REFRESH_TOKEN_RESPONSE_KEYS = [
-  REFRESH_TOKEN_KEY,
-  "refreshToken",
-  "refresh_token",
-  "adminRefreshToken",
-];
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
+const ACCESS_TOKEN_RESPONSE_KEYS = [ACCESS_TOKEN_KEY];
+const REFRESH_TOKEN_RESPONSE_KEYS = [REFRESH_TOKEN_KEY];
 
 type TokenResponse = Record<string, unknown>;
+let refreshAccessTokenPromise: Promise<string | null> | null = null;
+
+const TOKEN_EXPIRY_SKEW_MS = 30_000;
+const TOKEN_EXPIRY_KEYS = ["exp"];
 
 const GOOGLE_REDIRECT_KEYS = [
   "url",
@@ -78,8 +69,70 @@ function findTokenValue(data: unknown, names: string[]): string | null {
   return null;
 }
 
+function findNumberValue(data: unknown, names: string[]): number | null {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const record = data as TokenResponse;
+
+  for (const name of names) {
+    const value = record[name];
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string" && value) {
+      const parsedValue = Number(value);
+
+      if (Number.isFinite(parsedValue)) {
+        return parsedValue;
+      }
+    }
+  }
+
+  for (const value of Object.values(record)) {
+    const numberValue = findNumberValue(value, names);
+
+    if (numberValue !== null) {
+      return numberValue;
+    }
+  }
+
+  return null;
+}
+
 function findStringValue(data: unknown, names: string[]) {
   return findTokenValue(data, names);
+}
+
+function parseJwtPayload(token: string): TokenResponse | null {
+  const [, payload] = token.split(".");
+
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+
+    return JSON.parse(atob(base64 + padding)) as TokenResponse;
+  } catch {
+    return null;
+  }
+}
+
+function isAccessTokenExpired(token: string) {
+  const payload = parseJwtPayload(token);
+  const expiresAt = findNumberValue(payload, TOKEN_EXPIRY_KEYS);
+
+  if (expiresAt === null) {
+    return false;
+  }
+
+  return expiresAt * 1000 <= Date.now() + TOKEN_EXPIRY_SKEW_MS;
 }
 
 export function getAccessToken() {
@@ -94,7 +147,6 @@ export function saveAuthTokens(data: unknown) {
   const accessToken = findTokenValue(data, ACCESS_TOKEN_RESPONSE_KEYS);
   const refreshToken = findTokenValue(data, REFRESH_TOKEN_RESPONSE_KEYS);
 
-  removeStorage([...LEGACY_ACCESS_TOKEN_KEYS, ...LEGACY_REFRESH_TOKEN_KEYS]);
   writeStorage(ACCESS_TOKEN_KEY, accessToken);
   writeStorage(REFRESH_TOKEN_KEY, refreshToken);
 
@@ -114,12 +166,14 @@ export function saveAuthTokensFromUrl(url: URL) {
 }
 
 export function clearAuthTokens() {
-  removeStorage([
-    ACCESS_TOKEN_KEY,
-    REFRESH_TOKEN_KEY,
-    ...LEGACY_ACCESS_TOKEN_KEYS,
-    ...LEGACY_REFRESH_TOKEN_KEYS,
-  ]);
+  removeStorage([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+}
+
+export function redirectToLogin() {
+  clearAuthTokens();
+  window.location.replace("/login");
+
+  return new Promise<never>(() => {});
 }
 
 export function getGoogleSignInUrl() {
@@ -132,7 +186,6 @@ export async function signInWithGoogleCode(code: string) {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       "x-idempotency-key": crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -168,7 +221,6 @@ export async function getGoogleSignInRedirectUrl() {
     redirect: "manual",
     headers: {
       Accept: "application/json",
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
     },
   });
 
@@ -196,7 +248,7 @@ export async function getGoogleSignInRedirectUrl() {
   throw new Error("Google login redirect was not returned by the API.");
 }
 
-export async function refreshAccessToken() {
+async function requestFreshAccessToken() {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
@@ -210,7 +262,6 @@ export async function refreshAccessToken() {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
         "x-idempotency-key": crypto.randomUUID(),
       },
       body: JSON.stringify({
@@ -238,10 +289,18 @@ export async function refreshAccessToken() {
   }
 }
 
+export function refreshAccessToken() {
+  refreshAccessTokenPromise ??= requestFreshAccessToken().finally(() => {
+    refreshAccessTokenPromise = null;
+  });
+
+  return refreshAccessTokenPromise;
+}
+
 export async function ensureAuthenticated() {
   const accessToken = getAccessToken();
 
-  if (accessToken) {
+  if (accessToken && !isAccessTokenExpired(accessToken)) {
     return true;
   }
 

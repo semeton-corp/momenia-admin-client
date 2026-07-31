@@ -1,7 +1,6 @@
-import { clearAuthTokens, getAccessToken, refreshAccessToken } from "@/lib/auth";
+import { getAccessToken, redirectToLogin, refreshAccessToken } from "@/lib/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
 type QueryParams = Record<string, string | number | boolean | null | undefined | (string | number)[]>;
 
@@ -67,28 +66,27 @@ async function request<T>(path: string, options: ApiRequestOptions = {}, retried
     headers: {
       Accept: "application/json",
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(IDEMPOTENT_METHODS.has(method) ? { "x-idempotency-key": crypto.randomUUID() } : {}),
       ...headers,
     },
     body: isFormData ? body : body === undefined ? undefined : JSON.stringify(body),
   });
-
-  const data = await parseResponse(response);
-
-  if (!response.ok) {
-    if (response.status === 401 && !retried) {
+  if (!response.ok && response.status === 401) {
+    if (!retried) {
       const refreshedToken = await refreshAccessToken();
 
       if (refreshedToken) {
         return request<T>(path, { ...options, token: refreshedToken }, true);
       }
-
-      clearAuthTokens();
-      window.location.assign("/login");
     }
 
+    return redirectToLogin();
+  }
+
+  const data = await parseResponse(response);
+
+  if (!response.ok) {
     const message =
       typeof data === "object" && data !== null && "message" in data
         ? String(data.message)
