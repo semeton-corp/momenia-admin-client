@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import {
   getInvitationTemplateDurations,
   createInvitationTemplateDuration,
@@ -7,20 +8,28 @@ import {
   deleteInvitationTemplateDuration,
   type InvitationTemplateDuration,
   type InvitationTemplateDurationPayload,
+  type InvitationTemplateDurationUnit,
 } from "@/api/cms/invitation-template-durations"
 import { queryKeys } from "@/api/query-keys"
 import { cn } from "@/lib/utils"
 
-const DURATION_OPTIONS = ["day", "week", "month", "year"] as const
+const UNIT_OPTIONS = ["day", "week", "month", "year"] as const
+
+type DurationForm = {
+  duration: string
+  unit: InvitationTemplateDurationUnit
+  price: string
+  isActive: boolean
+}
 
 function formatPrice(raw: string): string {
   if (!raw) return ""
   return Number(raw).toLocaleString("id-ID")
 }
 
-const emptyForm = (): InvitationTemplateDurationPayload => ({
-  value: 1,
-  duration: "week",
+const emptyForm = (): DurationForm => ({
+  duration: "1",
+  unit: "week",
   price: "",
   isActive: true,
 })
@@ -30,7 +39,7 @@ type ModalMode = { type: "create" } | { type: "edit"; item: InvitationTemplateDu
 export default function TemplateDurations() {
   const queryClient = useQueryClient()
   const [modal, setModal] = useState<ModalMode | null>(null)
-  const [form, setForm] = useState<InvitationTemplateDurationPayload>(emptyForm())
+  const [form, setForm] = useState<DurationForm>(emptyForm())
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [formError, setFormError] = useState("")
 
@@ -42,27 +51,42 @@ export default function TemplateDurations() {
   const { mutate: create, isPending: isCreating } = useMutation({
     mutationFn: (payload: InvitationTemplateDurationPayload) => createInvitationTemplateDuration(payload),
     onSuccess: () => {
+      toast.success("Duration created successfully")
       queryClient.invalidateQueries({ queryKey: queryKeys.invitationTemplateDurations.all })
       setModal(null)
     },
-    onError: (err) => setFormError(err instanceof Error ? err.message : "Failed to create"),
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Failed to create duration"
+      setFormError(message)
+      toast.error(message)
+    },
   })
 
   const { mutate: update, isPending: isUpdating } = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: InvitationTemplateDurationPayload }) =>
       updateInvitationTemplateDuration(id, payload),
     onSuccess: () => {
+      toast.success("Duration updated successfully")
       queryClient.invalidateQueries({ queryKey: queryKeys.invitationTemplateDurations.all })
       setModal(null)
     },
-    onError: (err) => setFormError(err instanceof Error ? err.message : "Failed to update"),
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Failed to update duration"
+      setFormError(message)
+      toast.error(message)
+    },
   })
 
   const { mutate: remove, isPending: isDeleting } = useMutation({
     mutationFn: (id: string) => deleteInvitationTemplateDuration(id),
     onSuccess: () => {
+      toast.success("Duration deleted successfully")
       queryClient.invalidateQueries({ queryKey: queryKeys.invitationTemplateDurations.all })
       setDeleteConfirmId(null)
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Failed to delete duration"
+      toast.error(message)
     },
   })
 
@@ -73,15 +97,38 @@ export default function TemplateDurations() {
   }
 
   const openEdit = (item: InvitationTemplateDuration) => {
-    setForm({ value: item.value, duration: item.duration, price: item.price, isActive: item.isActive })
+    setForm({ duration: String(item.duration), unit: item.unit, price: item.price, isActive: item.isActive })
     setFormError("")
     setModal({ type: "edit", item })
   }
 
   const handleSubmit = () => {
-    if (form.value < 1) { setFormError("Value must be at least 1"); return }
+    const duration = Number(form.duration)
+
+    if (!form.duration || !Number.isInteger(duration) || duration < 1) {
+      const message = "Duration must be at least 1"
+      setFormError(message)
+      toast.error(message)
+      return
+    }
+
+    const price = Number(form.price)
+
+    if (!form.price || !Number.isFinite(price) || price <= 0) {
+      const message = "Price must be greater than 0"
+      setFormError(message)
+      toast.error(message)
+      return
+    }
+
     setFormError("")
-    const payload = { ...form, price: form.price.trim() || "0" }
+    const payload: InvitationTemplateDurationPayload = {
+      duration,
+      unit: form.unit,
+      price: String(price),
+      isActive: form.isActive,
+    }
+
     if (modal?.type === "edit") {
       update({ id: modal.item.id, payload })
     } else {
@@ -138,8 +185,8 @@ export default function TemplateDurations() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="px-6 py-3 text-left text-sm font-semibold">Value</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold">Duration</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Unit</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold">Price</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold">Actions</th>
@@ -148,8 +195,8 @@ export default function TemplateDurations() {
             <tbody>
               {durations.map((item) => (
                 <tr key={item.id} className="border-b border-border hover:bg-muted/30 transition-colors last:border-0">
-                  <td className="px-6 py-4 text-sm font-medium">{item.value}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground capitalize">{item.duration}</td>
+                  <td className="px-6 py-4 text-sm font-medium">{item.duration}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground capitalize">{item.unit}</td>
                   <td className="px-6 py-4 text-sm">Rp {formatPrice(item.price)}</td>
                   <td className="px-6 py-4">
                     <span className={cn(
@@ -202,23 +249,24 @@ export default function TemplateDurations() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Value</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Duration</label>
                   <input
-                    type="number"
-                    min={1}
-                    value={form.value}
-                    onChange={(e) => setForm((f) => ({ ...f, value: Number(e.target.value) }))}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={form.duration}
+                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value.replace(/\D/g, "") }))}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Duration</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Unit</label>
                   <select
-                    value={form.duration}
-                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value as typeof form.duration }))}
+                    value={form.unit}
+                    onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value as InvitationTemplateDurationUnit }))}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   >
-                    {DURATION_OPTIONS.map((d) => (
+                    {UNIT_OPTIONS.map((d) => (
                       <option key={d} value={d} className="capitalize">{d}</option>
                     ))}
                   </select>
