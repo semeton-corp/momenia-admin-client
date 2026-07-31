@@ -21,6 +21,11 @@ export const queryKeys = {
     list: (params?: unknown) => [...queryKeys.cmsTransactions.lists(), params] as const,
     detail: (id: string) => [...queryKeys.cmsTransactions.all, "detail", id] as const,
   },
+  cmsDashboard: {
+    all: ["cms-dashboard"] as const,
+    overview: (period: string) => [...queryKeys.cmsDashboard.all, "overview", period] as const,
+    topSellingTemplates: () => [...queryKeys.cmsDashboard.all, "top-selling-templates"] as const,
+  },
   faqs: {
     all: ["faqs"] as const,
     lists: () => [...queryKeys.faqs.all, "list"] as const,
