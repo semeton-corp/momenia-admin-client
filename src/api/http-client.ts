@@ -1,7 +1,6 @@
 import { getAccessToken, redirectToLogin, refreshAccessToken } from "@/lib/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
 type QueryParams = Record<string, string | number | boolean | null | undefined | (string | number)[]>;
 
@@ -67,7 +66,6 @@ async function request<T>(path: string, options: ApiRequestOptions = {}, retried
     headers: {
       Accept: "application/json",
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(IDEMPOTENT_METHODS.has(method) ? { "x-idempotency-key": crypto.randomUUID() } : {}),
       ...headers,

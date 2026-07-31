@@ -1,5 +1,4 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 const REFRESH_PATH =
   import.meta.env.VITE_ADMIN_REFRESH_PATH ?? "/api/v1/sessions/refresh";
 
@@ -187,7 +186,6 @@ export async function signInWithGoogleCode(code: string) {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       "x-idempotency-key": crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -223,7 +221,6 @@ export async function getGoogleSignInRedirectUrl() {
     redirect: "manual",
     headers: {
       Accept: "application/json",
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
     },
   });
 
@@ -265,7 +262,6 @@ async function requestFreshAccessToken() {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
         "x-idempotency-key": crypto.randomUUID(),
       },
       body: JSON.stringify({
