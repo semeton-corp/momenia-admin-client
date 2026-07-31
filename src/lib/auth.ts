@@ -186,7 +186,6 @@ export async function signInWithGoogleCode(code: string) {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       "x-idempotency-key": crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -263,7 +262,6 @@ async function requestFreshAccessToken() {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
         "x-idempotency-key": crypto.randomUUID(),
       },
       body: JSON.stringify({
