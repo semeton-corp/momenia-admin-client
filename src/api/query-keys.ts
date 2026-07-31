@@ -1,9 +1,13 @@
 export const queryKeys = {
-  users: {
-    all: ["users"] as const,
-    lists: () => [...queryKeys.users.all, "list"] as const,
-    list: (params?: unknown) => [...queryKeys.users.lists(), params] as const,
-    detail: (id: string | number) => [...queryKeys.users.all, "detail", id] as const,
+  account: {
+    all: ["account"] as const,
+    me: () => [...queryKeys.account.all, "me"] as const,
+  },
+  admins: {
+    all: ["admins"] as const,
+    lists: () => [...queryKeys.admins.all, "list"] as const,
+    list: (params?: unknown) => [...queryKeys.admins.lists(), params] as const,
+    detail: (id: string | number) => [...queryKeys.admins.all, "detail", id] as const,
   },
   faqs: {
     all: ["faqs"] as const,

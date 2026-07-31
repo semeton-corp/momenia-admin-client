@@ -27,7 +27,10 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
+const SIDEBAR_WIDTH = 288
+const SIDEBAR_WIDTH_MIN = 240
+const SIDEBAR_WIDTH_MAX = 420
+const SIDEBAR_WIDTH_STORAGE_KEY = "momenia_sidebar_width"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
@@ -39,6 +42,8 @@ type SidebarContextProps = {
   openMobile: boolean
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
+  sidebarWidth: number
+  setSidebarWidth: (width: number) => void
   toggleSidebar: () => void
 }
 
@@ -68,6 +73,19 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
+  const [sidebarWidth, _setSidebarWidth] = React.useState(() => {
+    if (typeof window === "undefined") {
+      return SIDEBAR_WIDTH
+    }
+
+    const storedWidth = Number(window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY))
+
+    if (!Number.isFinite(storedWidth)) {
+      return SIDEBAR_WIDTH
+    }
+
+    return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, storedWidth))
+  })
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
@@ -87,6 +105,16 @@ function SidebarProvider({
     },
     [setOpenProp, open]
   )
+
+  const setSidebarWidth = React.useCallback((width: number) => {
+    const nextWidth = Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, width))
+
+    _setSidebarWidth(nextWidth)
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(nextWidth))
+    }
+  }, [])
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
@@ -121,9 +149,11 @@ function SidebarProvider({
       isMobile,
       openMobile,
       setOpenMobile,
+      sidebarWidth,
+      setSidebarWidth,
       toggleSidebar,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+    [state, open, setOpen, isMobile, openMobile, setOpenMobile, sidebarWidth, setSidebarWidth, toggleSidebar]
   )
 
   return (
@@ -133,7 +163,7 @@ function SidebarProvider({
           data-slot="sidebar-wrapper"
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width": `${sidebarWidth}px`,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
             } as React.CSSProperties
@@ -280,7 +310,63 @@ function SidebarTrigger({
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar } = useSidebar()
+  const { isMobile, open, sidebarWidth, setSidebarWidth, toggleSidebar } = useSidebar()
+  const dragState = React.useRef({
+    dragging: false,
+    didResize: false,
+    startWidth: 0,
+    startX: 0,
+    side: "left" as "left" | "right",
+  })
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (isMobile || !open || event.button !== 0) {
+      return
+    }
+
+    const side = event.currentTarget.closest("[data-side]")?.getAttribute("data-side") === "right" ? "right" : "left"
+    const state = dragState.current
+
+    state.dragging = true
+    state.didResize = false
+    state.startWidth = sidebarWidth
+    state.startX = event.clientX
+    state.side = side
+
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const state = dragState.current
+
+    if (!state.dragging) {
+      return
+    }
+
+    const delta = event.clientX - state.startX
+
+    if (Math.abs(delta) > 4) {
+      state.didResize = true
+    }
+
+    const nextWidth = state.side === "right" ? state.startWidth - delta : state.startWidth + delta
+
+    setSidebarWidth(nextWidth)
+  }
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const state = dragState.current
+
+    if (!state.dragging) {
+      return
+    }
+
+    state.dragging = false
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
 
   return (
     <button
@@ -288,10 +374,23 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       data-slot="sidebar-rail"
       aria-label="Toggle Sidebar"
       tabIndex={-1}
-      onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      onClick={(event) => {
+        if (dragState.current.didResize) {
+          dragState.current.didResize = false
+          event.preventDefault()
+          event.stopPropagation()
+          return
+        }
+
+        toggleSidebar()
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      title="Drag to resize, click to toggle"
       className={cn(
-        "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex",
+        "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 touch-none transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full",
