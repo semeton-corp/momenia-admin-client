@@ -1,4 +1,4 @@
-import { clearAuthTokens, getAccessToken, refreshAccessToken } from "@/lib/auth";
+import { getAccessToken, redirectToLogin, refreshAccessToken } from "@/lib/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
@@ -74,21 +74,21 @@ async function request<T>(path: string, options: ApiRequestOptions = {}, retried
     },
     body: isFormData ? body : body === undefined ? undefined : JSON.stringify(body),
   });
-
-  const data = await parseResponse(response);
-
-  if (!response.ok) {
-    if (response.status === 401 && !retried) {
+  if (!response.ok && response.status === 401) {
+    if (!retried) {
       const refreshedToken = await refreshAccessToken();
 
       if (refreshedToken) {
         return request<T>(path, { ...options, token: refreshedToken }, true);
       }
-
-      clearAuthTokens();
-      window.location.assign("/login");
     }
 
+    return redirectToLogin();
+  }
+
+  const data = await parseResponse(response);
+
+  if (!response.ok) {
     const message =
       typeof data === "object" && data !== null && "message" in data
         ? String(data.message)
