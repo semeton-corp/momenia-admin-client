@@ -9,23 +9,6 @@ export const queryKeys = {
     list: (params?: unknown) => [...queryKeys.admins.lists(), params] as const,
     detail: (id: string | number) => [...queryKeys.admins.all, "detail", id] as const,
   },
-  cmsUsers: {
-    all: ["cms-users"] as const,
-    lists: () => [...queryKeys.cmsUsers.all, "list"] as const,
-    list: (params?: unknown) => [...queryKeys.cmsUsers.lists(), params] as const,
-    detail: (id: string, params?: unknown) => [...queryKeys.cmsUsers.all, "detail", id, params] as const,
-  },
-  cmsTransactions: {
-    all: ["cms-transactions"] as const,
-    lists: () => [...queryKeys.cmsTransactions.all, "list"] as const,
-    list: (params?: unknown) => [...queryKeys.cmsTransactions.lists(), params] as const,
-    detail: (id: string) => [...queryKeys.cmsTransactions.all, "detail", id] as const,
-  },
-  cmsDashboard: {
-    all: ["cms-dashboard"] as const,
-    overview: (period: string) => [...queryKeys.cmsDashboard.all, "overview", period] as const,
-    topSellingTemplates: () => [...queryKeys.cmsDashboard.all, "top-selling-templates"] as const,
-  },
   faqs: {
     all: ["faqs"] as const,
     lists: () => [...queryKeys.faqs.all, "list"] as const,

@@ -1,5 +1,5 @@
 import { IconDashboard, IconListDetails } from "@tabler/icons-react";
-import { AppWindow, BookUser, ReceiptText, Users } from "lucide-react";
+import { AppWindow, BookUser } from "lucide-react";
 
 export const sidebarItems = {
   navMain: [
@@ -14,7 +14,6 @@ export const sidebarItems = {
       title: "Landing Page Management",
       icon: IconListDetails,
       items: [
-        // { title: "Banner", url: "/landing/banner" },
         { title: "Features", url: "/landing/features" },
         { title: "Catalog Recommendations", url: "/landing/catalogs" },
         { title: "Testimonials", url: "/landing/testimonials" },
@@ -22,28 +21,18 @@ export const sidebarItems = {
       ],
     },
     {
-      title: "Templates",
+      title: "Templates Management",
       icon: AppWindow,
       items: [
-        { title: "Template List", url: "/templates" },
+        { title: "Overview", url: "/templates/report" },
+        { title: "Templates", url: "/templates" },
         { title: "Durations", url: "/templates/durations" },
-        { title: "Report", url: "/templates/report" },
       ],
     },
     {
       title: "Admin Management",
       url: "/admins",
       icon: BookUser,
-    },
-    {
-      title: "User Management",
-      url: "/users",
-      icon: Users,
-    },
-    {
-      title: "Transaction Management",
-      url: "/transactions",
-      icon: ReceiptText,
     },
   ],
 };
