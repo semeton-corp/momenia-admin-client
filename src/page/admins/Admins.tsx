@@ -56,7 +56,7 @@ export default function Admins() {
         </div>
         <Link
           to="/admins/add"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Add Admin
         </Link>
@@ -74,7 +74,7 @@ export default function Admins() {
       {isError && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center gap-3">
           <p className="text-sm text-muted-foreground">Failed to load admins.</p>
-          <button onClick={() => refetch()} className="text-sm text-indigo-500 hover:text-indigo-400">
+          <button onClick={() => refetch()} className="text-sm text-primary hover:text-primary/80">
             Try again
           </button>
         </div>
@@ -83,7 +83,7 @@ export default function Admins() {
       {!isLoading && !isError && admins.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
           <p className="text-sm text-muted-foreground">No admins found.</p>
-          <Link to="/admins/add" className="mt-3 text-sm text-indigo-500 hover:text-indigo-400">
+          <Link to="/admins/add" className="mt-3 text-sm text-primary hover:text-primary/80">
             Add your first admin -&gt;
           </Link>
         </div>
@@ -121,7 +121,7 @@ export default function Admins() {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => setDeleteTarget(admin)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-destructive/35 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         Delete
@@ -147,14 +147,14 @@ export default function Admins() {
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleteMutation.isPending}
-                className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+                className="flex-1 rounded-lg border border-border py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
                 onClick={() => deleteMutation.mutate(deleteTarget.id)}
                 disabled={deleteMutation.isPending}
-                className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
+                className="flex-1 rounded-lg bg-destructive py-2.5 text-sm font-semibold text-white hover:bg-destructive/90 transition-colors disabled:opacity-60"
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </button>
