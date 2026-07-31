@@ -15,6 +15,12 @@ export const queryKeys = {
     list: (params?: unknown) => [...queryKeys.cmsUsers.lists(), params] as const,
     detail: (id: string, params?: unknown) => [...queryKeys.cmsUsers.all, "detail", id, params] as const,
   },
+  cmsTransactions: {
+    all: ["cms-transactions"] as const,
+    lists: () => [...queryKeys.cmsTransactions.all, "list"] as const,
+    list: (params?: unknown) => [...queryKeys.cmsTransactions.lists(), params] as const,
+    detail: (id: string) => [...queryKeys.cmsTransactions.all, "detail", id] as const,
+  },
   faqs: {
     all: ["faqs"] as const,
     lists: () => [...queryKeys.faqs.all, "list"] as const,

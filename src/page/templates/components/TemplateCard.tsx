@@ -1,18 +1,11 @@
 import { type InvitationTemplate } from "@/api/cms/invitation-templates"
 import { PhoneMockup } from "./PhoneMockup"
 import { STATUS_LABELS, STATUS_STYLES } from "./constants"
+import { formatApiDateTime } from "@/utils/formatApiDate"
 
 export function TemplateCard({ template, onClick }: { template: InvitationTemplate; onClick: () => void }) {
   const status = template.status ?? "draft"
-  const formattedDate = template.updatedAt
-    ? new Date(template.updatedAt).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null
+  const formattedDate = formatApiDateTime(template.updatedAt)
 
   return (
     <div
@@ -29,7 +22,7 @@ export function TemplateCard({ template, onClick }: { template: InvitationTempla
             {typeof template.category === "string" ? template.category : template.category.name}
           </p>
         )}
-        {formattedDate && (
+        {formattedDate !== "-" && (
           <p className="text-[10px] text-muted-foreground">Last modified {formattedDate}</p>
         )}
         <div className="pt-1">

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { getInvitationTemplates } from "@/api/cms/invitation-templates"
 import { queryKeys } from "@/api/query-keys"
+import { formatApiDate } from "@/utils/formatApiDate"
 
 export default function TemplateReport() {
   const sortField = "createdAt"
@@ -124,22 +125,10 @@ export default function TemplateReport() {
                   })()}
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {template.createdAt
-                    ? new Date(template.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "—"}
+                  {formatApiDate(template.createdAt)}
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {template.updatedAt
-                    ? new Date(template.updatedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "—"}
+                  {formatApiDate(template.updatedAt)}
                 </td>
               </tr>
             ))}
