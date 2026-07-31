@@ -10,6 +10,8 @@ import Login from "@/page/login/Login";
 import Transactions from "@/page/transactions/Transactions";
 import Admins from "@/page/admins/Admins";
 import AddAdmin from "@/page/admins/AddAdmin";
+import Users from "@/page/users/Users";
+import UserDetail from "@/page/users/UserDetail";
 import Templates from "@/page/templates/Templates";
 import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate"
@@ -105,6 +107,16 @@ export const appRouter = createBrowserRouter([
         path: "admins/add",
         element: <AddAdmin />,
         handle: { title: "Add Admin" },
+      },
+      {
+        path: "users",
+        element: <Users />,
+        handle: { title: "User Management" },
+      },
+      {
+        path: "users/:id",
+        element: <UserDetail />,
+        handle: { title: "User Detail" },
       },
       {
         path: "transactions",

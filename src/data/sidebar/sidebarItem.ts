@@ -1,5 +1,5 @@
 import { IconDashboard, IconListDetails } from "@tabler/icons-react";
-import { AppWindow, BookUser } from "lucide-react";
+import { AppWindow, BookUser, Users } from "lucide-react";
 
 export const sidebarItems = {
   navMain: [
@@ -33,6 +33,11 @@ export const sidebarItems = {
       title: "Admin Management",
       url: "/admins",
       icon: BookUser,
+    },
+    {
+      title: "User Management",
+      url: "/users",
+      icon: Users,
     },
   ],
 };
