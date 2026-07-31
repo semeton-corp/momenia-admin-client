@@ -15,8 +15,8 @@ const AdminLayout = () => {
 
   return (
     <SidebarProvider>
-      <AppSidebar className="pr-3" />
-      <SidebarInset className="bg-secondary mx-3 mt-3 rounded-lg ">
+      <AppSidebar />
+      <SidebarInset className="min-w-0 bg-background">
         <SiteHeader title={pageTitle} />
         <Outlet />
       </SidebarInset>

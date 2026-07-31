@@ -57,10 +57,15 @@ const Catalogs = () => {
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-5 md:px-6">
-      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-normal">Catalog Momemia</h1>
-        <div className="flex items-center gap-3">
+    <main className="min-h-[calc(100vh-4rem)] px-4 py-6 md:px-6 lg:px-7">
+      <div className="mx-auto max-w-[1800px]">
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">Catalog Recommendations</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Choose which templates appear in catalog recommendations and mark each one as new or Momenia's Choice.</p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {hasChanges && (
             <>
               {saveError && (
@@ -72,7 +77,7 @@ const Catalogs = () => {
                 type="button"
                 onClick={handleDiscard}
                 disabled={isSaving}
-                className="rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+                className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
               >
                 Discard
               </button>
@@ -80,21 +85,21 @@ const Catalogs = () => {
                 type="button"
                 onClick={handleApply}
                 disabled={isSaving}
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 transition-colors disabled:opacity-60"
+                className="rounded-lg border border-border bg-card/80 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
               >
-                {isSaving ? "Saving..." : "Apply Changes"}
+                {isSaving ? "Saving..." : "Apply changes"}
               </button>
             </>
           )}
           <button
             type="button"
             onClick={() => navigate("/landing/catalogs/select")}
-            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Edit Selected Templates
+            Edit selected templates
           </button>
+          </div>
         </div>
-      </div>
 
       {isLoading && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -171,7 +176,7 @@ const Catalogs = () => {
                   className={cn(
                     "flex-1 py-1.5 transition-colors",
                     catalog.isNew
-                      ? "bg-indigo-500 text-white"
+                      ? "bg-orange-500 text-white hover:bg-orange-500"
                       : "text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -194,6 +199,7 @@ const Catalogs = () => {
           ))}
         </div>
       )}
+      </div>
     </main>
   )
 }

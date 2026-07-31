@@ -16,6 +16,8 @@ type Locale = "english" | "indonesia";
 
 type FeatureField = "titleIdn" | "descriptionIdn" | "titleEn" | "descriptionEn";
 
+type ApiFeature = Partial<Omit<Feature, "isOpen" | "iconPreview">>;
+
 const locales: Locale[] = ["english", "indonesia"];
 
 const languageLabels: Record<Locale, string> = {
@@ -23,7 +25,7 @@ const languageLabels: Record<Locale, string> = {
   indonesia: "Indonesia",
 };
 
-function normalizeFeatures(data: any[]): Feature[] {
+function normalizeFeatures(data: ApiFeature[]): Feature[] {
   return data.map((item) => ({
     id: item.id,
     titleIdn: item.titleIdn ?? "",
@@ -116,7 +118,7 @@ const Features = () => {
     );
   };
 
-  const updateFeature = (index: number, field: FeatureField, value: any) => {
+  const updateFeature = (index: number, field: FeatureField, value: string) => {
     markChanged(
       features.map((f, i) =>
         i === index ? { ...f, [field]: value } : f
@@ -189,57 +191,67 @@ const Features = () => {
   };
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-5 md:px-6">
+    <main className="min-h-[calc(100vh-4rem)] px-4 py-6 md:px-6 lg:px-7">
       {(isLoading || updateMutation.isPending) && <LoadingScreen />}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-normal">Features</h1>
+      <div className="mx-auto max-w-[1800px]">
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">Features</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Edit the feature cards shown on the public landing page in both languages.</p>
+          </div>
 
-        <div className="flex flex-col gap-3 sm:items-end">
-          <Button
-            type="button"
-            className="h-11 min-w-56 bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-            disabled={
-              !hasChanges ||
-              isLoading ||
-              updateMutation.isPending
-            }
-            onClick={applyChanges}
-          >
-            Apply changes
-          </Button>
-          <Button
-            type="button"
-            className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-            onClick={addFeature}
-          >
-            <Plus className="size-4" />
-            Add Feature
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-w-44"
+              disabled={
+                !hasChanges ||
+                isLoading ||
+                updateMutation.isPending
+              }
+              onClick={applyChanges}
+            >
+              Apply changes
+            </Button>
+            <Button type="button" onClick={addFeature}>
+              <Plus className="size-4" />
+              Add feature
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="grid gap-8 xl:grid-cols-2 xl:gap-10">
-        {locales.map((locale) => (
-          <section key={locale} className="space-y-6">
-            <h2 className="text-base font-medium">{languageLabels[locale]}</h2>
+        <div className="grid gap-6 xl:grid-cols-2 xl:gap-7">
+          {locales.map((locale) => (
+            <section key={locale} className="space-y-4">
+              <div className="flex items-end justify-between border-b border-border/70 pb-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Copy deck</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em]">{languageLabels[locale]}</h2>
+                </div>
+                <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {features.length} items
+                </span>
+              </div>
 
-            <div className="space-y-6">
-              {features.map((feature, index) => (
-                <FeatureCard
-                  key={feature.id ?? `new-${index}`}
-                  feature={feature}
-                  locale={locale}
-                  index={index}
-                  showError={showErrors}
-                  onToggle={toggleFeature}
-                  onUpdate={updateFeature}
-                  onUpdateIcon={updateIcon}
-                  onRemove={removeFeature}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+              <div className="space-y-4">
+                {features.map((feature, index) => (
+                  <FeatureCard
+                    key={feature.id ?? `new-${index}`}
+                    feature={feature}
+                    locale={locale}
+                    index={index}
+                    showError={showErrors}
+                    onToggle={toggleFeature}
+                    onUpdate={updateFeature}
+                    onUpdateIcon={updateIcon}
+                    onRemove={removeFeature}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </main>
   );
