@@ -17,12 +17,12 @@ import { NavPages } from "./nav-pages";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="h-auto data-[slot=sidebar-menu-button]:!p-3"
+              className="h-auto rounded-lg border border-sidebar-border/80 bg-sidebar-accent/70 shadow-none data-[slot=sidebar-menu-button]:!p-3 dark:bg-[#0d1628]"
               variant="outline"
             >
               <a href="#" className="flex items-center gap-3">
@@ -45,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </defs>
                 </svg>
                 <span className="grid text-left leading-tight">
-                  <span className="text-sm font-semibold">Momenia CMS</span>
+                  <span className="text-sm font-bold tracking-[-0.02em]">Momenia CMS</span>
                   <span className="text-xs text-muted-foreground">Semeton Corp</span>
                 </span>
               </a>
