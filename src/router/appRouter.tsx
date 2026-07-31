@@ -128,6 +128,16 @@ export const appRouter = createBrowserRouter([
         handle: { title: "Add Admin" },
       },
       {
+        path: "users",
+        element: <Users />,
+        handle: { title: "User Management" },
+      },
+      {
+        path: "users/:id",
+        element: <UserDetail />,
+        handle: { title: "User Detail" },
+      },
+      {
         path: "transactions",
         element: <Transactions />,
         handle: { title: "Transaction Management" },
