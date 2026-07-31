@@ -6,6 +6,7 @@ import { getCmsUsers, type CmsUser } from "@/api/cms/users"
 import { queryKeys } from "@/api/query-keys"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { formatApiDateTime } from "@/utils/formatApiDate"
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
@@ -21,26 +22,6 @@ function getInitials(user: CmsUser) {
   }
 
   return user.email.slice(0, 2).toUpperCase()
-}
-
-function formatDateTime(value?: string) {
-  if (!value || value.startsWith("0001-01-01")) {
-    return "-"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return "-"
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
 }
 
 export default function Users() {
@@ -175,7 +156,7 @@ export default function Users() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{user.phoneNumber || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDateTime(user.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatApiDateTime(user.createdAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <Link
                         to={`/users/${user.id}`}
