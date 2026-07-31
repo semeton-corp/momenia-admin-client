@@ -3,22 +3,10 @@ const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 const REFRESH_PATH =
   import.meta.env.VITE_ADMIN_REFRESH_PATH ?? "/api/v1/sessions/refresh";
 
-const ACCESS_TOKEN_KEY = "memoria_admin_access_token";
-const REFRESH_TOKEN_KEY = "memoria_admin_refresh_token";
-const LEGACY_ACCESS_TOKEN_KEYS = ["accessToken", "access_token", "adminAccessToken"];
-const LEGACY_REFRESH_TOKEN_KEYS = ["refreshToken", "refresh_token", "adminRefreshToken"];
-const ACCESS_TOKEN_RESPONSE_KEYS = [
-  ACCESS_TOKEN_KEY,
-  "accessToken",
-  "access_token",
-  "adminAccessToken",
-];
-const REFRESH_TOKEN_RESPONSE_KEYS = [
-  REFRESH_TOKEN_KEY,
-  "refreshToken",
-  "refresh_token",
-  "adminRefreshToken",
-];
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
+const ACCESS_TOKEN_RESPONSE_KEYS = [ACCESS_TOKEN_KEY];
+const REFRESH_TOKEN_RESPONSE_KEYS = [REFRESH_TOKEN_KEY];
 
 type TokenResponse = Record<string, unknown>;
 let refreshAccessTokenPromise: Promise<string | null> | null = null;
@@ -160,7 +148,6 @@ export function saveAuthTokens(data: unknown) {
   const accessToken = findTokenValue(data, ACCESS_TOKEN_RESPONSE_KEYS);
   const refreshToken = findTokenValue(data, REFRESH_TOKEN_RESPONSE_KEYS);
 
-  removeStorage([...LEGACY_ACCESS_TOKEN_KEYS, ...LEGACY_REFRESH_TOKEN_KEYS]);
   writeStorage(ACCESS_TOKEN_KEY, accessToken);
   writeStorage(REFRESH_TOKEN_KEY, refreshToken);
 
@@ -180,12 +167,7 @@ export function saveAuthTokensFromUrl(url: URL) {
 }
 
 export function clearAuthTokens() {
-  removeStorage([
-    ACCESS_TOKEN_KEY,
-    REFRESH_TOKEN_KEY,
-    ...LEGACY_ACCESS_TOKEN_KEYS,
-    ...LEGACY_REFRESH_TOKEN_KEYS,
-  ]);
+  removeStorage([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
 }
 
 export function redirectToLogin() {
