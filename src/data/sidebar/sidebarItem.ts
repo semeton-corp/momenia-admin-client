@@ -1,5 +1,5 @@
 import { IconDashboard, IconListDetails } from "@tabler/icons-react";
-import { AppWindow, BookUser, Users } from "lucide-react";
+import { AppWindow, BookUser, ReceiptText, Users } from "lucide-react";
 
 export const sidebarItems = {
   navMain: [
@@ -38,6 +38,11 @@ export const sidebarItems = {
       title: "User Management",
       url: "/users",
       icon: Users,
+    },
+    {
+      title: "Transaction Management",
+      url: "/transactions",
+      icon: ReceiptText,
     },
   ],
 };
