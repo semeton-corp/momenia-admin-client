@@ -1,16 +1,7 @@
-import {
-  IconDashboard,
-  IconListDetails,
-
-} from "@tabler/icons-react";
+import { IconDashboard, IconListDetails } from "@tabler/icons-react";
 import { AppWindow, BookUser } from "lucide-react";
 
 export const sidebarItems = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -20,29 +11,28 @@ export const sidebarItems = {
   ],
   pages: [
     {
-      title: "Landing page",
+      title: "Landing Page Management",
       icon: IconListDetails,
       items: [
-        // { title: "Banner", url: "/landing/banner" },
         { title: "Features", url: "/landing/features" },
-        { title: "Catalog Memoria", url: "/landing/catalogs" },
+        { title: "Catalog Recommendations", url: "/landing/catalogs" },
         { title: "Testimonials", url: "/landing/testimonials" },
-        { title: "FAQ", url: "/landing/faq" },
+        { title: "FAQs", url: "/landing/faq" },
       ],
     },
     {
-      title: "Templates",
+      title: "Templates Management",
       icon: AppWindow,
       items: [
-        { title: "Template List", url: "/templates" },
+        { title: "Overview", url: "/templates/report" },
+        { title: "Templates", url: "/templates" },
         { title: "Durations", url: "/templates/durations" },
-        { title: "Report", url: "/templates/report" },
       ],
     },
     {
-      title: "Users",
-      url: "/users",
+      title: "Admin Management",
+      url: "/admins",
       icon: BookUser,
     },
-  ]
+  ],
 };

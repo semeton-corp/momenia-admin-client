@@ -8,8 +8,8 @@ import Features from "@/page/landing/features/Features";
 import Testimonials from "@/page/landing/testimonials/Testimonials";
 import Login from "@/page/login/Login";
 import Transactions from "@/page/transactions/Transactions";
-import Users from "@/page/users/Users";
-import AddAdmin from "@/page/users/AddAdmin";
+import Admins from "@/page/admins/Admins";
+import AddAdmin from "@/page/admins/AddAdmin";
 import Templates from "@/page/templates/Templates";
 import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate"
@@ -97,12 +97,12 @@ export const appRouter = createBrowserRouter([
         handle: { title: "Dashboard" },
       },
       {
-        path: "users",
-        element: <Users />,
-        handle: { title: "Users" },
+        path: "admins",
+        element: <Admins />,
+        handle: { title: "Admin Management" },
       },
       {
-        path: "users/add",
+        path: "admins/add",
         element: <AddAdmin />,
         handle: { title: "Add Admin" },
       },

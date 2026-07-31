@@ -1,28 +1,38 @@
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { createAdminAccount } from "@/api/admins"
 import { ApiError } from "@/api/http-client"
+import { queryKeys } from "@/api/query-keys"
 
 export default function AddAdmin() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [email, setEmail] = useState("")
   const [error, setError] = useState("")
 
   const createMutation = useMutation({
     mutationFn: createAdminAccount,
-    onSuccess: () => navigate("/users"),
+    onSuccess: () => {
+      toast.success("Admin created successfully")
+      queryClient.invalidateQueries({ queryKey: queryKeys.admins.all })
+      navigate("/admins")
+    },
     onError: (err) => {
-      setError(err instanceof ApiError ? err.message : "Failed to create admin account. Please try again.")
+      const message = err instanceof ApiError ? err.message : "Failed to create admin account. Please try again."
+      setError(message)
+      toast.error(message)
     },
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setError("")
 
     if (!email.trim()) {
       setError("Email is required")
+      toast.error("Email is required")
       return
     }
 
@@ -33,7 +43,7 @@ export default function AddAdmin() {
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-6 py-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/users")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => navigate("/admins")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             Back
           </button>
