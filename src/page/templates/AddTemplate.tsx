@@ -572,6 +572,10 @@ export default function AddTemplate() {
   const [uploadingDesktop, setUploadingDesktop] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitError, setSubmitError] = useState("")
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importJson, setImportJson] = useState("")
+  const [importError, setImportError] = useState("")
+  const importFileRef = useRef<HTMLInputElement>(null)
 
   // Step 2 state (template maker)
   const [template, setTemplate] = useState<Template>(makeBlankTemplate)
@@ -697,6 +701,56 @@ export default function AddTemplate() {
     if (win) { win.document.write(previewHtml); win.document.close() }
   }
 
+  const handleImportFile = async (file: File) => {
+    setImportError("")
+    try {
+      const text = await file.text()
+      setImportJson(text)
+    } catch (e) {
+      setImportError("Failed to read file")
+    }
+  }
+
+  const handleImportTemplate = () => {
+    setImportError("")
+    try {
+      const imported = JSON.parse(importJson)
+
+      // Validate required fields
+      const errors: string[] = []
+      if (!imported.name) errors.push("Missing 'name'")
+      if (!imported.theme_defaults) errors.push("Missing 'theme_defaults'")
+      if (!imported.pages || !Array.isArray(imported.pages)) errors.push("Missing or invalid 'pages'")
+      if (!imported.schema) errors.push("Missing 'schema'")
+
+      if (errors.length > 0) {
+        setImportError(`Invalid format: ${errors.join(", ")}`)
+        return
+      }
+
+      // Import fields
+      if (imported.name) setField("name", imported.name)
+      if (imported.descriptionEn) setField("descriptionEn", imported.descriptionEn)
+      if (imported.descriptionIdn) setField("descriptionIdn", imported.descriptionIdn)
+      if (imported.theme_defaults) {
+        setTemplate((t) => ({ ...t, theme_defaults: imported.theme_defaults }))
+      }
+      if (imported.pages) {
+        setTemplate((t) => ({ ...t, pages: imported.pages }))
+      }
+      if (imported.schema) {
+        setTemplate((t) => ({ ...t, schema: imported.schema }))
+      }
+      if (imported.sectionTypes) {
+        setSectionTypes(imported.sectionTypes)
+      }
+      setShowImportModal(false)
+      setImportJson("")
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : "Invalid JSON format")
+    }
+  }
+
   // ── STEP 1 UI ───────────────────────────────────────────────────────────────
 
   if (step === 1) {
@@ -712,10 +766,16 @@ export default function AddTemplate() {
             <h1 className="text-sm font-semibold text-foreground">Add New Template</h1>
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Step 1 of 2 — Details</span>
           </div>
-          <button onClick={handleNext} disabled={uploadingMobile || uploadingDesktop} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">
-            Next
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0 0V8m0 4h4m-4 0H8" /></svg>
+              Import
+            </button>
+            <button onClick={handleNext} disabled={uploadingMobile || uploadingDesktop} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">
+              Next
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
         </div>
 
         <div className="mx-auto max-w-5xl px-6 py-8 space-y-8">
@@ -762,6 +822,40 @@ export default function AddTemplate() {
             </div>
           </div>
         </div>
+
+        {showImportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Import Template from JSON</h2>
+
+              <div className="mb-4 space-y-3">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Upload File</label>
+                  <input ref={importFileRef} type="file" accept=".json" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportFile(file) }} className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border file:border-border file:bg-muted file:px-4 file:py-2 file:text-sm file:font-semibold file:text-foreground hover:file:bg-muted/80 transition-colors" />
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
+                  <div className="relative flex justify-center"><span className="bg-card px-2 text-xs text-muted-foreground">OR</span></div>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Paste JSON</label>
+                  <textarea value={importJson} onChange={(e) => setImportJson(e.target.value)} placeholder='Paste template JSON here...' className="w-full h-40 rounded-lg border border-border bg-background p-3 text-sm text-foreground font-mono focus:border-indigo-500 focus:outline-none" />
+                </div>
+              </div>
+
+              {importError && <p className="mb-3 text-xs text-destructive">{importError}</p>}
+
+              <div className="mb-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                ✓ Required fields: <code className="font-mono">name</code>, <code className="font-mono">theme_defaults</code>, <code className="font-mono">pages</code>, <code className="font-mono">schema</code>
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={() => { setShowImportModal(false); setImportJson(""); setImportError("") }} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">Cancel</button>
+                <button onClick={handleImportTemplate} disabled={!importJson.trim()} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">Import</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
