@@ -943,6 +943,56 @@ export default function AddTemplate() {
     }
   }
 
+  const handleImportFile = async (file: File) => {
+    setImportError("")
+    try {
+      const text = await file.text()
+      setImportJson(text)
+    } catch (e) {
+      setImportError("Failed to read file")
+    }
+  }
+
+  const handleImportTemplate = () => {
+    setImportError("")
+    try {
+      const imported = JSON.parse(importJson)
+
+      // Validate required fields
+      const errors: string[] = []
+      if (!imported.name) errors.push("Missing 'name'")
+      if (!imported.theme_defaults) errors.push("Missing 'theme_defaults'")
+      if (!imported.pages || !Array.isArray(imported.pages)) errors.push("Missing or invalid 'pages'")
+      if (!imported.schema) errors.push("Missing 'schema'")
+
+      if (errors.length > 0) {
+        setImportError(`Invalid format: ${errors.join(", ")}`)
+        return
+      }
+
+      // Import fields
+      if (imported.name) setField("name", imported.name)
+      if (imported.descriptionEn) setField("descriptionEn", imported.descriptionEn)
+      if (imported.descriptionIdn) setField("descriptionIdn", imported.descriptionIdn)
+      if (imported.theme_defaults) {
+        setTemplate((t) => ({ ...t, theme_defaults: imported.theme_defaults }))
+      }
+      if (imported.pages) {
+        setTemplate((t) => ({ ...t, pages: imported.pages }))
+      }
+      if (imported.schema) {
+        setTemplate((t) => ({ ...t, schema: imported.schema }))
+      }
+      if (imported.sectionTypes) {
+        setSectionTypes(imported.sectionTypes)
+      }
+      setShowImportModal(false)
+      setImportJson("")
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : "Invalid JSON format")
+    }
+  }
+
   // ── STEP 1 UI ───────────────────────────────────────────────────────────────
 
   if (step === 1) {
