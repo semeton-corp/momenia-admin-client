@@ -102,6 +102,11 @@ export const appRouter = createBrowserRouter([
         element: <TemplateDurations />,
         handle: { title: "Template Durations" },
       },
+      {
+        path: "content-invitation-templates",
+        element: <ContentInvitationTemplates />,
+        handle: { title: "Content Invitation Templates" },
+      },
     ],
   },
   {
