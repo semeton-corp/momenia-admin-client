@@ -116,8 +116,72 @@ const RUNTIME_SCRIPT = `(function(){
       reportHeight();
     }
   });
-  if(document.readyState==='complete'){ init(); }
-  else{ window.addEventListener('load', init); }
+  // ── Guest interaction preview (data-momenia-*) ───────────────────────────
+  // In production the real invitation posts these submits up to the app, which
+  // owns the endpoints. There is no host here, so this stub fakes a signed-in
+  // guest with sample messages — enough for an author to see and style RSVP and
+  // guestbook sections. Nothing is sent anywhere.
+  var MOCK_GUEST = 'Haidai';
+  var MOCK_MESSAGES = [
+    { name: 'Haidai',       message: 'Selamat menempuh hidup baru! Bahagia selalu.', messageAt: '2 jam lalu' },
+    { name: 'Rina Astuti',  message: 'Turut berbahagia, semoga samawa ya!',          messageAt: 'Kemarin' }
+  ];
+
+  function when(root, name, on){
+    root.querySelectorAll('[data-momenia-when="'+name+'"]').forEach(function(el){
+      el.style.display = on ? '' : 'none';
+    });
+  }
+
+  function initGuestPreview(){
+    // Preview always behaves as though the link carries a guestInvitationId,
+    // otherwise the author would only ever see the "no-guest" fallback.
+    when(document, 'guest', true);
+    when(document, 'no-guest', false);
+    document.querySelectorAll('[data-momenia-text="guestName"]').forEach(function(el){
+      el.textContent = MOCK_GUEST;
+    });
+
+    document.querySelectorAll('[data-momenia-form]').forEach(function(form){
+      when(form, 'sending', false);
+      when(form, 'success', false);
+      when(form, 'error', false);
+    });
+
+    document.querySelectorAll('[data-momenia-list="messages"]').forEach(function(list){
+      when(list, 'empty', MOCK_MESSAGES.length === 0);
+      var tpl = list.querySelector('template[data-momenia-item]');
+      if(!tpl) return;
+      MOCK_MESSAGES.forEach(function(item){
+        var node = tpl.content.cloneNode(true).firstElementChild;
+        if(!node) return;
+        node.querySelectorAll('[data-momenia-text]').forEach(function(el){
+          var val = item[el.getAttribute('data-momenia-text')];
+          if(val === undefined || val === null || val === ''){ el.style.display = 'none'; return; }
+          el.textContent = val;
+        });
+        list.appendChild(node);
+      });
+    });
+
+    document.addEventListener('submit', function(e){
+      var form = e.target && e.target.closest ? e.target.closest('[data-momenia-form]') : null;
+      if(!form) return;
+      e.preventDefault();
+      when(form, 'error', false);
+      when(form, 'sending', true);
+      setTimeout(function(){
+        when(form, 'sending', false);
+        when(form, 'success', true);
+        reportHeight();
+      }, 500);
+    }, true);
+
+    reportHeight();
+  }
+
+  if(document.readyState==='complete'){ init(); initGuestPreview(); }
+  else{ window.addEventListener('load', function(){ init(); initGuestPreview(); }); }
   try{ new ResizeObserver(reportHeight).observe(document.body); }catch(e){}
 })();`
 
