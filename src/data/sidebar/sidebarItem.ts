@@ -27,6 +27,7 @@ export const sidebarItems = {
         { title: "Overview", url: "/templates/report" },
         { title: "Templates", url: "/templates" },
         { title: "Durations", url: "/templates/durations" },
+        { title: "Content Invitation Templates", url: "/templates/content-invitation-templates" },
       ],
     },
     {
