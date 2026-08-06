@@ -1,259 +1,207 @@
-import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-
-type Catalog = {
-  id: number;
-  catalogPreview: string;
-  title: string;
-  templateId: string;
-};
-
-const initialCatalogs: Catalog[] = [
-  {
-    id: 1,
-    catalogPreview:
-      "https://is3.cloudhost.id/memoria/landing-page/lp_84560ed4-f041-42b2-80a1-8694c0e4a085",
-    title: "wedding invitation",
-    templateId: "",
-  },
-];
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { getLandingPageCatalogs, saveLandingPageCatalogsBatch, type LandingPageCatalog } from "@/api/cms/landing-page-catalogs"
+import { queryKeys } from "@/api/query-keys"
+import { cn } from "@/lib/utils"
 
 const Catalogs = () => {
-  const [newTemplates, setNewTemplates] = useState<Catalog[]>(initialCatalogs);
-  const [memoriaChoices, setMemoriaChoices] =
-    useState<Catalog[]>(initialCatalogs);
-  const [selectedCatalogId, setSelectedCatalogId] = useState<number | null>(
-    initialCatalogs[0]?.id ?? null,
-  );
-  const [editingCatalogId, setEditingCatalogId] = useState<number | null>(null);
-  const [hasChanges, setHasChanges] = useState(false);
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-  const selectedCatalog = useMemo(() => {
-    return (
-      newTemplates.find((catalog) => catalog.id === selectedCatalogId) ??
-      memoriaChoices.find((catalog) => catalog.id === selectedCatalogId) ??
-      null
-    );
-  }, [memoriaChoices, newTemplates, selectedCatalogId]);
+  const { data: catalogs, isLoading, isError, refetch } = useQuery({
+    queryKey: queryKeys.landingPageCatalogs.lists(),
+    queryFn: getLandingPageCatalogs,
+  })
 
-  const editSelectedTemplate = () => {
-    if (!selectedCatalog) return;
-    setEditingCatalogId(selectedCatalog.id);
-  };
+  const [localCatalogs, setLocalCatalogs] = useState<LandingPageCatalog[]>([])
+  const [hasChanges, setHasChanges] = useState(false)
 
-  const updateCatalog = (id: number, field: keyof Catalog, value: string) => {
-    const updateItem = (catalog: Catalog) =>
-      catalog.id === id ? { ...catalog, [field]: value } : catalog;
+  useEffect(() => {
+    if (catalogs) {
+      setLocalCatalogs(catalogs)
+      setHasChanges(false)
+    }
+  }, [catalogs])
 
-    setNewTemplates((templates) => templates.map(updateItem));
-    setMemoriaChoices((templates) => templates.map(updateItem));
-    setHasChanges(true);
-  };
+  const { mutate: saveBatch, isPending: isSaving, error: saveError } = useMutation({
+    mutationFn: saveLandingPageCatalogsBatch,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.landingPageCatalogs.all })
+      setHasChanges(false)
+    },
+  })
 
-  const applyChanges = () => {
-    setEditingCatalogId(null);
-    setHasChanges(false);
-  };
+  const toggleIsNew = (id: number) => {
+    setLocalCatalogs((prev) =>
+      prev.map((c) => c.id === id ? { ...c, isNew: !c.isNew } : c)
+    )
+    setHasChanges(true)
+  }
+
+  const handleApply = () => {
+    saveBatch(
+      localCatalogs.map((c) => ({
+        id: c.id,
+        invitationTemplateId: c.invitationTemplateId,
+        isNew: c.isNew,
+      }))
+    )
+  }
+
+  const handleDiscard = () => {
+    if (catalogs) {
+      setLocalCatalogs(catalogs)
+      setHasChanges(false)
+    }
+  }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-5 md:px-6">
-      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-normal">
-          Catalog Momemia
-        </h1>
+    <main className="min-h-[calc(100vh-4rem)] px-4 py-6 md:px-6 lg:px-7">
+      <div className="mx-auto max-w-[1800px]">
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">Catalog Recommendations</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Choose which templates appear in catalog recommendations and mark each one as new or Momenia's Choice.</p>
+          </div>
 
-        <div className="flex flex-col gap-5 sm:items-end">
-          <Button
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {hasChanges && (
+            <>
+              {saveError && (
+                <span className="text-xs text-destructive">
+                  {saveError instanceof Error ? saveError.message : "Failed to save"}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleDiscard}
+                disabled={isSaving}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+              >
+                Discard
+              </button>
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={isSaving}
+                className="rounded-lg border border-border bg-card/80 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              >
+                {isSaving ? "Saving..." : "Apply changes"}
+              </button>
+            </>
+          )}
+          <button
             type="button"
-            variant="secondary"
-            className="h-11 min-w-48 bg-muted text-muted-foreground"
-            disabled={!hasChanges}
-            onClick={applyChanges}
+            onClick={() => navigate("/landing/catalogs/select")}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Apply changes
-          </Button>
-          <Button
-            type="button"
-            className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-            disabled={!selectedCatalog}
-            onClick={editSelectedTemplate}
-          >
-            Edit Selected Template
-          </Button>
+            Edit selected templates
+          </button>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-8">
-        <CatalogSection
-          title="New Template"
-          catalogs={newTemplates}
-          selectedCatalogId={selectedCatalogId}
-          onSelect={setSelectedCatalogId}
-        />
+      {isLoading && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-3 animate-pulse">
+              <div className="aspect-9/18 rounded-xl bg-muted mb-2" />
+              <div className="h-3 bg-muted rounded mx-auto w-3/4 mb-3" />
+              <div className="h-8 bg-muted rounded-lg" />
+            </div>
+          ))}
+        </div>
+      )}
 
-        {editingCatalogId && selectedCatalog && (
-          <CatalogEditor catalog={selectedCatalog} onUpdate={updateCatalog} />
-        )}
+      {isError && (
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <p className="text-sm text-muted-foreground">Failed to load catalogs.</p>
+          <button onClick={() => refetch()} className="text-sm text-indigo-500 hover:text-indigo-400">
+            Try again
+          </button>
+        </div>
+      )}
 
-        <CatalogSection
-          title="Momenia's Choise's"
-          catalogs={memoriaChoices}
-          selectedCatalogId={selectedCatalogId}
-          onSelect={setSelectedCatalogId}
-          action={
-            <Button
-              type="button"
-              className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-              disabled={!selectedCatalog}
-              onClick={editSelectedTemplate}
+      {!isLoading && !isError && localCatalogs.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
+          <p className="text-sm text-muted-foreground">No catalogs yet.</p>
+          <button
+            onClick={() => navigate("/landing/catalogs/select")}
+            className="mt-3 text-sm text-indigo-500 hover:text-indigo-400"
+          >
+            Select templates →
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !isError && localCatalogs.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {localCatalogs.map((catalog) => (
+            <div
+              key={catalog.id}
+              className={cn(
+                "rounded-2xl border bg-card p-3 flex flex-col transition-colors",
+                catalog.isNew !== catalogs?.find((c) => c.id === catalog.id)?.isNew
+                  ? "border-amber-400"
+                  : "border-border"
+              )}
             >
-              Edit Selected Template
-            </Button>
-          }
-        />
+              {/* Thumbnail */}
+              <div className="aspect-9/18 rounded-xl overflow-hidden bg-muted mb-2">
+                {catalog.invitationTemplateMobileThumbnail ? (
+                  <img
+                    src={catalog.invitationTemplateMobileThumbnail}
+                    alt={catalog.invitationTemplateNameEn}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Name */}
+              <p className="text-xs font-semibold text-foreground text-center truncate mb-2">
+                {catalog.invitationTemplateNameEn}
+              </p>
+
+              {/* isNew toggle */}
+              <div className="flex rounded-lg border border-border overflow-hidden text-xs font-medium mt-auto">
+                <button
+                  type="button"
+                  onClick={() => !catalog.isNew && toggleIsNew(catalog.id)}
+                  className={cn(
+                    "flex-1 py-1.5 transition-colors",
+                    catalog.isNew
+                      ? "bg-orange-500 text-white hover:bg-orange-500"
+                      : "text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  New Template
+                </button>
+                <button
+                  type="button"
+                  onClick={() => catalog.isNew && toggleIsNew(catalog.id)}
+                  className={cn(
+                    "flex-1 py-1.5 transition-colors border-l border-border",
+                    !catalog.isNew
+                      ? "bg-indigo-500 text-white"
+                      : "text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  Momenia's Choice
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       </div>
     </main>
-  );
-};
+  )
+}
 
-type CatalogSectionProps = {
-  title: string;
-  catalogs: Catalog[];
-  selectedCatalogId: number | null;
-  onSelect: (id: number) => void;
-  action?: ReactNode;
-};
-
-const CatalogSection = ({
-  title,
-  catalogs,
-  selectedCatalogId,
-  onSelect,
-  action,
-}: CatalogSectionProps) => {
-  return (
-    <section className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-medium">{title}</h2>
-        {action}
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-        {catalogs.map((catalog) => (
-          <CatalogCard
-            key={catalog.id}
-            catalog={catalog}
-            isSelected={catalog.id === selectedCatalogId}
-            onSelect={() => onSelect(catalog.id)}
-          />
-        ))}
-      </div>
-    </section>
-  );
-};
-
-type CatalogCardProps = {
-  catalog: Catalog;
-  isSelected: boolean;
-  onSelect: () => void;
-};
-
-const CatalogCard = ({ catalog, isSelected, onSelect }: CatalogCardProps) => {
-  return (
-    <button
-      type="button"
-      className={cn(
-        "rounded-lg border bg-card p-3 text-left shadow-sm transition",
-        "hover:border-[#4f46e5]/70 focus-visible:border-[#4f46e5] focus-visible:ring-[#4f46e5]/30 focus-visible:ring-[3px] focus-visible:outline-none",
-        isSelected && "border-[#0ea5e9] ring-2 ring-[#0ea5e9]",
-      )}
-      onClick={onSelect}
-    >
-      <div className="flex justify-center rounded-md bg-background px-3 pt-3">
-        <div className="w-full max-w-44 overflow-hidden rounded-md">
-          <img
-            src={catalog.catalogPreview}
-            alt={catalog.title}
-            className="aspect-[3/4.6] w-full object-cover"
-          />
-        </div>
-      </div>
-
-      <div className="px-2 py-3 text-center">
-        <h3 className="text-base font-semibold">
-          {catalog.title || "Untitled catalog"}
-        </h3>
-      </div>
-    </button>
-  );
-};
-
-type CatalogEditorProps = {
-  catalog: Catalog;
-  onUpdate: (id: number, field: keyof Catalog, value: string) => void;
-};
-
-const CatalogEditor = ({ catalog, onUpdate }: CatalogEditorProps) => {
-  return (
-    <section className="rounded-lg border bg-card p-5 shadow-sm">
-      <div className="grid gap-5 lg:grid-cols-[14rem_1fr]">
-        <div className="rounded-md bg-background p-3">
-          <img
-            src={catalog.catalogPreview}
-            alt={catalog.title}
-            className="aspect-[3/4.6] w-full rounded-md object-cover"
-          />
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor={`catalog-${catalog.id}-title`}>Title</Label>
-            <Input
-              id={`catalog-${catalog.id}-title`}
-              value={catalog.title}
-              placeholder="Type the catalog title"
-              onChange={(event) =>
-                onUpdate(catalog.id, "title", event.target.value)
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`catalog-${catalog.id}-template`}>
-              Template ID
-            </Label>
-            <Input
-              id={`catalog-${catalog.id}-template`}
-              value={catalog.templateId}
-              placeholder="Select or enter template ID"
-              onChange={(event) =>
-                onUpdate(catalog.id, "templateId", event.target.value)
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`catalog-${catalog.id}-preview`}>
-              Catalog Preview
-            </Label>
-            <Input
-              id={`catalog-${catalog.id}-preview`}
-              value={catalog.catalogPreview}
-              placeholder="Paste catalog preview URL"
-              onChange={(event) =>
-                onUpdate(catalog.id, "catalogPreview", event.target.value)
-              }
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-export default Catalogs;
+export default Catalogs

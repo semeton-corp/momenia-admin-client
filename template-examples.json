@@ -1,0 +1,158 @@
+{
+  "name": "Pastel Pop",
+  "descriptionEn": "A playful, colorful wedding invitation with bold pastel shapes, punchy typography, and a fun editorial layout.",
+  "descriptionIdn": "Undangan pernikahan yang ceria dan penuh warna dengan bentuk pastel yang berani, tipografi yang kuat, dan tata letak editorial yang menyenangkan.",
+  "theme_defaults": {
+    "font_body": "Poppins",
+    "font_title": "Fraunces",
+    "color_accent": "#ff6b6b",
+    "color_primary": "#5046a8",
+    "color_background": "#fffaf3"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "label": "Cover",
+      "sections": [
+        {
+          "id": "cover_pastel-pop",
+          "section_type_id": "cover_section"
+        }
+      ]
+    },
+    {
+      "id": "main",
+      "label": "Main Invitation",
+      "sections": [
+        {
+          "id": "hero_pastel-pop",
+          "section_type_id": "hero_section"
+        },
+        {
+          "id": "couple_pastel-pop",
+          "section_type_id": "couple_section"
+        },
+        {
+          "id": "details_pastel-pop",
+          "section_type_id": "details_section"
+        }
+      ]
+    }
+  ],
+  "schema": {
+    "fields": [
+      {
+        "key": "headline",
+        "type": "text",
+        "label": "Nama Pasangan",
+        "section": "hero_section",
+        "required": true,
+        "placeholder": "Budi & Rina"
+      },
+      {
+        "key": "couple_photo",
+        "type": "image",
+        "label": "Foto Pasangan",
+        "section": "cover_section",
+        "required": false,
+        "placeholder": "https://example.com/couple.jpg"
+      },
+      {
+        "key": "bride_name",
+        "type": "text",
+        "label": "Nama Pengantin Wanita",
+        "section": "couple_section",
+        "required": true,
+        "placeholder": "Rina Astuti"
+      },
+      {
+        "key": "groom_name",
+        "type": "text",
+        "label": "Nama Pengantin Pria",
+        "section": "couple_section",
+        "required": true,
+        "placeholder": "Budi Santoso"
+      },
+      {
+        "key": "bride_photo",
+        "type": "image",
+        "label": "Foto Pengantin Wanita",
+        "section": "couple_section",
+        "required": false,
+        "placeholder": "https://example.com/bride.jpg"
+      },
+      {
+        "key": "groom_photo",
+        "type": "image",
+        "label": "Foto Pengantin Pria",
+        "section": "couple_section",
+        "required": false,
+        "placeholder": "https://example.com/groom.jpg"
+      },
+      {
+        "key": "event_date",
+        "type": "date",
+        "label": "Tanggal Acara",
+        "section": "details_section",
+        "required": true
+      },
+      {
+        "key": "event_time",
+        "type": "time",
+        "label": "Waktu Acara",
+        "section": "details_section",
+        "required": true
+      },
+      {
+        "key": "venue_name",
+        "type": "text",
+        "label": "Nama Venue",
+        "section": "details_section",
+        "required": true,
+        "placeholder": "Gedung Balai Kartini"
+      }
+    ]
+  },
+  "sectionTypes": {
+    "hero_section": {
+      "id": "hero_section",
+      "js": "",
+      "css": ".s-hero_section{padding:85px 24px;text-align:center;background:#fffaf3;color:#5046a8}.s-hero_section span{font:800 .7rem var(--font-body);letter-spacing:.19em;color:#ff6b6b}.s-hero_section h2{font:700 clamp(3rem,10vw,5.4rem)/.95 var(--font-title);margin:24px 0}.s-hero_section__pill{display:inline-block;padding:10px 20px;border-radius:999px;background:#b9e6ff;font:800 .7rem var(--font-body);letter-spacing:.15em}\n",
+      "html": "<section class=\"s-hero_section\"><span>GOOD VIBES · GREAT LOVE</span><h2>{{headline}}</h2><div class=\"s-hero_section__pill\">SAVE THE DATE</div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "cover_section": {
+      "id": "cover_section",
+      "js": "(function() {\n  var root = document.currentScript && document.currentScript.closest('[data-template-root]') || document;\n  var btn = root.querySelector('.js-open-invitation');\n  if (btn) {\n    btn.addEventListener('click', function() {\n      if (typeof window.__memoriaGoTo === 'function') window.__memoriaGoTo('main');\n    });\n  }\n})();\n",
+      "css": ".s-cover_section{position:relative;min-height:812px;display:grid;place-items:center;padding:28px;background:#ffd9e8;overflow:hidden}.s-cover_section__shape{position:absolute;border-radius:50%}.s-cover_section__shape--a{width:380px;height:380px;background:#b9e6ff;left:-130px;top:-100px}.s-cover_section__shape--b{width:320px;height:320px;background:#ffe26f;right:-90px;bottom:-70px}.s-cover_section__card{position:relative;z-index:2;width:min(900px,100%);display:grid;grid-template-columns:1.1fr .9fr;background:#fffaf3;border:3px solid #5046a8;border-radius:30px;overflow:hidden;box-shadow:14px 14px 0 #5046a8}.s-cover_section img{width:100%;height:620px;object-fit:cover}.s-cover_section__copy{display:flex;flex-direction:column;justify-content:center;padding:42px}.s-cover_section span{font:700 .72rem var(--font-body);letter-spacing:.17em;color:#ff6b6b}.s-cover_section h1{font:700 clamp(3rem,8vw,5.7rem)/.85 var(--font-title);color:#5046a8;margin:28px 0}.s-cover_section button{align-self:flex-start;padding:14px 22px;border:2px solid #5046a8;border-radius:14px;background:#ffe26f;color:#5046a8;font-weight:800;cursor:pointer}@media(max-width:650px){.s-cover_section__card{grid-template-columns:1fr}.s-cover_section img{height:390px}.s-cover_section__copy{padding:32px}}\n",
+      "html": "<section class=\"s-cover_section\"><div class=\"s-cover_section__shape s-cover_section__shape--a\"></div><div class=\"s-cover_section__shape s-cover_section__shape--b\"></div><div class=\"s-cover_section__card\"><img data-field-img=\"couple_photo\" src=\"{{couple_photo}}\" alt=\"Foto pasangan\"><div class=\"s-cover_section__copy\"><span>WE ARE GETTING MARRIED!</span><h1>{{headline}}</h1><button class=\"js-open-invitation\">LET'S PARTY →</button></div></div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "couple_section": {
+      "id": "couple_section",
+      "js": "",
+      "css": ".s-couple_section{padding:80px 24px;background:#5046a8;color:#fff;display:flex;align-items:center;justify-content:center;gap:30px}.s-couple_section article{text-align:center}.s-couple_section__photo{position:relative;width:240px;height:290px;border-radius:45% 45% 18px 18px;background:#ff9f9f;padding:10px;transform:rotate(-3deg)}.s-couple_section__photo--two{background:#73d2de;transform:rotate(3deg)}.s-couple_section img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.s-couple_section__photo span{position:absolute;right:-10px;top:-12px;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:#ffe26f;color:#5046a8;font-weight:900}.s-couple_section h3{font:700 1.8rem var(--font-title);margin:18px 0 4px}.s-couple_section p{font:800 .68rem var(--font-body);letter-spacing:.18em;color:#ffe26f}.s-couple_section__plus{font:900 4rem var(--font-body);color:#ff9f9f}@media(max-width:650px){.s-couple_section{flex-direction:column}}\n",
+      "html": "<section class=\"s-couple_section\"><article><div class=\"s-couple_section__photo\"><img data-field-img=\"bride_photo\" src=\"{{bride_photo}}\" alt=\"{{bride_name}}\"><span>01</span></div><h3>{{bride_name}}</h3><p>THE BRIDE</p></article><div class=\"s-couple_section__plus\">+</div><article><div class=\"s-couple_section__photo s-couple_section__photo--two\"><img data-field-img=\"groom_photo\" src=\"{{groom_photo}}\" alt=\"{{groom_name}}\"><span>02</span></div><h3>{{groom_name}}</h3><p>THE GROOM</p></article></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "details_section": {
+      "id": "details_section",
+      "js": "",
+      "css": ".s-details_section{padding:85px 24px;background:#fffaf3;color:#5046a8}.s-details_section h2{text-align:center;font:700 3rem var(--font-title)}.s-details_section__grid{max-width:880px;margin:40px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.s-details_section article{padding:30px 20px;border:3px solid #5046a8;border-radius:24px;box-shadow:7px 7px 0 #5046a8;text-align:center}.s-details_section .pink{background:#ffd9e8}.s-details_section .blue{background:#b9e6ff}.s-details_section .yellow{background:#ffe26f}.s-details_section span{font-size:2rem}.s-details_section small{display:block;margin:15px 0 8px;font:800 .68rem var(--font-body);letter-spacing:.18em}.s-details_section strong{font:700 1.1rem/1.35 var(--font-title)}@media(max-width:650px){.s-details_section__grid{grid-template-columns:1fr}}\n",
+      "html": "<section class=\"s-details_section\"><h2>Party Particulars</h2><div class=\"s-details_section__grid\"><article class=\"pink\"><span>📅</span><small>DATE</small><strong data-field=\"event_date\">{{event_date}}</strong></article><article class=\"blue\"><span>⏰</span><small>TIME</small><strong data-field=\"event_time\">{{event_time}}</strong></article><article class=\"yellow\"><span>📍</span><small>PLACE</small><strong data-field=\"venue_name\">{{venue_name}}</strong></article></div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    }
+  }
+}

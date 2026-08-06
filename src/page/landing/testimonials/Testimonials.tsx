@@ -273,101 +273,108 @@ const Testimonials = () => {
   };
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-5 md:px-6">
+    <main className="min-h-[calc(100vh-4rem)] px-4 py-6 md:px-6 lg:px-7">
       {isUploadingImage && <LoadingScreen />}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-normal">Reviews</h1>
+      <div className="mx-auto max-w-[1800px]">
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">Testimonials</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Edit customer reviews shown on the public landing page in both languages.</p>
+          </div>
 
-        <div className="flex flex-col gap-3 sm:items-end">
-          <Button
-            type="button"
-            variant="secondary"
-            className={cn(
-              "h-11 min-w-44",
-              hasChanges
-                ? "bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-                : "bg-muted text-muted-foreground",
-            )}
-            disabled={
-              !hasChanges ||
-              isLoading ||
-              isUploadingImage ||
-              updateMutation.isPending
-            }
-            onClick={applyChanges}
-          >
-            {isUploadingImage
-              ? "Uploading image..."
-              : updateMutation.isPending
-                ? "Applying..."
-                : "Apply changes"}
-          </Button>
-          <Button
-            type="button"
-            className="bg-[#4f46e5] text-white hover:bg-[#4338ca]"
-            disabled={isLoading || isUploadingImage || updateMutation.isPending}
-            onClick={addReview}
-          >
-            <Plus className="size-4" />
-            Add Review
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-w-44"
+              disabled={
+                !hasChanges ||
+                isLoading ||
+                isUploadingImage ||
+                updateMutation.isPending
+              }
+              onClick={applyChanges}
+            >
+              {isUploadingImage
+                ? "Uploading image..."
+                : updateMutation.isPending
+                  ? "Applying..."
+                  : "Apply changes"}
+            </Button>
+            <Button
+              type="button"
+              disabled={isLoading || isUploadingImage || updateMutation.isPending}
+              onClick={addReview}
+            >
+              <Plus className="size-4" />
+              Add review
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {isLoading && (
-        <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm">
-          Loading testimonials...
-        </div>
-      )}
+        {isLoading && (
+          <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground">
+            Loading testimonials...
+          </div>
+        )}
 
-      {isError && (
-        <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <span>Could not load testimonials from the API.</span>
-          <Button type="button" variant="secondary" onClick={() => refetch()}>
-            Try again
-          </Button>
-        </div>
-      )}
+        {isError && (
+          <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <span>Could not load testimonials from the API.</span>
+            <Button type="button" variant="secondary" onClick={() => refetch()}>
+              Try again
+            </Button>
+          </div>
+        )}
 
-      {updateMutation.isError && (
-        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive shadow-sm">
-          Could not apply testimonial changes.
-        </div>
-      )}
+        {updateMutation.isError && (
+          <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive">
+            Could not apply testimonial changes.
+          </div>
+        )}
 
-      {imageUploadError && (
-        <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive shadow-sm">
-          Could not upload testimonial image.
-        </div>
-      )}
+        {imageUploadError && (
+          <div className="mb-6 rounded-lg border bg-card p-5 text-sm text-destructive">
+            Could not upload testimonial image.
+          </div>
+        )}
 
-      <div className="grid gap-8 xl:grid-cols-2 xl:gap-10">
-        {locales.map((locale) => (
-          <section key={locale} className="space-y-6">
-            <h2 className="text-base font-medium">{languageLabels[locale]}</h2>
-
-            <div className="space-y-6">
-              {!isLoading && testimonials.length === 0 && (
-                <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground shadow-sm">
-                  No testimonials yet.
+        <div className="grid gap-6 xl:grid-cols-2 xl:gap-7">
+          {locales.map((locale) => (
+            <section key={locale} className="space-y-4">
+              <div className="flex items-end justify-between border-b border-border/70 pb-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Copy deck</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em]">{languageLabels[locale]}</h2>
                 </div>
-              )}
+                <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {testimonials.length} items
+                </span>
+              </div>
 
-              {testimonials.map((testimonial) => (
-                <ReviewCard
-                  key={testimonial.clientId}
-                  locale={locale}
-                  testimonial={testimonial}
-                  onToggle={toggleReview}
-                  onUpdate={updateReview}
-                  onUpdateRating={updateRating}
-                  onUpdateImage={updateImage}
-                  onRemove={removeReview}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+              <div className="space-y-4">
+                {!isLoading && testimonials.length === 0 && (
+                  <div className="rounded-lg border bg-card p-5 text-sm text-muted-foreground">
+                    No testimonials yet.
+                  </div>
+                )}
+
+                {testimonials.map((testimonial) => (
+                  <ReviewCard
+                    key={testimonial.clientId}
+                    locale={locale}
+                    testimonial={testimonial}
+                    onToggle={toggleReview}
+                    onUpdate={updateReview}
+                    onUpdateRating={updateRating}
+                    onUpdateImage={updateImage}
+                    onRemove={removeReview}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </main>
   );
@@ -413,7 +420,7 @@ const ReviewCard = ({
   };
 
   return (
-    <article className="rounded-lg border bg-card p-5 shadow-sm">
+    <article className="rounded-lg border bg-card p-5">
       <button
         type="button"
         className={cn(
@@ -504,7 +511,7 @@ const ReviewCard = ({
                 id={`${locale}-${testimonial.clientId}-testimonial`}
                 value={testimonialText}
                 placeholder="Type the feature description (Max 50 words)"
-                className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:ring-[3px]"
+                className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px]"
                 onChange={(event) =>
                   onUpdate(
                     testimonial.clientId,

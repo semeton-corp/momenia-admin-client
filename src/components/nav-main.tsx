@@ -19,7 +19,7 @@ export function NavMain({
 }) {
   const navigate = useNavigate();
   return (
-    <SidebarGroup>
+    <SidebarGroup className="px-3 pb-1 pt-3">
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => (
@@ -29,7 +29,7 @@ export function NavMain({
               }}
               key={item.title}
             >
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton className="h-auto min-h-10 px-3 py-2.5" tooltip={item.title}>
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>
