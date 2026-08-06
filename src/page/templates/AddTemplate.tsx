@@ -976,12 +976,14 @@ export default function AddTemplate() {
       if (imported.descriptionIdn) setField("descriptionIdn", imported.descriptionIdn)
       if (imported.theme_defaults) {
         setTemplate((t) => ({ ...t, theme_defaults: imported.theme_defaults }))
+        setThemeJson(JSON.stringify(imported.theme_defaults, null, 2))
       }
       if (imported.pages) {
         setTemplate((t) => ({ ...t, pages: imported.pages }))
       }
       if (imported.schema) {
         setTemplate((t) => ({ ...t, schema: imported.schema }))
+        setSchemaJson(JSON.stringify(imported.schema, null, 2))
       }
       if (imported.sectionTypes) {
         setSectionTypes(imported.sectionTypes)
