@@ -35,6 +35,14 @@
         {
           "id": "details_pastel-pop",
           "section_type_id": "details_section"
+        },
+        {
+          "id": "rsvp_pastel-pop",
+          "section_type_id": "rsvp_section"
+        },
+        {
+          "id": "guestbook_pastel-pop",
+          "section_type_id": "guestbook_section"
         }
       ]
     }
@@ -55,7 +63,7 @@
         "label": "Foto Pasangan",
         "section": "cover_section",
         "required": false,
-        "placeholder": "https://example.com/couple.jpg"
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_efc7bd33-aafd-48a4-8b4f-f6fbfd483312"
       },
       {
         "key": "bride_name",
@@ -79,7 +87,7 @@
         "label": "Foto Pengantin Wanita",
         "section": "couple_section",
         "required": false,
-        "placeholder": "https://example.com/bride.jpg"
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_d3b25674-e7fa-40c5-83e3-9d65d8771bd4"
       },
       {
         "key": "groom_photo",
@@ -87,7 +95,7 @@
         "label": "Foto Pengantin Pria",
         "section": "couple_section",
         "required": false,
-        "placeholder": "https://example.com/groom.jpg"
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_334187c4-e93e-4517-bbf1-14f2bdbc4361"
       },
       {
         "key": "event_date",
@@ -149,6 +157,26 @@
       "js": "",
       "css": ".s-details_section{padding:85px 24px;background:#fffaf3;color:#5046a8}.s-details_section h2{text-align:center;font:700 3rem var(--font-title)}.s-details_section__grid{max-width:880px;margin:40px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.s-details_section article{padding:30px 20px;border:3px solid #5046a8;border-radius:24px;box-shadow:7px 7px 0 #5046a8;text-align:center}.s-details_section .pink{background:#ffd9e8}.s-details_section .blue{background:#b9e6ff}.s-details_section .yellow{background:#ffe26f}.s-details_section span{font-size:2rem}.s-details_section small{display:block;margin:15px 0 8px;font:800 .68rem var(--font-body);letter-spacing:.18em}.s-details_section strong{font:700 1.1rem/1.35 var(--font-title)}@media(max-width:650px){.s-details_section__grid{grid-template-columns:1fr}}\n",
       "html": "<section class=\"s-details_section\"><h2>Party Particulars</h2><div class=\"s-details_section__grid\"><article class=\"pink\"><span>📅</span><small>DATE</small><strong data-field=\"event_date\">{{event_date}}</strong></article><article class=\"blue\"><span>⏰</span><small>TIME</small><strong data-field=\"event_time\">{{event_time}}</strong></article><article class=\"yellow\"><span>📍</span><small>PLACE</small><strong data-field=\"venue_name\">{{venue_name}}</strong></article></div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "rsvp_section": {
+      "id": "rsvp_section",
+      "js": "",
+      "css": ".s-rsvp_section{padding:85px 24px;background:#b9e6ff;color:#5046a8}.s-rsvp_section h2{text-align:center;font:700 3rem var(--font-title)}.s-rsvp_section__lead{text-align:center;margin-top:10px;font:500 .95rem var(--font-body)}.s-rsvp_section__card{max-width:460px;margin:34px auto 0;padding:30px 24px;background:#fffaf3;border:3px solid #5046a8;border-radius:24px;box-shadow:7px 7px 0 #5046a8}.s-rsvp_section label{display:block;margin-bottom:8px;font:800 .68rem var(--font-body);letter-spacing:.18em;text-transform:uppercase}.s-rsvp_section select,.s-rsvp_section input,.s-rsvp_section textarea{width:100%;margin-bottom:18px;padding:13px 15px;font:500 .95rem var(--font-body);color:#5046a8;background:#fff;border:3px solid #5046a8;border-radius:14px}.s-rsvp_section select:focus,.s-rsvp_section input:focus{outline:none;border-color:#ff6b6b}.s-rsvp_section button{width:100%;padding:15px;font:800 .8rem var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:#5046a8;background:#ffe26f;border:3px solid #5046a8;border-radius:14px;box-shadow:4px 4px 0 #5046a8;cursor:pointer}.s-rsvp_section button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #5046a8}.s-rsvp_section button:disabled{opacity:.55;cursor:default;transform:none}.s-rsvp_section__note{margin-top:14px;text-align:center;font:600 .82rem var(--font-body)}.s-rsvp_section__note.ok{color:#2f9e6d}.s-rsvp_section__note.err{color:#d8452f}@media(max-width:650px){.s-rsvp_section h2{font-size:2.2rem}}",
+      "html": "<section class=\"s-rsvp_section\" data-momenia-when=\"guest\"><h2>Konfirmasi Kehadiran</h2><p class=\"s-rsvp_section__lead\">Kepada <strong data-momenia-text=\"guestName\">Tamu Undangan</strong></p><form class=\"s-rsvp_section__card\" data-momenia-form=\"rsvp\"><label for=\"rsvp-status\">Kehadiran</label><select id=\"rsvp-status\" name=\"status\"><option value=\"present\">Ya, saya hadir</option><option value=\"absent\">Maaf, berhalangan</option></select><label for=\"rsvp-total\">Jumlah tamu</label><input id=\"rsvp-total\" type=\"number\" name=\"totalAttendee\" min=\"1\" value=\"1\"><button type=\"submit\">Kirim Konfirmasi</button><p class=\"s-rsvp_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-rsvp_section__note ok\" data-momenia-when=\"success\">Terima kasih! Sampai jumpa di hari bahagia 🎉</p><p class=\"s-rsvp_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form></section>",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    },
+    "guestbook_section": {
+      "id": "guestbook_section",
+      "js": "",
+      "css": ".s-guestbook_section{padding:85px 24px;background:#ffd9e8;color:#5046a8}.s-guestbook_section h2{text-align:center;font:700 3rem var(--font-title)}.s-guestbook_section__card{max-width:460px;margin:34px auto 0;padding:26px 24px;background:#fffaf3;border:3px solid #5046a8;border-radius:24px;box-shadow:7px 7px 0 #5046a8}.s-guestbook_section__from{margin-bottom:14px;font:500 .88rem var(--font-body)}.s-guestbook_section textarea{width:100%;padding:13px 15px;font:500 .95rem var(--font-body);color:#5046a8;background:#fff;border:3px solid #5046a8;border-radius:14px;resize:vertical}.s-guestbook_section textarea:focus{outline:none;border-color:#ff6b6b}.s-guestbook_section button{width:100%;margin-top:16px;padding:15px;font:800 .8rem var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:#5046a8;background:#ffe26f;border:3px solid #5046a8;border-radius:14px;box-shadow:4px 4px 0 #5046a8;cursor:pointer}.s-guestbook_section button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #5046a8}.s-guestbook_section button:disabled{opacity:.55;cursor:default;transform:none}.s-guestbook_section__note{margin-top:14px;text-align:center;font:600 .82rem var(--font-body)}.s-guestbook_section__note.ok{color:#2f9e6d}.s-guestbook_section__note.err{color:#d8452f}.s-guestbook_section__list{max-width:460px;margin:34px auto 0;padding:0;list-style:none}.s-guestbook_section__item{margin-bottom:16px;padding:20px;background:#fffaf3;border:3px solid #5046a8;border-radius:20px;box-shadow:5px 5px 0 #5046a8}.s-guestbook_section__item strong{display:block;font:700 1.05rem var(--font-title)}.s-guestbook_section__item p{margin:8px 0;font:500 .9rem/1.6 var(--font-body)}.s-guestbook_section__item time{font:600 .7rem var(--font-body);opacity:.65}.s-guestbook_section__empty{padding:22px;text-align:center;font:500 .88rem var(--font-body);border:3px dashed #5046a8;border-radius:20px}@media(max-width:650px){.s-guestbook_section h2{font-size:2.2rem}}",
+      "html": "<section class=\"s-guestbook_section\"><h2>Ucapan &amp; Doa</h2><form class=\"s-guestbook_section__card\" data-momenia-form=\"message\" data-momenia-when=\"guest\"><p class=\"s-guestbook_section__from\">Dari <strong data-momenia-text=\"guestName\">Tamu Undangan</strong></p><textarea name=\"message\" rows=\"4\" maxlength=\"500\" placeholder=\"Tulis ucapan dan doa...\" required></textarea><button type=\"submit\">Kirim Ucapan</button><p class=\"s-guestbook_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-guestbook_section__note ok\" data-momenia-when=\"success\">Terima kasih atas ucapannya!</p><p class=\"s-guestbook_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form><ul class=\"s-guestbook_section__list\" data-momenia-list=\"messages\"><template data-momenia-item><li class=\"s-guestbook_section__item\"><strong data-momenia-text=\"name\"></strong><p data-momenia-text=\"message\"></p><time data-momenia-text=\"messageAt\"></time></li></template><li class=\"s-guestbook_section__empty\" data-momenia-when=\"empty\">Belum ada ucapan. Jadilah yang pertama!</li></ul></section>",
       "schema": {
         "slots": [],
         "styles": []

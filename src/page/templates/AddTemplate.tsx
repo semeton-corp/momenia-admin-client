@@ -639,7 +639,20 @@ export default function AddTemplate() {
     let parsedTheme = template.theme_defaults
     try { parsedTheme = JSON.parse(themeJson) } catch { /* noop */ }
     const mainPage = template.pages.find((p) => p.id === "main")
-    return { ...createDefaultInvitation(), theme: parsedTheme, sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [] }
+    // Schema field placeholders (e.g. imported photo URLs) take priority over
+    // the generic mock defaults, so an imported template previews with real content.
+    const schemaDefaults = Object.fromEntries(
+      (template.schema?.fields ?? [])
+        .filter((f) => f.placeholder?.trim())
+        .map((f) => [f.key, f.placeholder as string])
+    )
+    const defaultInvitation = createDefaultInvitation()
+    return {
+      ...defaultInvitation,
+      theme: parsedTheme,
+      sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [],
+      userData: { ...defaultInvitation.userData, ...schemaDefaults },
+    }
   }, [template, themeJson])
 
   const previewHtml = useMemo(() => {
@@ -734,12 +747,14 @@ export default function AddTemplate() {
       if (imported.descriptionIdn) setField("descriptionIdn", imported.descriptionIdn)
       if (imported.theme_defaults) {
         setTemplate((t) => ({ ...t, theme_defaults: imported.theme_defaults }))
+        setThemeJson(JSON.stringify(imported.theme_defaults, null, 2))
       }
       if (imported.pages) {
         setTemplate((t) => ({ ...t, pages: imported.pages }))
       }
       if (imported.schema) {
         setTemplate((t) => ({ ...t, schema: imported.schema }))
+        setSchemaJson(JSON.stringify(imported.schema, null, 2))
       }
       if (imported.sectionTypes) {
         setSectionTypes(imported.sectionTypes)
