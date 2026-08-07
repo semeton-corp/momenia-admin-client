@@ -5,6 +5,7 @@ import { MOCK_TEMPLATE, SECTION_TYPES, createDefaultInvitation } from "@/lib/tem
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
 import { getTemplate, saveTemplate } from "@/lib/template/template-store"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ function JsonEditor({
   example?: string
 }) {
   const [error, setError] = useState<string | null>(null)
+  const [formatting, setFormatting] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
 
   const lastExternalRef = useRef(value)
@@ -90,12 +92,33 @@ function JsonEditor({
     validate(example)
   }
 
+  const handleFormat = async () => {
+    if (!ref.current || error) return
+    setFormatting(true)
+    try {
+      const formatted = await formatJson(ref.current.value)
+      ref.current.value = formatted
+      lastExternalRef.current = formatted
+      onChange(formatted)
+      validate(formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
         <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest">{label}</span>
         <div className="flex items-center gap-3">
           {error && <span className="text-xs text-red-400">{error}</span>}
+          <button
+            onClick={handleFormat}
+            disabled={formatting || !!error}
+            className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40"
+          >
+            {formatting ? "Formatting…" : "Prettier"}
+          </button>
           {example && (
             <button
               onClick={loadExample}
@@ -131,6 +154,19 @@ function SectionCodeEditor({
   onChange: (field: CodeTab, value: string) => void
 }) {
   const tabs: CodeTab[] = ["html", "css", "js"]
+  const [formatting, setFormatting] = useState(false)
+  const formatters: Record<CodeTab, (code: string) => Promise<string>> = { html: formatHtml, css: formatCss, js: formatJs }
+
+  const handleFormat = async () => {
+    setFormatting(true)
+    try {
+      const formatted = await formatters[tab](sectionType[tab])
+      onChange(tab, formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-0.5 px-3 pt-2 pb-0 border-b border-border bg-card shrink-0">
@@ -148,6 +184,13 @@ function SectionCodeEditor({
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 pb-1">
+          <button
+            onClick={handleFormat}
+            disabled={formatting}
+            className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40"
+          >
+            {formatting ? "Formatting…" : "Prettier"}
+          </button>
           <span className="text-[11px] text-muted-foreground/60 font-mono">{sectionType.id}</span>
         </div>
       </div>
