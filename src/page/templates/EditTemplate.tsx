@@ -218,13 +218,12 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
 // ─── PriceInput ───────────────────────────────────────────────────────────────
 
 function PriceInput({ label, value, onChange }: { label: string; value: string; onChange: (raw: string) => void }) {
-  const [focused, setFocused] = useState(false)
   return (
     <div>
       <label className="mb-2 block text-sm font-medium text-foreground">{label}</label>
       <div className="relative">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground select-none">Rp</span>
-        <input type="text" inputMode="numeric" value={focused ? value : formatPrice(value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder="0"
+        <input type="text" inputMode="numeric" value={formatPrice(value)} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder="0"
           className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
       </div>
     </div>
