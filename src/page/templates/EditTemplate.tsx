@@ -783,7 +783,7 @@ export default function EditTemplate() {
 
           <div className="grid grid-cols-2 gap-6">
             <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} />
-            <PriceInput label="Before Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} />
+            <PriceInput label="After Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
