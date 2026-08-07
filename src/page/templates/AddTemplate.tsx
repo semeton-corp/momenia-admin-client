@@ -5,6 +5,8 @@ import { createInvitationTemplate } from "@/api/cms/invitation-templates"
 import { getInvitationTemplateCategories, type InvitationTemplateCategory } from "@/api/cms/invitation-template-categories"
 import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
+import { compressImage } from "@/utils/compressImage"
+import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
 import { createDefaultInvitation } from "@/lib/template/mock-data"
@@ -326,6 +328,7 @@ function ImageUploader({ label, previewUrl, uploading, onFileSelect, error }: { 
 
 function JsonEditor({ label, value, onChange, example }: { label: string; value: string; onChange: (v: string) => void; example?: string }) {
   const [error, setError] = useState<string | null>(null)
+  const [formatting, setFormatting] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
   const lastExternalRef = useRef(value)
 
@@ -347,6 +350,19 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
     lastExternalRef.current = example
     onChange(example); validate(example)
   }
+  const handleFormat = async () => {
+    if (!ref.current || error) return
+    setFormatting(true)
+    try {
+      const formatted = await formatJson(ref.current.value)
+      ref.current.value = formatted
+      lastExternalRef.current = formatted
+      onChange(formatted)
+      validate(formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -354,6 +370,7 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
         <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest">{label}</span>
         <div className="flex items-center gap-3">
           {error && <span className="text-xs text-red-400">{error}</span>}
+          <button onClick={handleFormat} disabled={formatting || !!error} className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40">{formatting ? "Formatting…" : "Prettier"}</button>
           {example && <button onClick={loadExample} className="text-[11px] text-amber-400 hover:text-amber-300 border border-amber-800 hover:border-amber-600 rounded px-2 py-0.5 transition-colors">Load Example</button>}
         </div>
       </div>
@@ -364,6 +381,19 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
 
 function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectionType: SectionTypeDef; tab: CodeTab; onTabChange: (t: CodeTab) => void; onChange: (field: CodeTab, value: string) => void }) {
   const tabs: CodeTab[] = ["html", "css", "js"]
+  const [formatting, setFormatting] = useState(false)
+  const formatters: Record<CodeTab, (code: string) => Promise<string>> = { html: formatHtml, css: formatCss, js: formatJs }
+
+  const handleFormat = async () => {
+    setFormatting(true)
+    try {
+      const formatted = await formatters[tab](sectionType[tab])
+      onChange(tab, formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-0.5 px-3 pt-2 pb-0 border-b border-border bg-card shrink-0">
@@ -371,6 +401,7 @@ function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectio
           <button key={t} onClick={() => onTabChange(t)} className={`px-4 py-1.5 text-xs font-mono font-semibold rounded-t transition-colors ${tab === t ? "bg-background text-amber-400 border-t border-l border-r border-border" : "text-muted-foreground hover:text-foreground/80"}`}>{t.toUpperCase()}</button>
         ))}
         <div className="ml-auto flex items-center gap-2 pb-1">
+          <button onClick={handleFormat} disabled={formatting} className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40">{formatting ? "Formatting…" : "Prettier"}</button>
           <span className="text-[11px] text-muted-foreground/60 font-mono">{sectionType.id}</span>
         </div>
       </div>
@@ -591,6 +622,7 @@ export default function AddTemplate() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [importJson, setImportJson] = useState("")
   const [importError, setImportError] = useState("")
+  const [isImporting, setIsImporting] = useState(false)
   const importFileRef = useRef<HTMLInputElement>(null)
 
   // Step 2 state (template maker)
@@ -618,14 +650,22 @@ export default function AddTemplate() {
 
   const handleMobileUpload = async (file: File) => {
     setUploadingMobile(true)
-    try { const r = await uploadObjectWithPresignedUrl(file, "invitation-template"); setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(file) })) }
+    try {
+      const compressed = await compressImage(file)
+      const r = await uploadObjectWithPresignedUrl(compressed, "invitation-template")
+      setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(compressed) }))
+    }
     catch { setSubmitError("Failed to upload mobile thumbnail.") }
     finally { setUploadingMobile(false) }
   }
 
   const handleDesktopUpload = async (file: File) => {
     setUploadingDesktop(true)
-    try { const r = await uploadObjectWithPresignedUrl(file, "invitation-template"); setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(file) })) }
+    try {
+      const compressed = await compressImage(file)
+      const r = await uploadObjectWithPresignedUrl(compressed, "invitation-template")
+      setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(compressed) }))
+    }
     catch { setSubmitError("Failed to upload desktop thumbnail.") }
     finally { setUploadingDesktop(false) }
   }
@@ -740,7 +780,7 @@ export default function AddTemplate() {
     }
   }
 
-  const handleImportTemplate = () => {
+  const handleImportTemplate = async () => {
     setImportError("")
     try {
       const imported = JSON.parse(importJson)
@@ -773,12 +813,28 @@ export default function AddTemplate() {
         setSchemaJson(JSON.stringify(imported.schema, null, 2))
       }
       if (imported.sectionTypes) {
-        setSectionTypes(imported.sectionTypes)
+        setIsImporting(true)
+        // Imported HTML/CSS/JS usually arrives minified into a single line —
+        // pretty-print each so the code editor is actually readable.
+        const entries = Object.entries(imported.sectionTypes) as [string, SectionTypeDef][]
+        const formatted = await Promise.all(
+          entries.map(async ([id, section]) => {
+            const [html, css, js] = await Promise.all([
+              formatHtml(section.html ?? ""),
+              formatCss(section.css ?? ""),
+              formatJs(section.js ?? ""),
+            ])
+            return [id, { ...section, html, css, js }] as const
+          }),
+        )
+        setSectionTypes(Object.fromEntries(formatted))
       }
       setShowImportModal(false)
       setImportJson("")
     } catch (e) {
       setImportError(e instanceof Error ? e.message : "Invalid JSON format")
+    } finally {
+      setIsImporting(false)
     }
   }
 
@@ -881,8 +937,8 @@ export default function AddTemplate() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => { setShowImportModal(false); setImportJson(""); setImportError("") }} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">Cancel</button>
-                <button onClick={handleImportTemplate} disabled={!importJson.trim()} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">Import</button>
+                <button onClick={() => { setShowImportModal(false); setImportJson(""); setImportError("") }} disabled={isImporting} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60">Cancel</button>
+                <button onClick={handleImportTemplate} disabled={!importJson.trim() || isImporting} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">{isImporting ? "Formatting…" : "Import"}</button>
               </div>
             </div>
           </div>
