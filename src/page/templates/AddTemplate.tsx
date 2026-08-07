@@ -953,7 +953,7 @@ export default function AddTemplate() {
     }
   }
 
-  const handleImportTemplate = () => {
+  const handleImportTemplate = async () => {
     setImportError("")
     try {
       const imported = JSON.parse(importJson)
@@ -986,12 +986,28 @@ export default function AddTemplate() {
         setSchemaJson(JSON.stringify(imported.schema, null, 2))
       }
       if (imported.sectionTypes) {
-        setSectionTypes(imported.sectionTypes)
+        setIsImporting(true)
+        // Imported HTML/CSS/JS usually arrives minified into a single line —
+        // pretty-print each so the code editor is actually readable.
+        const entries = Object.entries(imported.sectionTypes) as [string, SectionTypeDef][]
+        const formatted = await Promise.all(
+          entries.map(async ([id, section]) => {
+            const [html, css, js] = await Promise.all([
+              formatHtml(section.html ?? ""),
+              formatCss(section.css ?? ""),
+              formatJs(section.js ?? ""),
+            ])
+            return [id, { ...section, html, css, js }] as const
+          }),
+        )
+        setSectionTypes(Object.fromEntries(formatted))
       }
       setShowImportModal(false)
       setImportJson("")
     } catch (e) {
       setImportError(e instanceof Error ? e.message : "Invalid JSON format")
+    } finally {
+      setIsImporting(false)
     }
   }
 
