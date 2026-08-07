@@ -29,6 +29,18 @@ function formatPrice(raw: string): string {
   return Number(raw).toLocaleString("id-ID")
 }
 
+// Backend stores categories as UPPER_SNAKE_CASE (e.g. "wedding event" -> "WEDDING_EVENT");
+// display them as Title Case everywhere in this form.
+function formatCategoryLabel(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+}
+
 function makeBlankTemplate(): Template {
   return {
     id: "__new__",
@@ -162,7 +174,12 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  const handleSelect = (cat: InvitationTemplateCategory) => { setInputText(cat.name); onChange({ id: cat.id, name: cat.name }); closeDropdown() }
+  const handleSelect = (cat: InvitationTemplateCategory) => {
+    const label = formatCategoryLabel(cat.name)
+    setInputText(label)
+    onChange({ id: cat.id, name: label })
+    closeDropdown()
+  }
 
   return (
     <div ref={containerRef} className="relative">
@@ -177,9 +194,9 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
       {open && (
         <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
           {suggestions.map((cat) => (
-            <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{cat.name}</button>
+            <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(cat.name)}</button>
           ))}
-          {!loading && inputText.trim() && !suggestions.find((c) => c.name.toLowerCase() === inputText.trim().toLowerCase()) && (
+          {!loading && inputText.trim() && !suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase()) && (
             <button type="button" onMouseDown={(e) => { e.preventDefault(); onChange({ id: null, name: inputText.trim() }); closeDropdown() }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               Create "{inputText.trim()}"
