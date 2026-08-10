@@ -296,12 +296,16 @@ function PriceInput({ label, value, onChange }: { label: string; value: string; 
 
 // ─── ImageUploader ────────────────────────────────────────────────────────────
 
-function ImageUploader({ label, previewUrl, uploading, onFileSelect, error }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void; error?: string }) {
+function ImageUploader({ label, previewUrl, uploading, onFileSelect, error, aspect = "landscape" }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void; error?: string; aspect?: "portrait" | "landscape" }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  // Portrait constrains width (letting aspect-ratio compute height freely);
+  // landscape fills the column width instead. Mixing a width and a height
+  // cap on the same box fights the aspect-ratio and produces neither shape.
+  const aspectClass = aspect === "portrait" ? "aspect-[9/16] w-full max-w-72 mx-auto" : "aspect-video w-full"
   return (
     <div className="flex-1">
       <label className="mb-2 block text-sm font-medium text-foreground">{label} <span className="text-destructive">*</span></label>
-      <div onClick={() => !uploading && inputRef.current?.click()} className={`relative flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-muted-foreground/50 ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}>
+      <div onClick={() => !uploading && inputRef.current?.click()} className={`relative flex ${aspectClass} cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-muted-foreground/50 ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}>
         {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-cover" /> : (
           <>
             <svg className="h-10 w-10 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
@@ -876,8 +880,8 @@ export default function AddTemplate() {
           </div>
 
           <div className="flex gap-6">
-            <ImageUploader label="Mobile Thumbnail" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.name && !uploads.mobileThumbnailKey ? "Mobile thumbnail is required" : undefined} />
-            <ImageUploader label="Desktop Thumbnail" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.name && !uploads.desktopThumbnailKey ? "Desktop thumbnail is required" : undefined} />
+            <ImageUploader label="Mobile Thumbnail" aspect="portrait" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.name && !uploads.mobileThumbnailKey ? "Mobile thumbnail is required" : undefined} />
+            <ImageUploader label="Desktop Thumbnail" aspect="landscape" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.name && !uploads.desktopThumbnailKey ? "Desktop thumbnail is required" : undefined} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
