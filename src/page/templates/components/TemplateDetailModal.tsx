@@ -5,6 +5,7 @@ import { type InvitationTemplate, updateInvitationTemplate } from "@/api/cms/inv
 import { Heart, Star, Smartphone, Monitor, Eye, X, ArrowLeft, ChevronDown, ChevronRight, Info } from "lucide-react"
 import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 export type TemplateDetail = InvitationTemplate & {
@@ -50,6 +51,11 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
   const [_selectedFeatures, setSelectedFeatures] = React.useState<Set<string>>(new Set())
   const [selectedDuration, setSelectedDuration] = React.useState("basic2week")
   const [expandedAddon, setExpandedAddon] = React.useState<string | null>(null)
+  // The modal's `template` prop comes from a query keyed separately from the
+  // list query that `onStatusChange` invalidates, so it won't refresh itself
+  // after a successful status update — track the new status locally instead
+  // of waiting on a refetch that never comes.
+  const [statusOverride, setStatusOverride] = React.useState<"draft" | "active" | "inactive" | null>(null)
 
   React.useEffect(() => {
     setView("mobile")
@@ -58,6 +64,7 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
     setSelectedFeatures(new Set())
     setSelectedDuration("basic2week")
     setExpandedAddon(null)
+    setStatusOverride(null)
   }, [template?.id])
 
   if (!open) return null
@@ -303,8 +310,13 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
 
                 {/* CTA */}
                 {(() => {
-                  const status = template.status?.toLowerCase()
+                  const status = statusOverride ?? template.status?.toLowerCase()
                   const handleStatus = async (next: "draft" | "active" | "inactive") => {
+                    if (next === "active" && status === "active") {
+                      toast.info("Invitation already set to active")
+                      onClose()
+                      return
+                    }
                     setStatusUpdating(true)
                     try {
                       const cat = template.category
@@ -322,6 +334,12 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
                         template: template.template,
                         status: next,
                       })
+                      setStatusOverride(next)
+                      toast.success(
+                        next === "active" ? "Template activated successfully" :
+                        next === "inactive" ? "Template inactivated successfully" :
+                        "Template updated successfully"
+                      )
                       onStatusChange?.()
                     } finally {
                       setStatusUpdating(false)
@@ -336,8 +354,20 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
                       Edit Template
                     </button>
                   )
+                  // Already active from the start (i.e. as loaded, not just after an
+                  // in-modal update) — the activate action has nothing to do here.
+                  const activateBtn = (
+                    <button
+                      className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      onClick={() => handleStatus("active")}
+                      disabled={statusUpdating || status === "active"}
+                    >
+                      {statusUpdating ? "Updating..." : status === "active" ? "Already Active" : "Activate Template"}
+                    </button>
+                  )
                   if (status === "active") return (
                     <div className="flex gap-3 shrink-0">
+                      {activateBtn}
                       {editBtn}
                       <button
                         className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
@@ -350,26 +380,14 @@ export function TemplateDetailModal({ open, template, onClose, isLoading, onStat
                   )
                   if (status === "inactive") return (
                     <div className="flex gap-3 shrink-0">
-                      <button
-                        className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
-                        onClick={() => handleStatus("active")}
-                        disabled={statusUpdating}
-                      >
-                        {statusUpdating ? "Updating..." : "Activate Template"}
-                      </button>
+                      {activateBtn}
                       {editBtn}
                     </div>
                   )
                   // draft
                   return (
                     <div className="flex gap-3 shrink-0">
-                      <button
-                        className="flex-1 h-14 rounded-2xl bg-indigo-600 px-4 text-base font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
-                        onClick={() => handleStatus("active")}
-                        disabled={statusUpdating}
-                      >
-                        {statusUpdating ? "Updating..." : "Activate Template"}
-                      </button>
+                      {activateBtn}
                       {editBtn}
                       <button
                         className="flex-1 h-14 rounded-2xl bg-red-600 px-4 text-base font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
