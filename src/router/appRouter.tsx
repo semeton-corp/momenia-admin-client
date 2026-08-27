@@ -13,6 +13,7 @@ import Admins from "@/page/admins/Admins";
 import AddAdmin from "@/page/admins/AddAdmin";
 import Users from "@/page/users/Users";
 import UserDetail from "@/page/users/UserDetail";
+import MusicManagement from "@/page/musics/MusicManagement";
 import Templates from "@/page/templates/Templates";
 import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate"
@@ -134,6 +135,11 @@ export const appRouter = createBrowserRouter([
         path: "transactions/:id",
         element: <TransactionDetail />,
         handle: { title: "Transaction Detail" },
+      },
+      {
+        path: "musics",
+        element: <MusicManagement />,
+        handle: { title: "Music Management" },
       },
       {
         path: "landing/faq",

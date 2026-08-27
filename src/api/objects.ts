@@ -5,6 +5,7 @@ export type ObjectCategory =
   | "avatar"
   | "invitation-template"
   | "content-invitation-template"
+  | "music"
   | "other";
 
 export type PresignedUploadRequest = {

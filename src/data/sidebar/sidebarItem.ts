@@ -1,5 +1,5 @@
 import { IconDashboard, IconListDetails } from "@tabler/icons-react";
-import { AppWindow, BookUser, ReceiptText, Users } from "lucide-react";
+import { AppWindow, BookUser, Music2, ReceiptText, Users } from "lucide-react";
 
 export const sidebarItems = {
   navMain: [
@@ -44,6 +44,11 @@ export const sidebarItems = {
       title: "Transaction Management",
       url: "/transactions",
       icon: ReceiptText,
+    },
+    {
+      title: "Music Management",
+      url: "/musics",
+      icon: Music2,
     },
   ],
 };
