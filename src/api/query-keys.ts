@@ -105,4 +105,9 @@ export const queryKeys = {
     all: ["content-invitation-templates"] as const,
     lists: () => [...queryKeys.contentInvitationTemplates.all, "list"] as const,
   },
+  musics: {
+    all: ["musics"] as const,
+    lists: () => [...queryKeys.musics.all, "list"] as const,
+    detail: (id: string) => [...queryKeys.musics.all, "detail", id] as const,
+  },
 };
