@@ -32,12 +32,12 @@ type MusicForm = {
   durationSeconds: string;
   isActive: boolean;
   fileName: string;
+  waveform: number[];
 };
 
 type ModalMode = { type: "create" } | { type: "edit"; item: Music };
 
 const WAVEFORM_POINT_COUNT = 160;
-const waveformCache = new Map<string, number[]>();
 
 const emptyForm = (): MusicForm => ({
   title: "",
@@ -47,6 +47,7 @@ const emptyForm = (): MusicForm => ({
   durationSeconds: "",
   isActive: true,
   fileName: "",
+  waveform: [],
 });
 
 function formatDuration(seconds: number) {
@@ -84,6 +85,7 @@ function buildPayload(form: MusicForm): MusicPayload {
     durationSeconds: Number(form.durationSeconds),
     isActive: form.isActive,
     contentType: form.contentType.trim(),
+    waveform: form.waveform,
   };
 }
 
@@ -125,7 +127,35 @@ function buildWaveformBars(audioBuffer: AudioBuffer) {
 
   const maxPeak = Math.max(...peaks, 0.01);
 
-  return peaks.map((peak) => 8 + Math.round((peak / maxPeak) * 78));
+  return peaks.map((peak) => Math.min(100, Math.max(0, Math.round((peak / maxPeak) * 100))));
+}
+
+async function getWaveformBarsFromFile(file: File) {
+  const AudioContextConstructor = getAudioContextConstructor();
+
+  if (!AudioContextConstructor) {
+    throw new Error("Audio decoding is not available in this browser");
+  }
+
+  const audioContext = new AudioContextConstructor();
+
+  try {
+    return buildWaveformBars(await audioContext.decodeAudioData(await file.arrayBuffer()));
+  } finally {
+    await audioContext.close().catch(() => undefined);
+  }
+}
+
+function normalizeWaveformBars(waveform: unknown) {
+  if (!Array.isArray(waveform)) {
+    return [];
+  }
+
+  return waveform.map((amplitude) => Math.min(100, Math.max(0, Math.round(Number(amplitude) || 0))));
+}
+
+function hasValidWaveform(waveform: number[]) {
+  return waveform.length > 0 && waveform.every((amplitude) => Number.isInteger(amplitude) && amplitude >= 0 && amplitude <= 100);
 }
 
 function buildWaveformPath(amplitudes: number[]) {
@@ -150,39 +180,6 @@ function buildWaveformPath(amplitudes: number[]) {
   });
 
   return `M ${topPoints.join(" L ")} L ${bottomPoints.join(" L ")} Z`;
-}
-
-async function getWaveformBarsFromUrl(audioUrl: string) {
-  const cachedBars = waveformCache.get(audioUrl);
-
-  if (cachedBars) {
-    return cachedBars;
-  }
-
-  const AudioContextConstructor = getAudioContextConstructor();
-
-  if (!AudioContextConstructor) {
-    throw new Error("Audio decoding is not available in this browser");
-  }
-
-  const response = await fetch(audioUrl);
-
-  if (!response.ok) {
-    throw new Error("Could not load audio for waveform");
-  }
-
-  const audioContext = new AudioContextConstructor();
-
-  try {
-    const audioBuffer = await audioContext.decodeAudioData(await response.arrayBuffer());
-    const bars = buildWaveformBars(audioBuffer);
-
-    waveformCache.set(audioUrl, bars);
-
-    return bars;
-  } finally {
-    await audioContext.close().catch(() => undefined);
-  }
 }
 
 export default function MusicManagement() {
@@ -250,6 +247,7 @@ export default function MusicManagement() {
       durationSeconds: String(music.durationSeconds),
       isActive: music.isActive,
       fileName: "",
+      waveform: normalizeWaveformBars(music.waveform),
     });
     setFormError("");
     setModal({ type: "edit", item: music });
@@ -267,9 +265,10 @@ export default function MusicManagement() {
     setFormError("");
 
     try {
-      const [uploaded, durationSeconds] = await Promise.all([
+      const [uploaded, durationSeconds, waveform] = await Promise.all([
         uploadObjectWithPresignedUrl(file, "music"),
         readAudioDuration(file).catch(() => 0),
+        getWaveformBarsFromFile(file),
       ]);
 
       setForm((current) => ({
@@ -278,6 +277,7 @@ export default function MusicManagement() {
         contentType: uploaded.contentType || file.type || current.contentType,
         durationSeconds: durationSeconds > 0 ? String(durationSeconds) : current.durationSeconds,
         fileName: file.name,
+        waveform,
       }));
       toast.success("Audio uploaded");
     } catch (error) {
@@ -317,6 +317,11 @@ export default function MusicManagement() {
 
     if (!payload.contentType) {
       setFormError("Content type is required.");
+      return;
+    }
+
+    if (!hasValidWaveform(payload.waveform)) {
+      setFormError("Upload an audio file with a valid waveform.");
       return;
     }
 
@@ -615,13 +620,11 @@ function MetricCard({
 function WaveformSilhouette({
   amplitudes,
   clipId,
-  isLoading,
   onSeekProgress,
   progress,
 }: {
   amplitudes: number[];
   clipId: string;
-  isLoading: boolean;
   onSeekProgress: (progress: number) => void;
   progress: number;
 }) {
@@ -681,7 +684,7 @@ function WaveformSilhouette({
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
-        className={cn("h-full w-full overflow-visible", isLoading && "opacity-60")}
+        className="h-full w-full overflow-visible"
       >
         <path d={path} className="fill-zinc-300 dark:fill-zinc-700" />
         <clipPath id={clipId}>
@@ -706,39 +709,8 @@ function MusicRow({
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const waveformClipId = `waveform-${useId().replace(/:/g, "")}`;
-  const [bars, setBars] = useState(() => fallbackWaveformBars(music.id));
-  const [isWaveformLoading, setIsWaveformLoading] = useState(false);
+  const bars = normalizeWaveformBars(music.waveform);
   const [playbackProgress, setPlaybackProgress] = useState(0);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    const loadWaveform = async () => {
-      setIsWaveformLoading(true);
-
-      try {
-        const nextBars = await getWaveformBarsFromUrl(music.musicUrl);
-
-        if (!isCancelled) {
-          setBars(nextBars);
-        }
-      } catch {
-        if (!isCancelled) {
-          setBars(fallbackWaveformBars(music.id));
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsWaveformLoading(false);
-        }
-      }
-    };
-
-    void loadWaveform();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [music.id, music.musicUrl]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -826,9 +798,8 @@ function MusicRow({
           <span className="sr-only">{isPlaying ? "Pause" : "Play"} {music.title}</span>
         </Button>
         <WaveformSilhouette
-          amplitudes={bars}
+          amplitudes={bars.length > 0 ? bars : fallbackWaveformBars(music.id)}
           clipId={waveformClipId}
-          isLoading={isWaveformLoading}
           onSeekProgress={seekToProgress}
           progress={playbackProgress}
         />
