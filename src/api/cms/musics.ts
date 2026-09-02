@@ -9,6 +9,7 @@ export type Music = {
   contentType: string;
   durationSeconds: number;
   isActive: boolean;
+  waveform: number[];
 };
 
 export type MusicPayload = {
@@ -18,6 +19,7 @@ export type MusicPayload = {
   durationSeconds: number;
   isActive: boolean;
   contentType: string;
+  waveform: number[];
 };
 
 export function getMusics() {
