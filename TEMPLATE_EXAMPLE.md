@@ -50,6 +50,14 @@ Copy this into the **schema.json** editor:
       "placeholder": "https://example.com/couple.jpg"
     },
     {
+      "key": "desktop_background",
+      "label": "Background Desktop",
+      "type": "image",
+      "section": "cover_section",
+      "required": false,
+      "placeholder": "https://example.com/desktop-bg.jpg"
+    },
+    {
       "key": "bride_name",
       "label": "Nama Pengantin Wanita",
       "type": "text",
@@ -86,6 +94,14 @@ Copy this into the **schema.json** editor:
       "section": "details_section",
       "required": true,
       "placeholder": "Gedung Balai Kartini"
+    },
+    {
+      "key": "dress_code",
+      "label": "Dress Code",
+      "type": "select",
+      "section": "details_section",
+      "required": false,
+      "options": ["Batik", "Formal", "Casual"]
     }
   ]
 }
@@ -446,6 +462,16 @@ And this CSS:
 
 - Use `{{fieldName}}` in HTML to reference schema fields
 - Use `data-field-img="fieldName"` on images for image field binding
+- **`select`-type fields** render as a dropdown in the editor's Content panel. Give the
+  field an `options` array of plain strings (see `dress_code` above) — whichever one the
+  couple picks is saved into `fieldValues` as that exact string, so `{{dress_code}}`
+  works in HTML exactly like any text field. No other setup needed per dropdown.
 - Use `var(--color-primary)`, `var(--color-accent)`, `var(--color-background)` for dynamic colors
 - Use `var(--font-title)`, `var(--font-body)` for dynamic fonts
 - Keep responsive design in mind using `clamp()`, percentages, and flexbox
+- **Reserved field key — `desktop_background`**: an `image`-type field with exactly this
+  key (spelling matters, it's not just a label) sets the wallpaper shown behind the
+  phone-shaped invitation on wide/desktop screens. It's read directly by the renderer,
+  not referenced via `{{desktop_background}}` in any section's HTML. If a template
+  omits it, guests see a shared default wallpaper instead — so it's optional, but every
+  template looks better with one that matches its own palette.
