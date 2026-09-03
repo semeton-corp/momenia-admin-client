@@ -6,7 +6,7 @@ import { queryKeys } from "@/api/query-keys"
 import { getInvitationTemplateCategories, type InvitationTemplateCategory } from "@/api/cms/invitation-template-categories"
 import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
-import { compressImage } from "@/utils/compressImage"
+import { ImageUploader } from "@/components/ImageUploader"
 import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
@@ -74,6 +74,13 @@ const EXAMPLE_THEME = JSON.stringify({
 const EXAMPLE_SCHEMA = JSON.stringify({
   fields: [
     { key: "headline", label: "Nama Pasangan", type: "text", section: "hero_section", required: true, placeholder: "Budi & Rina" },
+    // Reserved key — if present, its value becomes the desktop wallpaper behind the
+    // phone-shaped invitation. Falls back to a shared default image when omitted.
+    { key: "desktop_background", label: "Background Desktop", type: "image", section: "cover_section", required: false, placeholder: "https://example.com/desktop-bg.jpg" },
+    // "select" renders a dropdown in the editor's Content panel. `options` is a plain
+    // string list — whatever the couple picks saves into fieldValues as that exact
+    // string, same as any text field, so {{dress_code}} in the section HTML just works.
+    { key: "dress_code", label: "Dress Code", type: "select", section: "details_section", required: false, options: ["Batik", "Formal", "Casual"] },
   ],
 }, null, 2)
 
@@ -228,39 +235,6 @@ function PriceInput({ label, value, onChange }: { label: string; value: string; 
         <input type="text" inputMode="numeric" value={formatPrice(value)} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder="0"
           className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
       </div>
-    </div>
-  )
-}
-
-// ─── ImageUploader ────────────────────────────────────────────────────────────
-
-function ImageUploader({ label, previewUrl, uploading, onFileSelect, error, aspect = "landscape" }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void; error?: string; aspect?: "portrait" | "landscape" }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  // Portrait constrains width (letting aspect-ratio compute height freely);
-  // landscape fills the column width instead. Mixing a width and a height
-  // cap on the same box fights the aspect-ratio and produces neither shape.
-  const aspectClass = aspect === "portrait" ? "aspect-[9/16] w-full max-w-72 mx-auto" : "aspect-video w-full"
-  return (
-    <div className="flex-1">
-      <label className="mb-2 block text-sm font-medium text-foreground">{label} <span className="text-destructive">*</span></label>
-      <div onClick={() => !uploading && inputRef.current?.click()} className={`relative flex ${aspectClass} cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-muted-foreground/50 ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}>
-        {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-cover" /> : (
-          <>
-            <svg className="h-10 w-10 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">Click to upload</p>
-              <p className="text-xs text-muted-foreground">(max size 1 Mb)</p>
-            </div>
-          </>
-        )}
-        {uploading && <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/60"><div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" /></div>}
-        {previewUrl && !uploading && <div className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur-sm">Click to replace</div>}
-      </div>
-      <div className="mt-2 flex justify-center">
-        <button type="button" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading} className="rounded-lg border border-border px-4 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60">{uploading ? "Uploading..." : "Upload Files"}</button>
-      </div>
-      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) onFileSelect(file); e.target.value = "" }} />
     </div>
   )
 }
@@ -457,26 +431,29 @@ function FileTree({ template, sectionTypes: _sectionTypes, selection, onSelect, 
 
 // ─── PreviewWithPageControl ───────────────────────────────────────────────────
 
-function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: string }) {
+function PreviewWithPageControl({ html: liveHtml, page, onPageChange }: { html: string; page: string; onPageChange: (pageId: string) => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [height, setHeight] = useState(812)
   const isLoadedRef = useRef(false)
   const pageRef = useRef(page)
   pageRef.current = page
-
   // Reloading the iframe on every keystroke freezes the editor on large pastes.
   const html = useDebouncedValue(liveHtml, 500)
 
+  // A template can navigate itself (its own "Let's Party" button), so mirror that
+  // back into the page tabs.
   useEffect(() => {
-    const handler = (e: MessageEvent) => { if (e.data?.type === "memoriaResize" && typeof e.data.height === "number") setHeight(e.data.height) }
+    const handler = (e: MessageEvent) => {
+      if (e.source !== iframeRef.current?.contentWindow) return
+      if (e.data?.type === "memoriaPageChange" && typeof e.data.pageId === "string") onPageChange(e.data.pageId)
+    }
     window.addEventListener("message", handler)
     return () => window.removeEventListener("message", handler)
-  }, [])
+  }, [onPageChange])
 
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe || !html) return
-    isLoadedRef.current = false; setHeight(812)
+    isLoadedRef.current = false
     const onLoad = () => { isLoadedRef.current = true; iframe.contentWindow?.postMessage({ type: "memoriaGoTo", pageId: pageRef.current }, "*") }
     iframe.addEventListener("load", onLoad, { once: true })
     iframe.setAttribute("srcdoc", html)
@@ -493,9 +470,9 @@ function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: 
     <div className="flex flex-col items-center gap-3">
       <div className="relative overflow-hidden shrink-0" style={{ width: 391, borderRadius: "2.5rem", background: "#1a1a1a", border: "8px solid #111", outline: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 32px 64px rgba(0,0,0,0.4)" }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 rounded-b-xl" style={{ width: 120, height: 28, background: "#111" }} />
-        <iframe ref={iframeRef} sandbox="allow-scripts" style={{ width: 375, height, display: "block", border: 0 }} title="Template Preview" />
+        <iframe ref={iframeRef} sandbox="allow-scripts" style={{ width: 375, height: 812, display: "block", border: 0 }} title="Template Preview" />
       </div>
-      <p className="text-xs text-muted-foreground pb-4">Live Preview — 375px</p>
+      <p className="text-xs text-muted-foreground pb-4">Live Preview — 375 x 812</p>
     </div>
   )
 }
@@ -604,12 +581,13 @@ export default function EditTemplate() {
     setErrors((e) => ({ ...e, [key]: undefined }))
   }
 
+  // ImageUploader already crops and compresses the file before calling these, so
+  // uploading it as-is here doesn't run it through compressImage a second time.
   const handleMobileUpload = async (file: File) => {
     setUploadingMobile(true)
     try {
-      const compressed = await compressImage(file)
-      const r = await uploadObjectWithPresignedUrl(compressed, "invitation-template")
-      setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(compressed) }))
+      const r = await uploadObjectWithPresignedUrl(file, "invitation-template")
+      setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(file) }))
     }
     catch { setSubmitError("Failed to upload mobile thumbnail.") }
     finally { setUploadingMobile(false) }
@@ -618,9 +596,8 @@ export default function EditTemplate() {
   const handleDesktopUpload = async (file: File) => {
     setUploadingDesktop(true)
     try {
-      const compressed = await compressImage(file)
-      const r = await uploadObjectWithPresignedUrl(compressed, "invitation-template")
-      setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(compressed) }))
+      const r = await uploadObjectWithPresignedUrl(file, "invitation-template")
+      setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(file) }))
     }
     catch { setSubmitError("Failed to upload desktop thumbnail.") }
     finally { setUploadingDesktop(false) }
@@ -878,7 +855,7 @@ export default function EditTemplate() {
             ))}
           </div>
           <div className="flex-1 overflow-auto flex items-start justify-center p-4">
-            <PreviewWithPageControl html={previewHtml} page={previewPage} />
+            <PreviewWithPageControl html={previewHtml} page={previewPage} onPageChange={setPreviewPage} />
           </div>
         </aside>
       </div>
