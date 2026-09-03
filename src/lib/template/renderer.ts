@@ -62,30 +62,31 @@ export function buildThemeCSS(theme: Theme): string {
 //   - window.__memoriaGoTo(pageId) — show a page by id, hide all others
 //   - postMessage "memoriaGoTo" { pageId } — same, triggered from parent (admin preview)
 //   - postMessage "memoriaUpdate" — live-update data-field slots and CSS vars
-//   - postMessage "memoriaResize" — reports body height back to parent
+//   - postMessage "memoriaPageChange" — tells the parent which page is showing, so a
+//     template's own nav button ("Let's Party") keeps the editor's tabs in sync
 const RUNTIME_SCRIPT = `(function(){
   function getPages(){
     return Array.from(document.querySelectorAll('[data-memoria-page]'));
   }
-  function reportHeight(){
-    var pages = getPages();
-    var active = pages.find(function(el){ return el.style.display !== 'none'; }) || pages[0];
-    // First page is always fullscreen — report fixed height to avoid resize loop
-    var isFirst = active && active === pages[0];
-    var h = isFirst ? 812 : (active ? active.scrollHeight : document.body.scrollHeight);
-    window.parent.postMessage({type:'memoriaResize', height: h}, '*');
-  }
+  // Kept only so older previews listening for it don't break: the phone mockup is a
+  // fixed 375x812 viewport now and each page scrolls inside it, exactly like the
+  // guest's real screen — the frame no longer grows to fit the page.
+  function reportHeight(){}
   window.__memoriaGoTo = function(pageId){
     getPages().forEach(function(el){
-      el.style.display = el.dataset.memoriaPage === pageId ? 'block' : 'none';
+      // '' (not 'block') so the cover keeps the flex layout that stretches it to a
+      // full screen; 'block' would flatten it back to a short, content-sized page.
+      el.style.display = el.dataset.memoriaPage === pageId ? '' : 'none';
     });
-    setTimeout(reportHeight, 40);
+    // Each page starts at its own top rather than inheriting the previous scroll.
+    document.body.scrollTop = 0;
+    window.parent.postMessage({type:'memoriaPageChange', pageId: pageId}, '*');
   };
   function init(){
-    // Show only the first page on load
+    // Pages are already separated by inline display in the markup, so nothing to
+    // show or hide here — this only announces the starting page to the parent.
     var pages = getPages();
-    pages.forEach(function(el, i){ el.style.display = i === 0 ? 'block' : 'none'; });
-    reportHeight();
+    if(pages[0]) window.parent.postMessage({type:'memoriaPageChange', pageId: pages[0].dataset.memoriaPage}, '*');
   }
   window.addEventListener('message', function(e){
     if(!e.data) return;
@@ -180,9 +181,10 @@ const RUNTIME_SCRIPT = `(function(){
     reportHeight();
   }
 
-  if(document.readyState==='complete'){ init(); initGuestPreview(); }
-  else{ window.addEventListener('load', function(){ init(); initGuestPreview(); }); }
-  try{ new ResizeObserver(reportHeight).observe(document.body); }catch(e){}
+  // DOMContentLoaded, not load: waiting on every image and web font left both pages
+  // stacked and visible for as long as the assets took to arrive.
+  if(document.readyState!=='loading'){ init(); initGuestPreview(); }
+  else{ document.addEventListener('DOMContentLoaded', function(){ init(); initGuestPreview(); }); }
 })();`
 
 export function renderInvitation(
@@ -203,7 +205,7 @@ export function renderInvitation(
   const allJS: string[] = []
   const pageBlocks: string[] = []
 
-  for (const page of pages) {
+  for (const [pageIndex, page] of pages.entries()) {
     const isMain = page.id === "main"
 
     const pageSections = Array.isArray(page?.sections) ? page.sections : []
@@ -224,8 +226,12 @@ export function renderInvitation(
       if (rendered.js) allJS.push(rendered.js)
     }
 
+    // Non-first pages are hidden in the markup itself, not by the runtime: the
+    // browser paints the document before any script runs, so hiding them in JS
+    // showed every page stacked together for the first frames.
+    const isCover = pageIndex === 0
     pageBlocks.push(
-      `<div data-memoria-page="${page.id}">${sectionsHTML.join("\n")}</div>`
+      `<div data-memoria-page="${page.id}"${isCover ? " data-memoria-cover" : ' style="display:none"'}>${sectionsHTML.join("\n")}</div>`
     )
   }
 
@@ -243,7 +249,18 @@ export function renderInvitation(
     ${themeCSS}
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    /* The preview is a fixed 375x812 phone viewport: <html> clips at that size and
+       <body> carries the scrollbar, so each page scrolls inside the mockup instead
+       of stretching the frame — same as the guest's real screen. */
+    html { height: 100%; overflow: hidden; }
+    body { height: 100%; overflow-y: auto; overflow-x: hidden; }
     body { background: var(--color-background); color: var(--color-primary); font-family: var(--font-body); }
+    /* The cover is a full-screen splash, but templates size it in fixed pixels
+       (e.g. min-height:812px). Stretching it to whatever height it's given fixes
+       every template at once; the template's own min-height stays the floor.
+       Deliberately not applied to the other pages — those scroll through sections. */
+    [data-memoria-cover] { min-height: 100%; display: flex; flex-direction: column; }
+    [data-memoria-cover] > * { flex: 1 0 auto; }
     ${allCSS.join("\n")}
   </style>
 </head>
