@@ -945,12 +945,48 @@ export default function AddTemplate() {
 
   const handleImportFile = async (file: File) => {
     setImportError("")
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setImportFileName("")
+      setImportError(`"${file.name}" is not a .json file`)
+      return
+    }
     try {
       const text = await file.text()
       setImportJson(text)
-    } catch (e) {
+      setImportFileName(file.name)
+    } catch {
+      setImportFileName("")
       setImportError("Failed to read file")
     }
+  }
+
+  const resetDrag = () => { dragDepthRef.current = 0; setIsDraggingFile(false) }
+
+  const handleDropZoneDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepthRef.current += 1
+    setIsDraggingFile(true)
+  }
+
+  const handleDropZoneDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepthRef.current -= 1
+    if (dragDepthRef.current <= 0) resetDrag()
+  }
+
+  const handleDropZoneDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    resetDrag()
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleImportFile(file)
+  }
+
+  const closeImportModal = () => {
+    setShowImportModal(false)
+    setImportJson("")
+    setImportError("")
+    setImportFileName("")
+    resetDrag()
   }
 
   const handleImportTemplate = async () => {
@@ -1002,8 +1038,7 @@ export default function AddTemplate() {
         )
         setSectionTypes(Object.fromEntries(formatted))
       }
-      setShowImportModal(false)
-      setImportJson("")
+      closeImportModal()
     } catch (e) {
       setImportError(e instanceof Error ? e.message : "Invalid JSON format")
     } finally {
