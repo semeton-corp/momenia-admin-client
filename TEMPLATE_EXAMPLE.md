@@ -96,12 +96,12 @@ Copy this into the **schema.json** editor:
       "placeholder": "Gedung Balai Kartini"
     },
     {
-      "key": "dress_code",
-      "label": "Dress Code",
+      "key": "event_timezone",
+      "label": "Time Zone",
       "type": "select",
       "section": "details_section",
       "required": false,
-      "options": ["Batik", "Formal", "Casual"]
+      "options": ["WIB", "WIT", "WITA"]
     }
   ]
 }
@@ -463,8 +463,8 @@ And this CSS:
 - Use `{{fieldName}}` in HTML to reference schema fields
 - Use `data-field-img="fieldName"` on images for image field binding
 - **`select`-type fields** render as a dropdown in the editor's Content panel. Give the
-  field an `options` array of plain strings (see `dress_code` above) — whichever one the
-  couple picks is saved into `fieldValues` as that exact string, so `{{dress_code}}`
+  field an `options` array of plain strings (see `event_timezone` above) — whichever one
+  the couple picks is saved into `fieldValues` as that exact string, so `{{event_timezone}}`
   works in HTML exactly like any text field. No other setup needed per dropdown.
 - Use `var(--color-primary)`, `var(--color-accent)`, `var(--color-background)` for dynamic colors
 - Use `var(--font-title)`, `var(--font-body)` for dynamic fonts
