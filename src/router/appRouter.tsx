@@ -19,6 +19,7 @@ import TemplateMaker from "@/page/templates/TemplateMaker";
 import AddTemplate from "@/page/templates/AddTemplate"
 import EditTemplate from "@/page/templates/EditTemplate";
 import TemplateReport from "@/page/templates/TemplateReport";
+import TemplatePreview from "@/page/templates/TemplatePreview";
 import TemplateDurations from "@/page/templates/durations/TemplateDurations";
 import ContentInvitationTemplates from "@/page/templates/content-invitation-templates/ContentInvitationTemplates";
 import { ensureAuthenticated } from "@/lib/auth";
@@ -49,6 +50,14 @@ export const appRouter = createBrowserRouter([
   {
     path: "/auth/callback",
     element: <AuthCallback />,
+  },
+  {
+    // Listed before the /templates layout route so this exact path wins: the preview
+    // is a standalone tab (no sidebar, no header) filling the window, the same way
+    // the user client's /[locale]/preview route stands outside its dashboard shell.
+    path: "/templates/preview",
+    element: <TemplatePreview />,
+    loader: requireAuth,
   },
   {
     path: "/templates",
