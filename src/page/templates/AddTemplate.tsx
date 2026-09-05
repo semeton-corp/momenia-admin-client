@@ -9,7 +9,10 @@ import { ImageUploader } from "@/components/ImageUploader"
 import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
+import { openTemplatePreview } from "@/lib/template/preview-window"
 import { createDefaultInvitation } from "@/lib/template/mock-data"
+import { parseThemeJson, parseSchemaJson, findTemplateJsonIssue } from "@/lib/template/validate"
+import { PreviewErrorBoundary } from "@/components/PreviewErrorBoundary"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
@@ -139,14 +142,14 @@ const EXAMPLE_SCHEMA = JSON.stringify({
     },
     // "select" renders a dropdown in the editor's Content panel. `options` is a plain
     // string list — whatever the couple picks saves into fieldValues as that exact
-    // string, same as any text field, so {{dress_code}} in the section HTML just works.
+    // string, same as any text field, so {{event_timezone}} in the section HTML just works.
     {
-      key: "dress_code",
-      label: "Dress Code",
+      key: "event_timezone",
+      label: "Time Zone",
       type: "select",
       section: "details_section",
       required: false,
-      options: ["Batik", "Formal", "Casual"],
+      options: ["WIB", "WIT", "WITA"],
     },
   ],
 }, null, 2)
@@ -318,7 +321,7 @@ function PriceInput({ label, value, onChange }: { label: string; value: string; 
 
 // ─── TemplateMaker sub-components (inlined for step 2) ───────────────────────
 
-function JsonEditor({ label, value, onChange, example }: { label: string; value: string; onChange: (v: string) => void; example?: string }) {
+function JsonEditor({ label, value, onChange, example, validate: validateValue }: { label: string; value: string; onChange: (v: string) => void; example?: string; validate?: (v: string) => string | null }) {
   const [error, setError] = useState<string | null>(null)
   const [formatting, setFormatting] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -333,6 +336,9 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
 
   const validate = (v: string) => {
     if (!v.trim()) { setError(null); return }
+    // The page passes a validator that checks the document's shape too, not just
+    // its syntax — same rule that decides whether the edit reaches the preview.
+    if (validateValue) { setError(validateValue(v)); return }
     try { JSON.parse(v); setError(null) } catch (e) { setError(`Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`) }
   }
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const v = e.target.value; lastExternalRef.current = v; onChange(v); validate(v) }
@@ -692,24 +698,42 @@ export default function AddTemplate() {
   // ── Template maker helpers ──────────────────────────────────────────────────
 
   const previewInvitation = useMemo<Invitation>(() => {
-    let parsedTheme = template.theme_defaults
-    try { parsedTheme = JSON.parse(themeJson) } catch { /* noop */ }
-    const mainPage = template.pages.find((p) => p.id === "main")
-    // Schema field placeholders (e.g. imported photo URLs) take priority over
-    // the generic mock defaults, so an imported template previews with real content.
-    const schemaDefaults = Object.fromEntries(
-      (template.schema?.fields ?? [])
-        .filter((f) => f.placeholder?.trim())
-        .map((f) => [f.key, f.placeholder as string])
-    )
     const defaultInvitation = createDefaultInvitation()
-    return {
-      ...defaultInvitation,
-      theme: parsedTheme,
-      sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [],
-      userData: { ...defaultInvitation.userData, ...schemaDefaults },
+    try {
+      const parsedTheme = parseThemeJson(themeJson)
+      const mainPage = Array.isArray(template.pages) ? template.pages.find((p) => p.id === "main") : undefined
+      // Guarded rather than trusted: an imported template (or a hand-edited
+      // schema.json that got past the editor) can carry a non-array here, and
+      // mapping over it would throw during render — killing the whole route.
+      const fields = Array.isArray(template.schema?.fields) ? template.schema.fields : []
+      // Schema field placeholders (e.g. imported photo URLs) take priority over
+      // the generic mock defaults, so an imported template previews with real content.
+      // select-type fields have no placeholder (they use `options` instead) — without
+      // this, a raw `{{fieldKey}}` token was left in the preview HTML since renderSection
+      // only substitutes keys it finds in userData, so it seeds the first option instead.
+      const schemaDefaults = Object.fromEntries(
+        fields
+          .map((f): [string, string] | null => {
+            if (f?.placeholder?.trim()) return [f.key, f.placeholder]
+            if (f?.type === "select" && f.options?.[0]?.trim()) return [f.key, f.options[0]]
+            return null
+          })
+          .filter((entry): entry is [string, string] => entry !== null)
+      )
+      return {
+        ...defaultInvitation,
+        theme: parsedTheme.ok ? parsedTheme.value : template.theme_defaults,
+        sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [],
+        userData: { ...defaultInvitation.userData, ...schemaDefaults },
+      }
+    } catch {
+      // Last resort — the preview falls back to plain mock data instead of the
+      // editor going down with it. renderInvitation() reports the real problem.
+      return defaultInvitation
     }
   }, [template, themeJson])
+
+  const jsonIssue = useMemo(() => findTemplateJsonIssue(themeJson, schemaJson), [themeJson, schemaJson])
 
   const previewHtml = useMemo(() => {
     try {
@@ -719,8 +743,22 @@ export default function AddTemplate() {
     }
   }, [template, previewInvitation, sectionTypes])
 
-  const handleThemeJson = useCallback((v: string) => { setThemeJson(v); try { setTemplate((t) => ({ ...t, theme_defaults: JSON.parse(v) })) } catch { /* noop */ } }, [])
-  const handleSchemaJson = useCallback((v: string) => { setSchemaJson(v); try { setTemplate((t) => ({ ...t, schema: JSON.parse(v) })) } catch { /* noop */ } }, [])
+  // Parse *before* calling setTemplate, never inside the updater: React runs an
+  // updater later, during render, where this try/catch no longer applies — a throw
+  // there escapes into React and takes the whole route down. While the JSON is
+  // mid-edit the commit is simply skipped, so the preview holds its last valid render.
+  const handleThemeJson = useCallback((v: string) => {
+    setThemeJson(v)
+    const parsed = parseThemeJson(v)
+    if (parsed.ok) setTemplate((t) => ({ ...t, theme_defaults: parsed.value }))
+  }, [])
+  const handleSchemaJson = useCallback((v: string) => {
+    setSchemaJson(v)
+    const parsed = parseSchemaJson(v)
+    if (parsed.ok) setTemplate((t) => ({ ...t, schema: parsed.value }))
+  }, [])
+  const validateThemeJson = useCallback((v: string) => { const r = parseThemeJson(v); return r.ok ? null : r.error }, [])
+  const validateSchemaJson = useCallback((v: string) => { const r = parseSchemaJson(v); return r.ok ? null : r.error }, [])
   const handleSectionCode = useCallback((id: string, field: CodeTab, value: string) => { setSectionTypes((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } })) }, [])
   const handleDeleteSectionType = useCallback((id: string) => { setSectionTypes((prev) => { const next = { ...prev }; delete next[id]; return next }); setSelection((s) => (s?.kind === "section" && s.sectionTypeId === id ? null : s)) }, [])
   const handleAddPage = useCallback((id: string, label: string) => { setTemplate((prev) => ({ ...prev, pages: [...prev.pages, { id, label, sections: [] }] })) }, [])
@@ -740,6 +778,9 @@ export default function AddTemplate() {
   const handleTabChange = useCallback((tab: CodeTab) => { setSelection((s) => s?.kind === "section" ? { ...s, tab } : s) }, [])
 
   const handleSaveTemplate = () => {
+    // Belt and braces — the button is disabled in this state, but never persist a
+    // template whose on-screen JSON disagrees with what's committed to `template`.
+    if (jsonIssue) { setSubmitError(`Fix ${jsonIssue.pane} before saving — ${jsonIssue.message}`); return }
     setSaving(true)
     setSubmitError("")
 
@@ -766,8 +807,11 @@ export default function AddTemplate() {
   }
 
   const handlePreviewTemplate = () => {
-    const win = window.open("", "_blank")
-    if (win) { win.document.write(previewHtml); win.document.close() }
+    openTemplatePreview(previewHtml, {
+      userData: previewInvitation.userData,
+      theme: previewInvitation.theme,
+      activePage: previewPage,
+    })
   }
 
   const handleImportFile = async (file: File) => {
@@ -1037,7 +1081,13 @@ export default function AddTemplate() {
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Preview
           </button>
-          <button onClick={handleSaveTemplate} disabled={saving} className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors ${saving ? "bg-muted text-muted-foreground" : "bg-amber-600 hover:bg-amber-500 text-white"}`}>
+          {jsonIssue && (
+            <span title={`${jsonIssue.pane}: ${jsonIssue.message}`} className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+              Invalid {jsonIssue.pane}
+            </span>
+          )}
+          <button onClick={handleSaveTemplate} disabled={saving || jsonIssue !== null} title={jsonIssue ? `Fix ${jsonIssue.pane} before saving — ${jsonIssue.message}` : undefined} className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors ${saving || jsonIssue ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500 text-white"}`}>
             {saving ? "Saving..." : "Save Template"}
           </button>
         </div>
@@ -1059,8 +1109,8 @@ export default function AddTemplate() {
               ? <SectionCodeEditor sectionType={sectionTypes[selection.sectionTypeId]} tab={selection.tab} onTabChange={handleTabChange} onChange={(field, val) => handleSectionCode(selection.sectionTypeId, field, val)} />
               : <div className="flex flex-1 items-center justify-center text-red-400 text-sm">Section type "{selection.sectionTypeId}" not found.</div>
           ) : selection.kind === "theme"
-            ? <JsonEditor label="theme.json" value={themeJson} onChange={handleThemeJson} example={EXAMPLE_THEME} />
-            : <JsonEditor label="schema.json" value={schemaJson} onChange={handleSchemaJson} example={EXAMPLE_SCHEMA} />
+            ? <JsonEditor label="theme.json" value={themeJson} onChange={handleThemeJson} example={EXAMPLE_THEME} validate={validateThemeJson} />
+            : <JsonEditor label="schema.json" value={schemaJson} onChange={handleSchemaJson} example={EXAMPLE_SCHEMA} validate={validateSchemaJson} />
           }
         </main>
 
@@ -1072,7 +1122,9 @@ export default function AddTemplate() {
             ))}
           </div>
           <div className="flex-1 overflow-auto flex items-start justify-center p-4">
-            <PreviewWithPageControl html={previewHtml} page={previewPage} onPageChange={setPreviewPage} />
+            <PreviewErrorBoundary>
+              <PreviewWithPageControl html={previewHtml} page={previewPage} onPageChange={setPreviewPage} />
+            </PreviewErrorBoundary>
           </div>
         </aside>
       </div>
