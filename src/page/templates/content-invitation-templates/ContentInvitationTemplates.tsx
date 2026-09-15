@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef, useState, type DragEvent } from "react"
 import { Copy, ImagePlus, Plus, RefreshCw, Trash2, Upload, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -15,7 +15,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/utils/compressImage"
 import { formatApiDate } from "@/utils/formatApiDate"
+
+const MAX_IMAGE_BYTES = 1024 * 1024
+
+function formatBytes(bytes: number) {
+  return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(2)} MB` : `${Math.round(bytes / 1024)} KB`
+}
 
 type CreatePayload = {
   name: string
@@ -34,6 +41,8 @@ export default function ContentInvitationTemplates() {
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState("")
   const [formError, setFormError] = useState("")
+  const [isDragging, setIsDragging] = useState(false)
+  const [isCompressing, setIsCompressing] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ContentInvitationTemplate | null>(null)
 
   const {
@@ -95,16 +104,60 @@ export default function ContentInvitationTemplates() {
     },
   })
 
-  const handleFileSelect = (selectedFile: File | undefined) => {
+  const handleFileSelect = async (selectedFile: File | undefined) => {
     if (!selectedFile) return
+
+    if (!selectedFile.type.startsWith("image/")) {
+      setFormError("Please choose a PNG, JPG, or WEBP image")
+      return
+    }
+
+    setFormError("")
+    let finalFile = selectedFile
+
+    if (selectedFile.size > MAX_IMAGE_BYTES) {
+      setIsCompressing(true)
+      try {
+        finalFile = await compressImage(selectedFile, {
+          maxWidth: 4096,
+          maxHeight: 4096,
+          targetSizeBytes: MAX_IMAGE_BYTES,
+        })
+      } catch {
+        setFormError("Could not compress this image. Please try another file.")
+        return
+      } finally {
+        setIsCompressing(false)
+      }
+
+      if (finalFile.size > MAX_IMAGE_BYTES) {
+        setFormError(`Image is still ${formatBytes(finalFile.size)} after compression. Please use a smaller image.`)
+        return
+      }
+
+      toast.success(`Image compressed from ${formatBytes(selectedFile.size)} to ${formatBytes(finalFile.size)}`)
+    }
 
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl)
     }
 
-    setFile(selectedFile)
-    setPreviewUrl(URL.createObjectURL(selectedFile))
-    setFormError("")
+    setFile(finalFile)
+    setPreviewUrl(URL.createObjectURL(finalFile))
+  }
+
+  const handleDragOver = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    if (isBusy) return
+    event.dataTransfer.dropEffect = "copy"
+    setIsDragging(true)
+  }
+
+  const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    setIsDragging(false)
+    if (isBusy) return
+    void handleFileSelect(event.dataTransfer.files?.[0])
   }
 
   const handleCreate = () => {
@@ -134,6 +187,7 @@ export default function ContentInvitationTemplates() {
   }
 
   const isSaving = createMutation.isPending
+  const isBusy = isSaving || isCompressing
   const isDeleting = deleteMutation.isPending
 
   return (
@@ -234,11 +288,20 @@ export default function ContentInvitationTemplates() {
                 <Label>Image</Label>
                 <button
                   type="button"
-                  disabled={isSaving}
+                  disabled={isBusy}
                   onClick={() => fileInputRef.current?.click()}
+                  onDragEnter={handleDragOver}
+                  onDragOver={handleDragOver}
+                  onDragLeave={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      setIsDragging(false)
+                    }
+                  }}
+                  onDrop={handleDrop}
                   className={cn(
                     "relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-muted-foreground/50",
-                    isSaving && "cursor-not-allowed opacity-70",
+                    isDragging && "border-primary bg-primary/10",
+                    isBusy && "cursor-not-allowed opacity-70",
                   )}
                 >
                   {previewUrl ? (
@@ -247,12 +310,27 @@ export default function ContentInvitationTemplates() {
                     <span className="flex flex-col items-center gap-3 px-6 text-center">
                       <Upload className="size-9 text-muted-foreground/50" />
                       <span>
-                        <span className="block text-sm font-medium text-foreground">Choose image file</span>
-                        <span className="mt-1 block text-xs text-muted-foreground">PNG, JPG, or WEBP</span>
+                        <span className="block text-sm font-medium text-foreground">
+                          {isDragging ? "Drop image here" : "Drag & drop or choose image file"}
+                        </span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          PNG, JPG, or WEBP · images over 1 MB are compressed automatically
+                        </span>
                       </span>
                     </span>
                   )}
-                  {previewUrl && !isSaving && (
+                  {isCompressing && (
+                    <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/70">
+                      <span className="size-6 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
+                      <span className="text-xs text-muted-foreground">Compressing image...</span>
+                    </span>
+                  )}
+                  {file && !isBusy && (
+                    <span className="absolute bottom-3 left-3 rounded-md bg-background/90 px-2 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur">
+                      {formatBytes(file.size)}
+                    </span>
+                  )}
+                  {previewUrl && !isBusy && (
                     <span className="absolute bottom-3 right-3 rounded-md bg-background/90 px-2 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur">
                       Replace
                     </span>
@@ -269,7 +347,7 @@ export default function ContentInvitationTemplates() {
                   accept="image/*"
                   className="hidden"
                   onChange={(event) => {
-                    handleFileSelect(event.target.files?.[0])
+                    void handleFileSelect(event.target.files?.[0])
                     event.target.value = ""
                   }}
                 />
@@ -280,7 +358,7 @@ export default function ContentInvitationTemplates() {
               <Button type="button" variant="outline" className="flex-1" disabled={isSaving} onClick={closeCreate}>
                 Cancel
               </Button>
-              <Button type="button" className="flex-1" disabled={isSaving} onClick={handleCreate}>
+              <Button type="button" className="flex-1" disabled={isBusy} onClick={handleCreate}>
                 {isSaving ? "Saving..." : "Create"}
               </Button>
             </div>
