@@ -229,15 +229,16 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
 
 // ─── PriceInput ───────────────────────────────────────────────────────────────
 
-function PriceInput({ label, value, onChange }: { label: string; value: string; onChange: (raw: string) => void }) {
+function PriceInput({ label, value, onChange, required, error }: { label: string; value: string; onChange: (raw: string) => void; required?: boolean; error?: string }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-foreground">{label}</label>
+      <label className="mb-2 block text-sm font-medium text-foreground">{label} {required && <span className="text-destructive">*</span>}</label>
       <div className="relative">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground select-none">Rp</span>
         <input type="text" inputMode="numeric" value={formatPrice(value)} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder="0"
-          className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+          className={`w-full rounded-lg border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
       </div>
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   )
 }
@@ -487,7 +488,7 @@ function PreviewWithPageControl({ html: liveHtml, page, onPageChange }: { html: 
 
 type FormState = { name: string; descriptionEn: string; descriptionIdn: string; price: string; priceAfterDiscount: string }
 type UploadState = { mobileThumbnailKey: string; mobileThumbnailPreview: string; desktopThumbnailKey: string; desktopThumbnailPreview: string }
-type FormErrors = Partial<Record<keyof FormState | "category" | "tags", string>>
+type FormErrors = Partial<Record<keyof FormState | "category" | "tags" | "mobileThumbnail" | "desktopThumbnail", string>>
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -594,6 +595,7 @@ export default function EditTemplate() {
     try {
       const r = await uploadObjectWithPresignedUrl(file, "invitation-template")
       setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(file) }))
+      setErrors((e) => ({ ...e, mobileThumbnail: undefined }))
     }
     catch { setSubmitError("Failed to upload mobile thumbnail.") }
     finally { setUploadingMobile(false) }
@@ -604,6 +606,7 @@ export default function EditTemplate() {
     try {
       const r = await uploadObjectWithPresignedUrl(file, "invitation-template")
       setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(file) }))
+      setErrors((e) => ({ ...e, desktopThumbnail: undefined }))
     }
     catch { setSubmitError("Failed to upload desktop thumbnail.") }
     finally { setUploadingDesktop(false) }
@@ -612,8 +615,10 @@ export default function EditTemplate() {
   const validateStep1 = (): FormErrors => {
     const next: FormErrors = {}
     if (!form.name.trim()) next.name = "Template title is required"
-    if (!uploads.mobileThumbnailKey) next.name = "Mobile thumbnail is required"
-    if (!uploads.desktopThumbnailKey) next.name = "Desktop thumbnail is required"
+    if (!uploads.mobileThumbnailKey) next.mobileThumbnail = "Mobile thumbnail is required"
+    if (!uploads.desktopThumbnailKey) next.desktopThumbnail = "Desktop thumbnail is required"
+    if (!form.price.trim() || Number(form.price) <= 0) next.price = "Sell price is required"
+    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) <= 0) next.priceAfterDiscount = "After discount price is required"
     if (!category.name.trim()) next.category = "Category is required"
     return next
   }
@@ -804,8 +809,8 @@ export default function EditTemplate() {
           </div>
 
           <div className="flex gap-6">
-            <ImageUploader label="Mobile Thumbnail" aspect="portrait" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.name && !uploads.mobileThumbnailKey ? "Mobile thumbnail is required" : undefined} />
-            <ImageUploader label="Desktop Thumbnail" aspect="landscape" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.name && !uploads.desktopThumbnailKey ? "Desktop thumbnail is required" : undefined} />
+            <ImageUploader label="Mobile Thumbnail" aspect="portrait" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.mobileThumbnail} />
+            <ImageUploader label="Desktop Thumbnail" aspect="landscape" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.desktopThumbnail} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -820,8 +825,8 @@ export default function EditTemplate() {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} />
-            <PriceInput label="After Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} />
+            <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} required error={errors.price} />
+            <PriceInput label="After Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} required error={errors.priceAfterDiscount} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
