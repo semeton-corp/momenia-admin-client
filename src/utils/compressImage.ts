@@ -28,7 +28,9 @@ export async function compressImage(
   }
 
   const bitmap = await createImageBitmap(file)
-  const outputType = file.type === "image/png" ? "image/png" : "image/jpeg"
+  // WEBP keeps transparency *and* honours the quality argument, so it can be
+  // searched like JPEG without flattening alpha to black.
+  const outputType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg"
 
   const canvas = document.createElement("canvas")
   const ctx = canvas.getContext("2d")
@@ -50,16 +52,20 @@ export async function compressImage(
   let scale = Math.min(1, maxWidth / bitmap.width, maxHeight / bitmap.height)
   let best: Blob | null = null
 
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     const width = Math.max(1, Math.round(bitmap.width * scale))
     const height = Math.max(1, Math.round(bitmap.height * scale))
     renderAt(width, height)
 
     // PNG's "quality" argument is ignored by most browsers — nothing to
-    // search, just take the downscaled result.
-    if (outputType !== "image/jpeg") {
-      best = await toBlob(1)
-      break
+    // search, so keep shrinking dimensions until it fits the budget.
+    if (outputType === "image/png") {
+      const candidate = await toBlob(1)
+      if (!candidate) break
+      if (!best || candidate.size < best.size) best = candidate
+      if (candidate.size <= targetSizeBytes) break
+      scale *= 0.75
+      continue
     }
 
     const atMinQuality = await toBlob(minQuality)
@@ -97,6 +103,7 @@ export async function compressImage(
 
   if (!best || best.size >= file.size) return file
 
-  const newName = file.name.replace(/\.\w+$/, outputType === "image/png" ? ".png" : ".jpg")
+  const extension = outputType === "image/png" ? ".png" : outputType === "image/webp" ? ".webp" : ".jpg"
+  const newName = file.name.replace(/\.\w+$/, extension)
   return new File([best], newName, { type: outputType, lastModified: Date.now() })
 }
