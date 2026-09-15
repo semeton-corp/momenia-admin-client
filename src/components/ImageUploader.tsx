@@ -89,7 +89,7 @@ export function ImageUploader({ label, previewUrl, uploading, onFileSelect, erro
         onDragOver={(e) => e.preventDefault()}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative flex ${aspectClass} cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors ${isDraggingFile ? "border-indigo-500 bg-indigo-500/10" : "border-border bg-background hover:border-muted-foreground/50"} ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}
+        className={`relative flex ${aspectClass} cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors ${isDraggingFile ? "border-indigo-500 bg-indigo-500/10" : error ? "border-destructive bg-background" : "border-border bg-background hover:border-muted-foreground/50"} ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}
       >
         {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-cover" /> : (
           <>
