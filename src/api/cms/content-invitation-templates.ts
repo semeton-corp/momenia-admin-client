@@ -29,6 +29,7 @@ export type ContentInvitationTemplateFolderTree =
 export type CreateContentInvitationTemplatePayload = {
   name: string;
   content: string;
+  folderId: number | null;
 };
 
 export function getContentInvitationTemplateFolderBrowser(

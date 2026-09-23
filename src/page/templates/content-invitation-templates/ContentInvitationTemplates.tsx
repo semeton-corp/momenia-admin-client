@@ -166,20 +166,11 @@ export default function ContentInvitationTemplates() {
         imageFile,
         "content-invitation-template",
       );
-      const template = await createContentInvitationTemplate({
+      await createContentInvitationTemplate({
         name: templateName,
         content: uploaded.key,
+        folderId,
       });
-
-      if (folderId !== null) {
-        try {
-          await moveContentInvitationTemplate(template.id, folderId);
-        } catch {
-          throw new Error(
-            "Template was created in Root, but could not be moved to this folder.",
-          );
-        }
-      }
     },
     onSuccess: async () => {
       toast.success("Content template created");
