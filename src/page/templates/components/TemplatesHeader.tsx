@@ -1,22 +1,27 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 export function TemplatesHeader() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
-    <div className="mb-6 flex items-center justify-between">
-      <h1 className="text-xl font-semibold text-foreground">Template List</h1>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => navigate("/templates/add")}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Add New Template
-        </button>
+    <div className="mb-6 flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">
+            Templates
+          </h1>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review, activate, and refine the invitations available to customers.
+        </p>
       </div>
+      <Button type="button" onClick={() => navigate("/templates/add")}>
+        <Plus className="size-4" />
+        New template
+      </Button>
     </div>
-  )
+  );
 }
