@@ -55,11 +55,12 @@ async function parseResponse(response: Response) {
 
 const IDEMPOTENT_METHODS = new Set(["POST", "PUT", "PATCH"]);
 
-async function request<T>(path: string, options: ApiRequestOptions = {}, retried = false): Promise<T> {
+async function request<T>(path: string, options: ApiRequestOptions = {}, retried = false, retryKey?: string): Promise<T> {
   const { body, headers, params, token, ...requestOptions } = options;
   const isFormData = body instanceof FormData;
   const accessToken = token ?? getAccessToken();
   const method = (requestOptions.method ?? "GET").toUpperCase();
+  const idempotencyKey = IDEMPOTENT_METHODS.has(method) ? retryKey ?? crypto.randomUUID() : undefined;
 
   const response = await fetch(buildUrl(path, params), {
     ...requestOptions,
@@ -67,21 +68,25 @@ async function request<T>(path: string, options: ApiRequestOptions = {}, retried
       Accept: "application/json",
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...(IDEMPOTENT_METHODS.has(method) ? { "x-idempotency-key": crypto.randomUUID() } : {}),
+      ...(idempotencyKey ? { "x-idempotency-key": idempotencyKey } : {}),
       ...headers,
     },
     body: isFormData ? body : body === undefined ? undefined : JSON.stringify(body),
   });
   if (!response.ok && response.status === 401) {
     if (!retried) {
-      const refreshedToken = await refreshAccessToken();
+      // A different tab may already have replaced the token used by this request.
+      const currentToken = getAccessToken();
+      const refreshedToken = currentToken && currentToken !== accessToken
+        ? currentToken
+        : await refreshAccessToken();
 
       if (refreshedToken) {
-        return request<T>(path, { ...options, token: refreshedToken }, true);
+        return request<T>(path, { ...options, token: refreshedToken }, true, idempotencyKey);
       }
-    }
 
-    return redirectToLogin();
+      return redirectToLogin();
+    }
   }
 
   const data = await parseResponse(response);

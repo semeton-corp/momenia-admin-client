@@ -252,11 +252,15 @@ async function requestFreshAccessToken() {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
-    clearAuthTokens();
     return null;
   }
 
-  try {
+  const performRefresh = async () => {
+    // Another tab may have refreshed while this one waited for the lock.
+    if (getRefreshToken() !== refreshToken) {
+      return getAccessToken();
+    }
+
     const response = await fetch(buildApiUrl(REFRESH_PATH), {
       method: "POST",
       headers: {
@@ -270,23 +274,37 @@ async function requestFreshAccessToken() {
       }),
     });
 
-    const contentType = response.headers.get("content-type");
-    const data = contentType?.includes("application/json")
-      ? await response.json()
-      : await response.text();
-
-    if (!response.ok) {
+    // Only an explicit authentication rejection proves the session is invalid.
+    // Network errors, 5xx responses, and malformed responses must not log out
+    // a user who still has a valid refresh token.
+    if (response.status === 401 || response.status === 403) {
+      if (getRefreshToken() !== refreshToken) return getAccessToken();
       clearAuthTokens();
       return null;
     }
 
-    saveAuthTokens(data);
+    if (!response.ok) {
+      throw new Error(`Token refresh failed (${response.status}).`);
+    }
 
-    return getAccessToken();
-  } catch {
-    clearAuthTokens();
-    return null;
+    const data: unknown = await response.json();
+    const accessToken = findTokenValue(data, ACCESS_TOKEN_RESPONSE_KEYS);
+    if (!accessToken) {
+      throw new Error("Token refresh response did not include an access token.");
+    }
+
+    if (getRefreshToken() !== refreshToken) return getAccessToken();
+    saveAuthTokens(data);
+    return accessToken;
+  };
+
+  // localStorage is shared across tabs, but the in-memory promise below is not.
+  // A cross-tab lock prevents two tabs from using the same rotating refresh token.
+  if (navigator.locks) {
+    return navigator.locks.request("memoria-admin-token-refresh", performRefresh);
   }
+
+  return performRefresh();
 }
 
 export function refreshAccessToken() {
@@ -304,5 +322,11 @@ export async function ensureAuthenticated() {
     return true;
   }
 
-  return Boolean(await refreshAccessToken());
+  try {
+    return Boolean(await refreshAccessToken());
+  } catch {
+    // Keep the session on a temporary API/network failure. Protected requests
+    // can surface the error and retry; logging out would discard valid tokens.
+    return Boolean(getAccessToken());
+  }
 }
