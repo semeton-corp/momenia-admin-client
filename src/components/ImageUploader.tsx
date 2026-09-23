@@ -3,27 +3,23 @@ import { ImageCropModal } from "@/components/ImageCropModal"
 
 type Aspect = "portrait" | "landscape"
 
-// Portrait (mobile thumbnail, 9:16) and landscape (desktop thumbnail, 16:9) both put
-// their own field's target ratio first, so it's selected by default in the crop modal —
-// dropping a random photo lands on the shape the slot expects instead of "Free".
 const ASPECT_OPTIONS: Record<Aspect, { label: string; value: number | undefined }[]> = {
   portrait: [
-    { label: "9:16", value: 9 / 16 },
     { label: "Free", value: undefined },
+    { label: "9:16", value: 9 / 16 },
     { label: "1:1", value: 1 },
   ],
   landscape: [
-    { label: "16:9", value: 16 / 9 },
     { label: "Free", value: undefined },
+    { label: "16:9", value: 16 / 9 },
     { label: "1:1", value: 1 },
     { label: "4:3", value: 4 / 3 },
   ],
 }
 
 /**
- * Drag-and-drop image slot that always routes a picked/dropped file through
- * ImageCropModal before it reaches `onFileSelect` — so every thumbnail is
- * cropped to its slot's aspect and compressed before upload.
+ * Drag-and-drop thumbnail upload with optional crop. The full image is selected
+ * by default; users can choose a fixed ratio or adjust the crop before upload.
  */
 export function ImageUploader({ label, previewUrl, uploading, onFileSelect, error, aspect = "landscape" }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void; error?: string; aspect?: Aspect }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -42,6 +38,17 @@ export function ImageUploader({ label, previewUrl, uploading, onFileSelect, erro
 
   const beginCrop = (file: File) => {
     setPendingImage({ src: URL.createObjectURL(file), fileName: file.name })
+  }
+
+  const handleCropCancel = () => {
+    if (pendingImage) URL.revokeObjectURL(pendingImage.src)
+    setPendingImage(null)
+  }
+
+  const handleCropConfirm = (croppedFile: File) => {
+    if (pendingImage) URL.revokeObjectURL(pendingImage.src)
+    setPendingImage(null)
+    onFileSelect(croppedFile)
   }
 
   const resetDrag = () => { dragDepthRef.current = 0; setIsDraggingFile(false) }
@@ -67,17 +74,6 @@ export function ImageUploader({ label, previewUrl, uploading, onFileSelect, erro
     if (file && file.type.startsWith("image/")) beginCrop(file)
   }
 
-  const handleCropCancel = () => {
-    if (pendingImage) URL.revokeObjectURL(pendingImage.src)
-    setPendingImage(null)
-  }
-
-  const handleCropConfirm = (croppedFile: File) => {
-    if (pendingImage) URL.revokeObjectURL(pendingImage.src)
-    setPendingImage(null)
-    onFileSelect(croppedFile)
-  }
-
   return (
     <div className="flex-1">
       <label className="mb-2 block text-sm font-medium text-foreground">{label} <span className="text-destructive">*</span></label>
@@ -91,7 +87,7 @@ export function ImageUploader({ label, previewUrl, uploading, onFileSelect, erro
         onDrop={handleDrop}
         className={`relative flex ${aspectClass} cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors ${isDraggingFile ? "border-indigo-500 bg-indigo-500/10" : error ? "border-destructive bg-background" : "border-border bg-background hover:border-muted-foreground/50"} ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}
       >
-        {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-cover" /> : (
+        {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-contain" /> : (
           <>
             <svg className={`h-10 w-10 transition-colors ${isDraggingFile ? "text-indigo-400" : "text-muted-foreground/40"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
             <div className="text-center">
@@ -110,7 +106,6 @@ export function ImageUploader({ label, previewUrl, uploading, onFileSelect, erro
       </div>
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) beginCrop(file); e.target.value = "" }} />
-
       {pendingImage && (
         <ImageCropModal
           imageSrc={pendingImage.src}
