@@ -2,6 +2,7 @@
 
 import type { ElementType } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -54,7 +55,7 @@ export function NavPages({ items }: { items: PageItem[] }) {
                         {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
                         <span className="min-w-0 whitespace-normal leading-snug">{item.title}</span>
                       </div>
-                      <span className="text-sidebar-foreground/50">⌄</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
 
@@ -68,7 +69,7 @@ export function NavPages({ items }: { items: PageItem[] }) {
                             <SidebarMenuSubButton
                               asChild
                               isActive={isSubActive}
-                              className="h-auto min-h-8 whitespace-normal rounded-lg px-3 py-1.5 leading-snug"
+                              className="h-auto min-h-8 whitespace-normal rounded-md px-3 py-1.5 leading-snug"
                             >
                               <Link to={sub.url}>{sub.title}</Link>
                             </SidebarMenuSubButton>

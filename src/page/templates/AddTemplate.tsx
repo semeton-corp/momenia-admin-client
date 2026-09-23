@@ -187,7 +187,7 @@ function useCombobox<T extends { id: number; name: string }>(
     debounceRef.current = setTimeout(() => fetchSuggestions(text), debounceMs)
   }
 
-  return { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown: () => setOpen(false), openDropdown: () => { if (suggestions.length > 0) setOpen(true) } }
+  return { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown: () => setOpen(false), openDropdown: () => { setOpen(true); if (suggestions.length === 0) fetchSuggestions(inputText) } }
 }
 
 // ─── CategoryCombobox ─────────────────────────────────────────────────────────
@@ -212,7 +212,12 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
-        <input type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, (t) => onChange({ id: null, name: t }))} onFocus={openDropdown} placeholder="e.g. Wedding Invitation"
+        <input type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, (t) => onChange({ id: null, name: t }))} onFocus={openDropdown}
+          onBlur={() => {
+            const match = suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase())
+            if (match) onChange({ id: match.id, name: formatCategoryLabel(match.name) })
+          }}
+          placeholder="e.g. Wedding Invitation"
           className={`w-full rounded-lg border bg-background px-4 py-2.5 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
@@ -250,7 +255,7 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
 function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onChange: (v: SelectedItem[]) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown } = useCombobox(getInvitationTemplateTags)
+  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateTags)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -259,14 +264,19 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
   }, [])
 
   const addTag = (item: SelectedItem) => {
-    if (value.find((t) => t.name.toLowerCase() === item.name.toLowerCase())) return
+    if (value.find((t) => formatCategoryLabel(t.name).toLowerCase() === formatCategoryLabel(item.name).toLowerCase())) return
     onChange([...value, item]); setInputText(""); inputRef.current?.focus(); closeDropdown()
   }
 
   const removeTag = (name: string) => onChange(value.filter((t) => t.name !== name))
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }
+    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) {
+      e.preventDefault()
+      const trimmed = inputText.trim()
+      const match = suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === trimmed.toLowerCase())
+      addTag(match ? { id: match.id, name: formatCategoryLabel(match.name) } : { id: null, name: trimmed })
+    }
     if (e.key === "Backspace" && !inputText && value.length > 0) removeTag(value[value.length - 1].name)
   }
 
@@ -275,23 +285,23 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
       <div className={`flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border bg-background px-3 py-2 transition-colors cursor-text ${error ? "border-destructive" : "border-border focus-within:border-indigo-500"}`} onClick={() => inputRef.current?.focus()}>
         {value.map((tag) => (
           <span key={tag.name} className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-            {tag.name}
+            {formatCategoryLabel(tag.name)}
             <button type="button" onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }} className="ml-0.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 p-0.5 transition-colors">
               <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </span>
         ))}
         <div className="relative flex flex-1 items-center min-w-24">
-          <input ref={inputRef} type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, () => {})} onKeyDown={handleKeyDown} placeholder={value.length === 0 ? "e.g. Elegant, Modern…" : ""} className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          <input ref={inputRef} type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, () => {})} onFocus={openDropdown} onKeyDown={handleKeyDown} placeholder={value.length === 0 ? "e.g. Elegant, Modern…" : ""} className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
           {loading && <div className="absolute right-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
         </div>
       </div>
       {open && (
         <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {suggestions.filter((t) => !value.find((v) => v.name.toLowerCase() === t.name.toLowerCase())).map((tag) => (
-            <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: tag.name }) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{tag.name}</button>
+          {suggestions.filter((t) => !value.find((v) => formatCategoryLabel(v.name).toLowerCase() === formatCategoryLabel(t.name).toLowerCase())).map((tag) => (
+            <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: formatCategoryLabel(tag.name) }) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(tag.name)}</button>
           ))}
-          {!loading && inputText.trim() && !suggestions.find((t) => t.name.toLowerCase() === inputText.trim().toLowerCase()) && (
+          {!loading && inputText.trim() && !suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === inputText.trim().toLowerCase()) && (
             <button type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               Create "{inputText.trim()}"

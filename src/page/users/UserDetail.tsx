@@ -171,7 +171,7 @@ export default function UserDetail() {
                         <td className="px-4 py-3 text-sm text-foreground">{template.name || "Untitled template"}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">{formatApiDateTime(template.purchasedAt)}</td>
                         <td className="px-4 py-3">
-                          <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", statusClass(template.status))}>
+                          <span className={cn("inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold capitalize", statusClass(template.status))}>
                             {template.status || "unknown"}
                           </span>
                         </td>

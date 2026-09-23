@@ -1,6 +1,14 @@
-export function PhoneMockup({ thumbnail }: { thumbnail: string | null }) {
+export function PhoneMockup({
+  thumbnail,
+  className = "w-32",
+  showOverlay = true,
+}: {
+  thumbnail: string | null
+  className?: string
+  showOverlay?: boolean
+}) {
   return (
-    <div className="relative mx-auto w-32 aspect-9/18">
+    <div className={`relative mx-auto aspect-9/18 ${className}`}>
       {/* Phone frame */}
       <div className="relative rounded-4xl border-[3px] border-foreground/80 bg-foreground/80 shadow-md overflow-hidden w-full h-full">
         {/* Notch */}
@@ -22,11 +30,13 @@ export function PhoneMockup({ thumbnail }: { thumbnail: string | null }) {
           )}
         </div>
         {/* View Template overlay button */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-[80%]">
-          <div className="rounded border border-foreground/30 bg-background/80 py-1 text-center text-[9px] font-medium text-foreground/70 backdrop-blur-sm">
-            View Template
+        {showOverlay && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-[80%]">
+            <div className="rounded border border-foreground/30 bg-background/80 py-1 text-center text-[9px] font-medium text-foreground/70 backdrop-blur-sm">
+              View Template
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
