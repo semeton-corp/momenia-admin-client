@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useLayoutEffect } from "react"
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
 import { compressImage } from "@/utils/compressImage"
@@ -12,7 +12,7 @@ const MAX_OUTPUT_DIMENSION = 1600
 
 function centeredCrop(width: number, height: number, aspect: number | undefined): Crop {
   if (!aspect) {
-    return { unit: "%", x: 10, y: 10, width: 80, height: 80 }
+    return { unit: "%", x: 0, y: 0, width: 100, height: 100 }
   }
   return centerCrop(
     makeAspectCrop({ unit: "%", width: 80 }, aspect, width, height),
@@ -53,9 +53,8 @@ async function getCroppedBlob(image: HTMLImageElement, crop: Crop): Promise<Blob
 
 /**
  * Crop-then-compress step between "user picked a file" and "file goes to
- * onFileSelect". `aspectOptions` should put the field's own target ratio
- * first — it's selected by default, so an uncropped drop still lands on the
- * shape the thumbnail slot expects instead of "Free".
+ * onFileSelect". The first aspect option is selected by default. Thumbnail
+ * uploads start with "Free" and the complete image selected.
  */
 export function ImageCropModal({
   imageSrc,
@@ -71,6 +70,9 @@ export function ImageCropModal({
   onConfirm: (file: File) => void
 }) {
   const imgRef = useRef<HTMLImageElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
   const [aspect, setAspect] = useState<number | undefined>(aspectOptions[0]?.value)
   const [crop, setCrop] = useState<Crop>()
   const [completedCrop, setCompletedCrop] = useState<Crop>()
@@ -78,13 +80,35 @@ export function ImageCropModal({
   // Set when the browser can't decode the file at all (e.g. HEIC outside Safari).
   // Without this the modal just shows an empty black box with no explanation.
   const [decodeFailed, setDecodeFailed] = useState(false)
+  const availableWidth = Math.max(0, stageSize.width - 32)
+  const availableHeight = Math.max(0, stageSize.height - 32)
+  const fitScale = imageSize.width && imageSize.height
+    ? Math.min(availableWidth / imageSize.width, availableHeight / imageSize.height)
+    : 0
+  const fittedWidth = Math.floor(imageSize.width * fitScale)
+  const fittedHeight = Math.floor(imageSize.height * fitScale)
 
-  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height } = e.currentTarget
-    const initial = centeredCrop(width, height, aspect)
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    if (!stage) return
+    const measure = () => setStageSize({ width: stage.clientWidth, height: stage.clientHeight })
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(stage)
+    return () => observer.disconnect()
+  }, [])
+
+  useLayoutEffect(() => {
+    const image = imgRef.current
+    if (crop || !fittedWidth || !fittedHeight || !image?.naturalWidth) return
+    const initial = centeredCrop(image.width, image.height, aspect)
     setCrop(initial)
     setCompletedCrop(initial)
-  }, [aspect])
+  }, [fittedWidth, fittedHeight, crop, aspect])
+
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    setImageSize({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight })
+  }, [])
 
   const handleAspectChange = (value: number | undefined) => {
     setAspect(value)
@@ -111,7 +135,7 @@ export function ImageCropModal({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 px-4">
-      <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+      <div className="flex h-[90dvh] max-h-[900px] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-base font-semibold text-foreground">Crop Image</h2>
           <button onClick={onCancel} aria-label="Close" className="text-muted-foreground hover:text-foreground">
@@ -150,13 +174,13 @@ export function ImageCropModal({
             </p>
           </div>
         ) : (
-          <div className="flex-1 overflow-auto bg-zinc-900 p-4">
+          <div ref={stageRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-zinc-900 p-4">
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
-              onComplete={(c) => setCompletedCrop(c)}
+              onComplete={(_, percentCrop) => setCompletedCrop(percentCrop)}
               aspect={aspect}
-              className="mx-auto"
+              className="mx-auto [&_.ReactCrop__crop-mask]:hidden"
             >
               <img
                 ref={imgRef}
@@ -164,7 +188,8 @@ export function ImageCropModal({
                 alt=""
                 onLoad={onImageLoad}
                 onError={() => setDecodeFailed(true)}
-                className="max-h-[60vh] w-auto"
+                className="block"
+                style={{ width: fittedWidth, height: fittedHeight, maxWidth: "none", maxHeight: "none" }}
               />
             </ReactCrop>
           </div>
