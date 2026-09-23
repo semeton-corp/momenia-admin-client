@@ -71,12 +71,58 @@ function ContentSectionList({ order, sections, onMove, onReorder }: { order: str
   </div>
 }
 
+function TemporarySampleImageControl({ field, value, onChange }: { field: FieldSchema; value: string; onChange: (value: string) => void }) {
+  const [urlInput, setUrlInput] = useState(() => value.startsWith("data:") ? "" : value)
+  const [fileName, setFileName] = useState<string | null>(value.startsWith("data:") ? "Temporary local preview" : null)
+  const [error, setError] = useState<string | null>(null)
+  const [previewFailed, setPreviewFailed] = useState(false)
+  const className = "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+  const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
+
+  useEffect(() => {
+    if (!value.startsWith("data:")) {
+      setUrlInput(value)
+      setFileName(null)
+    }
+    setPreviewFailed(false)
+  }, [value])
+
+  return <div className="space-y-2">
+    <input value={urlInput} onChange={(event) => { const next = event.target.value; setUrlInput(next); setFileName(null); setError(null); onChange(next) }} type="url" placeholder={field.placeholder || "Paste a public image URL"} className={className} />
+    <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2.5">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-xs file:font-medium file:text-indigo-700" onChange={(event) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+        if (!supportedTypes.has(file.type)) {
+          setError("HEIC/HEIF cannot be previewed in this temporary editor. Choose JPG, PNG, WebP, or GIF, or paste an image URL.")
+          event.currentTarget.value = ""
+          return
+        }
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (typeof reader.result !== "string") return
+          setUrlInput("")
+          setFileName(file.name)
+          setError(null)
+          onChange(reader.result)
+        }
+        reader.readAsDataURL(file)
+      }} />
+      <p className="mt-1.5 text-[11px] leading-4 text-zinc-400">Temporary preview only — this file is not uploaded or saved. JPG, PNG, WebP, and GIF are supported.</p>
+      {fileName && <p className="mt-1 text-[11px] font-medium text-indigo-600">Using: {fileName}</p>}
+      {error && <p className="mt-1 text-[11px] leading-4 text-rose-600">{error}</p>}
+    </div>
+    {value && !previewFailed && <img src={value} onError={() => setPreviewFailed(true)} alt="Sample preview" className="max-h-32 w-full rounded-xl border border-zinc-200 object-contain" />}
+    {value && previewFailed && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">Preview unavailable. Paste a public direct image URL or choose JPG, PNG, WebP, or GIF.</p>}
+  </div>
+}
+
 function FieldControl({ field, value, onChange }: { field: FieldSchema; value: string; onChange: (value: string) => void }) {
   const className = "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
   const common = { value, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value), placeholder: field.placeholder ?? "", className }
   if (field.type === "textarea") return <textarea {...common} rows={3} />
   if (field.type === "select") return <select value={value} onChange={(event) => onChange(event.target.value)} className={className}><option value="">{field.placeholder || "Choose one"}</option>{(field.options ?? []).filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select>
-  if (field.type === "image") return <div className="space-y-2"><input {...common} type="url" placeholder={field.placeholder || "Paste image URL"} /><input type="file" accept="image/*" className="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-xs file:font-medium file:text-indigo-700" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => onChange(typeof reader.result === "string" ? reader.result : ""); reader.readAsDataURL(file) }} />{value && <img src={value} alt="Sample preview" className="max-h-32 w-full rounded-xl border border-zinc-200 object-contain" />}</div>
+  if (field.type === "image") return <TemporarySampleImageControl field={field} value={value} onChange={onChange} />
   if (field.type === "color") return <input type="color" value={value || "#000000"} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-lg border border-zinc-200 bg-white p-1" />
   if (field.type === "date") {
     // Match the user editor's rule: today is valid, earlier local dates are not.
