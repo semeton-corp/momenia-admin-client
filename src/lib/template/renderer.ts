@@ -34,10 +34,32 @@ export function renderSection(
   _sectionConfig: SectionConfig,
   userData: Record<string, string>,
 ): { html: string; css: string; js: string } {
-  let html = sectionDef.html ?? ""
-
-  Object.entries(userData).forEach(([key, val]) => {
-    html = html.replaceAll(`{{${key}}}`, val ?? "")
+  const sourceWithImages = (sectionDef.html ?? "").replace(/<img\b[^>]*>/gi, (tag) => {
+    if (/\bdata-field-img\s*=/.test(tag)) return tag
+    const imageField = tag.match(/\bsrc\s*=\s*(["'])\{\{\s*([^}\s]+)\s*\}\}\1/i)?.[2]
+    return imageField ? tag.replace(/^<img/i, `<img data-field-img="${imageField.replace(/"/g, "&quot;")}"`) : tag
+  })
+  // Retain attribute templates so URLs, dates, alt text and placeholders can be
+  // updated inside the iframe without rebuilding its document.
+  const source = sourceWithImages.replace(/<[a-z][^>]*>/gi, (tag) => {
+    const bindings: Record<string, string> = {}
+    for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/g)) {
+      if (/\{\{\s*[^}\s]+\s*\}\}/.test(match[3])) bindings[match[1]] = match[3]
+    }
+    if (!Object.keys(bindings).length) return tag
+    return tag.replace(/>$/, ` data-memoria-bind="${encodeURIComponent(JSON.stringify(bindings))}">`)
+  })
+  // Text placeholders need a stable target for `memoriaUpdate` so changing a
+  // sample value does not require rebuilding the iframe. Attribute placeholders
+  // (src, alt, href, …) cannot contain an injected span, so keep those as text.
+  const html = source.replace(/\{\{\s*([^}\s]+)\s*\}\}/g, (match, key: string, offset: number) => {
+    if (!Object.hasOwn(userData, key)) return match
+    const value = userData[key] ?? ""
+    const before = source.slice(0, offset)
+    const isInsideTag = before.lastIndexOf("<") > before.lastIndexOf(">")
+    const escaped = value.replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char]!)
+    if (isInsideTag) return escaped.replace(/"/g, "&quot;")
+    return `<span data-field="${key}" style="all:unset">${escaped}</span>`
   })
 
   return { html, css: sectionDef.css ?? "", js: sectionDef.js ?? "" }
@@ -65,6 +87,21 @@ export function buildThemeCSS(theme: Theme): string {
 //   - postMessage "memoriaPageChange" — tells the parent which page is showing, so a
 //     template's own nav button ("Let's Party") keeps the editor's tabs in sync
 const RUNTIME_SCRIPT = `(function(){
+  var currentUserData = {};
+  var boundAttributes = Array.from(document.querySelectorAll('[data-memoria-bind]')).map(function(el){
+    try { return {el:el, templates:JSON.parse(decodeURIComponent(el.getAttribute('data-memoria-bind')))}; }
+    catch(_error) { return null; }
+  }).filter(Boolean);
+  function updateBoundAttributes(changed){
+    boundAttributes.forEach(function(binding){
+      Object.keys(binding.templates).forEach(function(attribute){
+        var template = binding.templates[attribute];
+        var keys = Array.from(template.matchAll(/\\{\\{\\s*([^}\\s]+)\\s*\\}\\}/g)).map(function(match){return match[1]});
+        if(!keys.some(function(key){return Object.prototype.hasOwnProperty.call(changed,key)})) return;
+        binding.el.setAttribute(attribute,template.replace(/\\{\\{\\s*([^}\\s]+)\\s*\\}\\}/g,function(_match,key){return currentUserData[key] || ''}));
+      });
+    });
+  }
   function getPages(){
     return Array.from(document.querySelectorAll('[data-memoria-page]'));
   }
@@ -87,6 +124,7 @@ const RUNTIME_SCRIPT = `(function(){
     // show or hide here — this only announces the starting page to the parent.
     var pages = getPages();
     if(pages[0]) window.parent.postMessage({type:'memoriaPageChange', pageId: pages[0].dataset.memoriaPage}, '*');
+    window.parent.postMessage({type:'memoriaReady'}, '*');
   }
   window.addEventListener('message', function(e){
     if(!e.data) return;
@@ -94,8 +132,18 @@ const RUNTIME_SCRIPT = `(function(){
     if(d.type === 'memoriaGoTo' && d.pageId){
       window.__memoriaGoTo(d.pageId);
     }
+    if(d.type === 'memoriaScrollToSection' && d.sectionId){
+      var section = Array.from(document.querySelectorAll('[data-section-id]')).find(function(el){
+        return el.getAttribute('data-section-id') === d.sectionId;
+      });
+      var sectionPage = section && section.closest('[data-memoria-page]');
+      if(sectionPage && window.getComputedStyle(sectionPage).display !== 'none'){
+        section.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
     if(d.type === 'memoriaUpdate'){
       var u = d.userData || {};
+      Object.assign(currentUserData,u);
       Object.keys(u).forEach(function(k){
         document.querySelectorAll('[data-field="'+k+'"]').forEach(function(el){
           el.textContent = u[k] || '';
@@ -106,6 +154,7 @@ const RUNTIME_SCRIPT = `(function(){
           if(v){ el.style.display = ''; el.style.opacity = ''; }
         });
       });
+      updateBoundAttributes(u);
       if(d.theme){
         var r = document.documentElement, t = d.theme;
         if(t.color_primary)    r.style.setProperty('--color-primary',    t.color_primary);
@@ -114,6 +163,7 @@ const RUNTIME_SCRIPT = `(function(){
         if(t.font_title)       r.style.setProperty('--font-title',       "'"+t.font_title+"', serif");
         if(t.font_body)        r.style.setProperty('--font-body',        "'"+t.font_body+"', sans-serif");
       }
+      document.dispatchEvent(new CustomEvent('memoriaDataUpdated',{detail:{userData:currentUserData,changed:u}}));
       reportHeight();
     }
   });
@@ -222,7 +272,7 @@ export function renderInvitation(
       if (!sectionDef) continue
       const rendered = renderSection(sectionDef, sectionConfig, effectiveUserData)
       allCSS.push(rendered.css)
-      sectionsHTML.push(rendered.html)
+      sectionsHTML.push(`<div data-section-id="${sectionConfig.id.replace(/[&<>"]/g, "")}">${rendered.html}</div>`)
       if (rendered.js) allJS.push(rendered.js)
     }
 
@@ -261,6 +311,8 @@ export function renderInvitation(
        Deliberately not applied to the other pages — those scroll through sections. */
     [data-memoria-cover] { min-height: 100%; display: flex; flex-direction: column; }
     [data-memoria-cover] > * { flex: 1 0 auto; }
+    [data-memoria-cover] > [data-section-id] { display: flex; flex-direction: column; }
+    [data-memoria-cover] > [data-section-id] > * { flex: 1 0 auto; }
     ${allCSS.join("\n")}
   </style>
 </head>

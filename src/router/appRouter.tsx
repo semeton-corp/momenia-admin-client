@@ -20,6 +20,7 @@ import AddTemplate from "@/page/templates/AddTemplate"
 import EditTemplate from "@/page/templates/EditTemplate";
 import TemplateReport from "@/page/templates/TemplateReport";
 import TemplatePreview from "@/page/templates/TemplatePreview";
+import TemplateSampleEditor from "@/page/templates/TemplateSampleEditor";
 import TemplateDurations from "@/page/templates/durations/TemplateDurations";
 import ContentInvitationTemplates from "@/page/templates/content-invitation-templates/ContentInvitationTemplates";
 import { ensureAuthenticated } from "@/lib/auth";
@@ -57,6 +58,13 @@ export const appRouter = createBrowserRouter([
     // the user client's /[locale]/preview route stands outside its dashboard shell.
     path: "/templates/preview",
     element: <TemplatePreview />,
+    loader: requireAuth,
+  },
+  {
+    // A separate, browser-only workspace for trying customer-facing field values.
+    // It deliberately has no dashboard shell and never saves an invitation.
+    path: "/templates/sample-editor",
+    element: <TemplateSampleEditor />,
     loader: requireAuth,
   },
   {

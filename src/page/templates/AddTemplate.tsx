@@ -10,6 +10,7 @@ import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
 import { openTemplatePreview } from "@/lib/template/preview-window"
+import { openTemplateSampleEditor } from "@/lib/template/sample-editor-window"
 import { createDefaultInvitation } from "@/lib/template/mock-data"
 import { parseThemeJson, parseSchemaJson, findTemplateJsonIssue } from "@/lib/template/validate"
 import { PreviewErrorBoundary } from "@/components/PreviewErrorBoundary"
@@ -821,6 +822,14 @@ export default function AddTemplate() {
     })
   }
 
+  const handleEditSampleContent = () => {
+    openTemplateSampleEditor({
+      template,
+      sectionTypes,
+      invitation: previewInvitation,
+    })
+  }
+
   const handleImportFile = async (file: File) => {
     setImportError("")
     if (!file.name.toLowerCase().endsWith(".json")) {
@@ -1089,6 +1098,9 @@ export default function AddTemplate() {
           <button onClick={handlePreviewTemplate} className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Preview
+          </button>
+          <button onClick={handleEditSampleContent} className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 px-3 py-1.5 text-xs font-medium text-indigo-500 hover:bg-indigo-500/10 hover:text-indigo-400 transition-colors">
+            Edit Sample Content
           </button>
           {jsonIssue && (
             <span title={`${jsonIssue.pane}: ${jsonIssue.message}`} className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
