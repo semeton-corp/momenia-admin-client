@@ -29,6 +29,7 @@ export type InvitationTemplate = {
   version?: number
   createdAt?: string
   updatedAt?: string
+  lastModifiedAt?: string
   template?: TemplateBody
 }
 

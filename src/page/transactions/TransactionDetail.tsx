@@ -40,7 +40,7 @@ function statusClass(status: string) {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", statusClass(status))}>
+    <span className={cn("inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold capitalize", statusClass(status))}>
       {status || "unknown"}
     </span>
   )
