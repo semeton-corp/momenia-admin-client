@@ -30,3 +30,6 @@ dist-ssr
 *.sw?
 
 /graphify-out
+
+# Local template examples and their source artwork
+/examples/
