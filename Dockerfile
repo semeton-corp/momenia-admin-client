@@ -21,7 +21,9 @@ RUN npm install -g pnpm && pnpm build
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-RUN npm install -g serve
+RUN npm install -g serve && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 COPY --from=builder /app/dist ./dist
 
