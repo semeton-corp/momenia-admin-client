@@ -33,23 +33,6 @@ export const queryKeys = {
     topSellingTemplates: () =>
       [...queryKeys.cmsDashboard.all, "top-selling-templates"] as const,
   },
-  cmsUsers: {
-    all: ["cms-users"] as const,
-    lists: () => [...queryKeys.cmsUsers.all, "list"] as const,
-    list: (params?: unknown) => [...queryKeys.cmsUsers.lists(), params] as const,
-    detail: (id: string, params?: unknown) => [...queryKeys.cmsUsers.all, "detail", id, params] as const,
-  },
-  cmsTransactions: {
-    all: ["cms-transactions"] as const,
-    lists: () => [...queryKeys.cmsTransactions.all, "list"] as const,
-    list: (params?: unknown) => [...queryKeys.cmsTransactions.lists(), params] as const,
-    detail: (id: string) => [...queryKeys.cmsTransactions.all, "detail", id] as const,
-  },
-  cmsDashboard: {
-    all: ["cms-dashboard"] as const,
-    overview: (period: string) => [...queryKeys.cmsDashboard.all, "overview", period] as const,
-    topSellingTemplates: () => [...queryKeys.cmsDashboard.all, "top-selling-templates"] as const,
-  },
   faqs: {
     all: ["faqs"] as const,
     lists: () => [...queryKeys.faqs.all, "list"] as const,
@@ -95,15 +78,6 @@ export const queryKeys = {
       [...queryKeys.contentInvitationTemplates.all, "list", parentId] as const,
     folderTree: () =>
       [...queryKeys.contentInvitationTemplates.all, "folder-tree"] as const,
-  },
-  musics: {
-    all: ["musics"] as const,
-    lists: () => [...queryKeys.musics.all, "list"] as const,
-    detail: (id: string) => [...queryKeys.musics.all, "detail", id] as const,
-  },
-  contentInvitationTemplates: {
-    all: ["content-invitation-templates"] as const,
-    lists: () => [...queryKeys.contentInvitationTemplates.all, "list"] as const,
   },
   musics: {
     all: ["musics"] as const,

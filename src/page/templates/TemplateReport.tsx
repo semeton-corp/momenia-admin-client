@@ -32,12 +32,6 @@ export default function TemplateReport() {
     return status ?? "inactive";
   };
 
-  const getStatusLabel = (status: string | undefined) => {
-    if (status === "PUBLISHED") return "active"
-    if (status === "DRAFT") return "draft"
-    return status ?? "inactive"
-  }
-
   const stats = {
     total: templates.length,
     draft: templates.filter((t) => getStatusLabel(t.status) === "draft").length,

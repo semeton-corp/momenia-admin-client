@@ -58,16 +58,6 @@ export default function Templates() {
 
   const templates = response?.data ?? [];
 
-  const { data: selectedTemplate, isLoading: isLoadingTemplate } = useQuery({
-    queryKey: ["invitationTemplate", selectedTemplateId],
-    queryFn: () => getInvitationTemplateDetail(selectedTemplateId!),
-    enabled: !!selectedTemplateId,
-    staleTime: 0,
-    gcTime: 0,
-  })
-
-  const templates = response?.data ?? []
-
   const handleCardClick = (template: InvitationTemplate) => {
     setSelectedTemplateId(template.id);
   };

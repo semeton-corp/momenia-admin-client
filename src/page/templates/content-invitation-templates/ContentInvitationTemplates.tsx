@@ -55,12 +55,6 @@ import { formatApiDate } from "@/utils/formatApiDate";
 
 const MAX_IMAGE_BYTES = 1024 * 1024;
 
-const MAX_IMAGE_BYTES = 1024 * 1024
-
-function formatBytes(bytes: number) {
-  return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(2)} MB` : `${Math.round(bytes / 1024)} KB`
-}
-
 type CreatePayload = {
   name: string;
   file: File;
