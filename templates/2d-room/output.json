@@ -1,0 +1,196 @@
+{
+  "name": "Cozy Room — One Page",
+  "descriptionEn": "A single-page interactive bedroom invitation. One static isometric room; tap the window, bed, painting, lamp, and plants to reveal couple, date, venue, gift, RSVP and wishes.",
+  "descriptionIdn": "Undangan satu halaman berbentuk kamar tidur isometrik. Satu gambar statis; ketuk jendela, tempat tidur, lukisan, lampu, dan tanaman untuk melihat mempelai, tanggal, lokasi, kado, RSVP, dan ucapan.",
+  "theme_defaults": {
+    "font_body": "Poppins",
+    "font_title": "Fraunces",
+    "color_accent": "#ff6b6b",
+    "color_primary": "#3e3a7a",
+    "color_background": "#d9485f"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "label": "Room",
+      "sections": [
+        {
+          "id": "room_cozy-onepage",
+          "section_type_id": "room_section"
+        }
+      ]
+    }
+  ],
+  "schema": {
+    "fields": [
+      {
+        "key": "headline",
+        "type": "text",
+        "label": "Nama Pasangan",
+        "section": "room_section",
+        "required": true,
+        "placeholder": "Budi & Rina"
+      },
+      {
+        "key": "room_image",
+        "type": "image",
+        "label": "Gambar Kamar",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_2205c397-865c-4f2b-b68c-15b42ff6c090"
+      },
+      {
+        "key": "icon_cat",
+        "type": "image",
+        "label": "Ikon Kucing / Jendela",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_89a95f27-9b04-413b-90d8-270aa7571102"
+      },
+      {
+        "key": "icon_bed",
+        "type": "image",
+        "label": "Ikon Tempat Tidur",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_0b0c2c64-1ed6-4d2e-9e40-7be6c0974b3b"
+      },
+      {
+        "key": "icon_painting",
+        "type": "image",
+        "label": "Ikon Lukisan",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_c0a263f5-92ec-402d-91ae-4e1d06e95529"
+      },
+      {
+        "key": "icon_lamp",
+        "type": "image",
+        "label": "Ikon Lampu",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_795473b0-4622-4fbe-aed7-d28098ebe53c"
+      },
+      {
+        "key": "icon_plant",
+        "type": "image",
+        "label": "Ikon Tanaman",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_18c98c60-8952-4147-a50d-afed5299521b"
+      },
+      {
+        "key": "couple_photo",
+        "type": "image",
+        "label": "Foto Pasangan (bingkai)",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_efc7bd33-aafd-48a4-8b4f-f6fbfd483312"
+      },
+      {
+        "key": "desktop_background",
+        "type": "image",
+        "label": "Background Desktop",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_fe1e0ea7-4680-4d1d-809f-04a8a2344c98"
+      },
+      {
+        "key": "bride_name",
+        "type": "text",
+        "label": "Nama Pengantin Wanita",
+        "section": "room_section",
+        "required": true,
+        "placeholder": "Rina Astuti"
+      },
+      {
+        "key": "groom_name",
+        "type": "text",
+        "label": "Nama Pengantin Pria",
+        "section": "room_section",
+        "required": true,
+        "placeholder": "Budi Santoso"
+      },
+      {
+        "key": "bride_photo",
+        "type": "image",
+        "label": "Foto Pengantin Wanita",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_d3b25674-e7fa-40c5-83e3-9d65d8771bd4"
+      },
+      {
+        "key": "groom_photo",
+        "type": "image",
+        "label": "Foto Pengantin Pria",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "https://is3.cloudhost.id/momenia/content-invitation-template/cit_334187c4-e93e-4517-bbf1-14f2bdbc4361"
+      },
+      {
+        "key": "event_date",
+        "type": "date",
+        "label": "Tanggal Acara",
+        "section": "room_section",
+        "required": true,
+        "placeholder": "2025-04-20"
+      },
+      {
+        "key": "event_time",
+        "type": "time",
+        "label": "Waktu Acara",
+        "section": "room_section",
+        "required": true,
+        "placeholder": "15:00"
+      },
+      {
+        "key": "venue_name",
+        "type": "text",
+        "label": "Nama Venue",
+        "section": "room_section",
+        "required": true,
+        "placeholder": "Gedung Balai Kartini"
+      },
+      {
+        "key": "venue_location",
+        "type": "location",
+        "label": "Titik Lokasi (Peta)",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "-6.2248, 106.8295"
+      },
+      {
+        "key": "event_timezone",
+        "type": "select",
+        "label": "Time Zone",
+        "section": "room_section",
+        "required": false,
+        "options": [
+          "WIB",
+          "WIT",
+          "WITA"
+        ]
+      },
+      {
+        "key": "gift_info",
+        "type": "text",
+        "label": "Info Kado / Amplop",
+        "section": "room_section",
+        "required": false,
+        "placeholder": "Kehadiran Anda adalah kado terindah. Jika ingin berbagi tanda kasih: BCA 1234567890 a.n. Budi & Rina."
+      }
+    ]
+  },
+  "sectionTypes": {
+    "room_section": {
+      "id": "room_section",
+      "js": "(function(){\n  var root = document.querySelector('.s-room_section');\n  if(!root || root.dataset.inited) return; root.dataset.inited = '1';\n  var overlay = root.querySelector('.js-overlay');\n  var panels = Array.prototype.slice.call(root.querySelectorAll('.js-panel'));\n  var countdownEl = root.querySelector('.js-countdown');\n  var timer = null;\n  function currentDateTime(){\n    var dEl = root.querySelector('[data-field=\"event_date\"]');\n    var tEl = root.querySelector('[data-field=\"event_time\"]');\n    var d = dEl ? dEl.textContent.trim() : '';\n    var t = tEl ? tEl.textContent.trim() : '00:00';\n    var dt = new Date(d + 'T' + (t.length===5 ? t+':00' : t));\n    return isNaN(dt.getTime()) ? null : dt;\n  }\n  function tick(){\n    if(!countdownEl) return;\n    var target = currentDateTime();\n    if(!target){ countdownEl.textContent = ''; return; }\n    var diff = target.getTime() - Date.now();\n    if(diff <= 0){ countdownEl.textContent = 'Hari bahagia telah tiba!'; return; }\n    var s = Math.floor(diff/1000);\n    var dd = Math.floor(s/86400), hh = Math.floor(s%86400/3600), mm = Math.floor(s%3600/60), ss = s%60;\n    countdownEl.textContent = dd + ' hari : ' + hh + ' jam : ' + mm + ' mnt : ' + ss + ' dtk';\n  }\n  function open(name){\n    panels.forEach(function(p){ p.hidden = p.getAttribute('data-panel') !== name; });\n    overlay.hidden = false;\n    if(name === 'datetime'){ tick(); if(timer) clearInterval(timer); timer = setInterval(tick, 1000); }\n    var modal = root.querySelector('.s-room_section__modal');\n    if(modal) modal.scrollTop = 0;\n  }\n  function close(){\n    overlay.hidden = true;\n    if(timer){ clearInterval(timer); timer = null; }\n  }\n  root.querySelectorAll('.js-hot').forEach(function(b){\n    b.addEventListener('click', function(){ open(b.getAttribute('data-modal')); });\n  });\n  root.querySelectorAll('.js-close').forEach(function(b){ b.addEventListener('click', close); });\n  overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });\n  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !overlay.hidden) close(); });\nvar roomImg=root.querySelector('.js-roomimg');var cssRoom=root.querySelector('.s-room_section__cssroom');function syncRoom(){if(!roomImg||!cssRoom)return;var s=roomImg.getAttribute('src')||roomImg.src||'';var has=!!s&&s.trim()!=='';roomImg.style.display=has?'':'none';cssRoom.hidden=has;}if(roomImg){roomImg.addEventListener('load',syncRoom);roomImg.addEventListener('error',function(){roomImg.style.display='none';if(cssRoom)cssRoom.hidden=false;});syncRoom();if('MutationObserver' in window){new MutationObserver(syncRoom).observe(roomImg,{attributes:true,attributeFilter:['src']});}}})();\n",
+      "css": ".s-room_section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:22px 14px 40px;background:var(--color-background);color:var(--color-primary)}.s-room_section__title{text-align:center;color:#fff;margin:6px 0 4px}.s-room_section__title h1{font:700 clamp(2rem,8vw,3.2rem)/1 var(--font-title);text-shadow:3px 3px 0 rgba(0,0,0,.25)}.s-room_section__title p{margin-top:6px;font:700 .7rem var(--font-body);letter-spacing:.18em;opacity:.95}.s-room_section__frame{position:relative;width:min(460px,100%);margin-top:14px;border:4px solid #2b2135;border-radius:18px;overflow:hidden;background:#f7f1e5;box-shadow:10px 10px 0 rgba(0,0,0,.3)}.s-room_section__roomimg{display:block;width:100%;height:480px;object-fit:cover}.s-room_section__roomimg[hidden]{display:none}.s-room_section__cssroom{position:relative;height:480px;background:linear-gradient(#f7f1e5 0 62%,#7a5233 62% 100%)}.s-room_section__cssroom[hidden]{display:none}.s-room_section__wall-r{position:absolute;right:0;top:0;width:46%;height:62%;background:#efe6d4;border-left:4px solid #2b2135}.s-room_section__window{position:absolute;left:9%;top:8%;width:38%;height:42%;background:linear-gradient(#bfe6f5,#dff3fc);border:4px solid #2b2135;border-radius:4px;overflow:hidden}.s-room_section__window:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 46%,#2b2135 46% 54%,transparent 54%),linear-gradient(transparent 46%,#2b2135 46% 54%,transparent 54%)}.s-room_section__curtain{position:absolute;top:5%;width:13%;height:48%;background:#8fd694;border-left:3px solid #2b2135;border-right:3px solid #2b2135}.s-room_section__curtain--l{left:5%}.s-room_section__curtain--r{left:44%}.s-room_section__cat{position:absolute;left:31%;top:32%;font-size:2rem}.s-room_section__paint{position:absolute;right:6%;top:10%;width:36%;height:22%;border:4px solid #8a5a2b;border-radius:4px;background:conic-gradient(from 40deg at 30% 30%,#f6c453,#f28ba8,#9ad0c2,#f6c453)}.s-room_section__bed{position:absolute;left:8%;bottom:8%;width:64%;height:34%;background:#fdf6ec;border:4px solid #2b2135;border-radius:14px}.s-room_section__bed:before{content:'';position:absolute;top:-26%;right:-4%;width:44%;height:52%;background:#8a8fa8;border:4px solid #2b2135;border-radius:10px}.s-room_section__blanket{position:absolute;left:6%;top:22%;width:56%;height:70%;background:#f2a7b8;border:3px solid #2b2135;border-radius:8px}.s-room_section__plant{position:absolute;font-size:2rem}.s-room_section__plant--big{left:12%;bottom:38%}.s-room_section__plant--small{left:6%;bottom:30%;font-size:1.5rem}.s-room_section__stand{position:absolute;left:47%;bottom:38%;width:16%;height:24%;background:#b07a45;border:3px solid #2b2135;border-radius:4px}.s-room_section__lamp{position:absolute;right:7%;bottom:12%;width:18%;height:32%}.s-room_section__lamp .shade{width:100%;height:38%;background:#f6c453;border:3px solid #2b2135;border-radius:50% 50% 8px 8px}.s-room_section__lamp .base{width:70%;height:62%;margin:0 auto;background:#6b4423;border:3px solid #2b2135;border-top:0}.s-room_section__rug{position:absolute;left:8%;bottom:3%;width:70%;height:12%;background:#a8e6a1;border:3px solid #2b2135;border-radius:50%}.s-room_section__hot{position:absolute;width:32px;height:32px;border-radius:50%;border:3px solid #2b2135;background:var(--color-accent);color:#fff;font:900 1.05rem/1 var(--font-body);cursor:pointer;display:grid;place-items:center;animation:s-room-ping 1.6s infinite;z-index:3}.s-room_section__hot:focus-visible{outline:3px solid #fff;outline-offset:2px}@keyframes s-room-ping{0%{box-shadow:0 0 0 0 rgba(255,107,107,.7)}70%{box-shadow:0 0 0 12px rgba(255,107,107,0)}100%{box-shadow:0 0 0 0 rgba(255,107,107,0)}}.s-room_section__hot--window{left:22%;top:4%}.s-room_section__hot--bed{left:32%;bottom:36%}.s-room_section__hot--paint{right:18%;top:6%}.s-room_section__hot--lamp{right:10%;bottom:40%}.s-room_section__hot--plant{left:4%;bottom:52%}.s-room_section__hot--rsvp{left:44%;bottom:4%}.s-room_section__hint{margin-top:12px;color:#fff;font:800 .68rem var(--font-body);letter-spacing:.16em;text-align:center;opacity:.95}.s-room_section__overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(30,20,50,.6);padding:16px}.s-room_section__overlay[hidden]{display:none}.s-room_section__modal{width:min(440px,100%);max-height:84vh;overflow:auto;background:#fffaf3;border:3px solid var(--color-primary);border-radius:22px;box-shadow:8px 8px 0 var(--color-primary);padding:22px 18px;position:relative;color:var(--color-primary)}.s-room_section__modal h3{font:700 1.5rem var(--font-title);margin:6px 0 8px}.s-room_section__modal p{font:500 .9rem/1.65 var(--font-body)}.s-room_section__tag{display:inline-block;font:800 .6rem var(--font-body);letter-spacing:.16em;background:#ffe26f;border:2px solid var(--color-primary);border-radius:999px;padding:5px 11px}.s-room_section__big{font:700 1.2rem var(--font-title);margin:10px 0}.s-room_section__count{margin-top:10px;background:#b9e6ff;border:2px dashed var(--color-primary);border-radius:12px;padding:10px;font:800 .78rem var(--font-body)}.s-room_section__close{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:3px solid var(--color-primary);background:#fff;font-weight:900;cursor:pointer;z-index:2}.s-room_section__map{margin-top:10px;border:3px solid var(--color-primary);border-radius:14px;overflow:hidden}.s-room_section__map iframe{display:block;width:100%;height:210px;border:0}.s-room_section__pair{display:flex;gap:8px;margin-top:10px}.s-room_section__pair img{width:50%;height:130px;object-fit:cover;border-radius:12px;border:3px solid var(--color-primary)}.s-room_section__framephoto{width:100%;height:150px;object-fit:cover;border-radius:12px;border:3px solid var(--color-primary);margin-top:10px}.s-room_section label{display:block;margin:10px 0 6px;font:800 .62rem var(--font-body);letter-spacing:.14em}.s-room_section select,.s-room_section input,.s-room_section textarea{width:100%;padding:11px 13px;font:500 .9rem var(--font-body);color:var(--color-primary);background:#fff;border:3px solid var(--color-primary);border-radius:12px}.s-room_section__btn{width:100%;margin-top:12px;padding:13px;font:800 .75rem var(--font-body);letter-spacing:.12em;color:var(--color-primary);background:#ffe26f;border:3px solid var(--color-primary);border-radius:12px;box-shadow:4px 4px 0 var(--color-primary);cursor:pointer}.s-room_section__note{margin-top:10px;text-align:center;font:600 .8rem var(--font-body)}.s-room_section__note.ok{color:#2f9e6d}.s-room_section__note.err{color:#d8452f}.s-room_section__list{margin:12px 0 0;padding:0;list-style:none}.s-room_section__item{margin-bottom:10px;padding:14px;background:#fff;border:3px solid var(--color-primary);border-radius:14px}.s-room_section__item strong{display:block;font:700 1rem var(--font-title)}.s-room_section__item p{margin:6px 0;font-size:.86rem}.s-room_section__item time{font-size:.68rem;opacity:.6}.s-room_section__empty{padding:16px;text-align:center;font-size:.82rem;border:3px dashed var(--color-primary);border-radius:14px}\n.s-room_section__icon{width:100%;height:110px;object-fit:contain;margin:10px auto 0;display:block;background:#f7f1e5;border:3px solid var(--color-primary);border-radius:14px}\n",
+      "html": "<section class=\"s-room_section\"><div class=\"s-room_section__title\"><h1>{{headline}}</h1><p>TAP TITIK + DI KAMAR · 1 HALAMAN</p></div><div class=\"s-room_section__frame\"><img class=\"s-room_section__roomimg js-roomimg\" data-field-img=\"room_image\" src=\"{{room_image}}\" alt=\"Kamar\"><div class=\"s-room_section__cssroom\"><div class=\"s-room_section__wall-r\"></div><div class=\"s-room_section__window\"></div><div class=\"s-room_section__curtain s-room_section__curtain--l\"></div><div class=\"s-room_section__curtain s-room_section__curtain--r\"></div><div class=\"s-room_section__cat\">🐈‍⬛</div><div class=\"s-room_section__paint\"></div><div class=\"s-room_section__stand\"></div><div class=\"s-room_section__plant s-room_section__plant--big\">🪴</div><div class=\"s-room_section__plant s-room_section__plant--small\">🌿</div><div class=\"s-room_section__rug\"></div><div class=\"s-room_section__bed\"><div class=\"s-room_section__blanket\"></div></div><div class=\"s-room_section__lamp\"><div class=\"shade\"></div><div class=\"base\"></div></div></div><button class=\"s-room_section__hot s-room_section__hot--window js-hot\" type=\"button\" data-modal=\"venue\" aria-label=\"Lokasi\">+</button><button class=\"s-room_section__hot s-room_section__hot--bed js-hot\" type=\"button\" data-modal=\"couple\" aria-label=\"Mempelai\">+</button><button class=\"s-room_section__hot s-room_section__hot--paint js-hot\" type=\"button\" data-modal=\"datetime\" aria-label=\"Tanggal dan waktu\">+</button><button class=\"s-room_section__hot s-room_section__hot--lamp js-hot\" type=\"button\" data-modal=\"gift\" aria-label=\"Kado\">+</button><button class=\"s-room_section__hot s-room_section__hot--plant js-hot\" type=\"button\" data-modal=\"wishes\" aria-label=\"Ucapan\">+</button><button class=\"s-room_section__hot s-room_section__hot--rsvp js-hot\" type=\"button\" data-modal=\"rsvp\" aria-label=\"RSVP\">+</button></div><p class=\"s-room_section__hint\">JENDELA=LOKASI · BED=MEMPELAI · LUKISAN=TANGGAL · LAMPU=KADO · TANAMAN=UCAPAN · KARPET=RSVP</p><div class=\"s-room_section__overlay js-overlay\" hidden><div class=\"s-room_section__modal\" role=\"dialog\" aria-modal=\"true\"><button class=\"s-room_section__close js-close\" type=\"button\" aria-label=\"Tutup\">✕</button><article class=\"js-panel\" data-panel=\"couple\"><span class=\"s-room_section__tag\">BED · MEMPELAI</span><img class=\"s-room_section__icon\" data-field-img=\"icon_bed\" src=\"{{icon_bed}}\" alt=\"\"><h3>{{headline}}</h3><p><b data-field=\"bride_name\">{{bride_name}}</b> &amp; <b data-field=\"groom_name\">{{groom_name}}</b></p><img class=\"s-room_section__framephoto\" data-field-img=\"couple_photo\" src=\"{{couple_photo}}\" alt=\"Foto pasangan\"><div class=\"s-room_section__pair\"><img data-field-img=\"bride_photo\" src=\"{{bride_photo}}\" alt=\"{{bride_name}}\"><img data-field-img=\"groom_photo\" src=\"{{groom_photo}}\" alt=\"{{groom_name}}\"></div></article><article class=\"js-panel\" data-panel=\"datetime\" hidden><span class=\"s-room_section__tag\">LUKISAN · WAKTU</span><img class=\"s-room_section__icon\" data-field-img=\"icon_painting\" src=\"{{icon_painting}}\" alt=\"\"><h3>Save The Date</h3><p class=\"s-room_section__big\"><span data-field=\"event_date\">{{event_date}}</span> · <span data-field=\"event_time\">{{event_time}}</span> <span data-field=\"event_timezone\">{{event_timezone}}</span></p><div class=\"s-room_section__count js-countdown\">…</div><p>Mohon datang 30 menit lebih awal.</p></article><article class=\"js-panel\" data-panel=\"venue\" hidden><span class=\"s-room_section__tag\">JENDELA · LOKASI</span><img class=\"s-room_section__icon\" data-field-img=\"icon_cat\" src=\"{{icon_cat}}\" alt=\"\"><h3 data-field=\"venue_name\">{{venue_name}}</h3><div class=\"s-room_section__map\"><iframe data-field-map=\"venue_location\" src=\"https://www.google.com/maps?q={{venue_location}}&amp;output=embed\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\" title=\"Lokasi acara\"></iframe></div></article><article class=\"js-panel\" data-panel=\"gift\" hidden><span class=\"s-room_section__tag\">LAMPU · TANDA KASIH</span><img class=\"s-room_section__icon\" data-field-img=\"icon_lamp\" src=\"{{icon_lamp}}\" alt=\"\"><h3>Kado</h3><p data-field=\"gift_info\">{{gift_info}}</p></article><article class=\"js-panel\" data-panel=\"rsvp\" hidden><span class=\"s-room_section__tag\">KARPET · RSVP</span><h3>Konfirmasi Kehadiran</h3><form data-momenia-form=\"rsvp\"><label>Kehadiran</label><select name=\"status\"><option value=\"present\">Ya, saya hadir</option><option value=\"absent\">Maaf, berhalangan</option></select><label>Jumlah tamu</label><input type=\"number\" name=\"totalAttendee\" min=\"1\" value=\"1\"><button class=\"s-room_section__btn\" type=\"submit\">Kirim Konfirmasi</button><p class=\"s-room_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-room_section__note ok\" data-momenia-when=\"success\">Terima kasih! Sampai jumpa 🎉</p><p class=\"s-room_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form></article><article class=\"js-panel\" data-panel=\"wishes\" hidden><span class=\"s-room_section__tag\">TANAMAN · UCAPAN</span><img class=\"s-room_section__icon\" data-field-img=\"icon_plant\" src=\"{{icon_plant}}\" alt=\"\"><h3>Ucapan &amp; Doa</h3><form data-momenia-form=\"message\"><textarea name=\"message\" rows=\"3\" maxlength=\"500\" placeholder=\"Tulis ucapan dan doa...\" required></textarea><button class=\"s-room_section__btn\" type=\"submit\">Kirim Ucapan</button><p class=\"s-room_section__note\" data-momenia-when=\"sending\">Mengirim…</p><p class=\"s-room_section__note ok\" data-momenia-when=\"success\">Terima kasih!</p><p class=\"s-room_section__note err\" data-momenia-when=\"error\" data-momenia-error></p></form><ul class=\"s-room_section__list\" data-momenia-list=\"messages\"><template data-momenia-item><li class=\"s-room_section__item\"><strong data-momenia-text=\"name\"></strong><p data-momenia-text=\"message\"></p><time data-momenia-text=\"messageAt\"></time></li></template><li class=\"s-room_section__empty\" data-momenia-when=\"empty\">Belum ada ucapan.</li></ul></article></div></div></section>\n",
+      "schema": {
+        "slots": [],
+        "styles": []
+      }
+    }
+  }
+}

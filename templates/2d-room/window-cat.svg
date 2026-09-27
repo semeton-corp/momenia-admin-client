@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" shape-rendering="crispEdges">
+  <title>Pixel window with cat</title>
+  <rect width="160" height="160" fill="#f7f1e5"/>
+  <rect x="34" y="14" width="92" height="108" fill="#bfe6f5"/>
+  <rect x="34" y="14" width="92" height="108" fill="none" stroke="#2b2135" stroke-width="6"/>
+  <rect x="76" y="14" width="8" height="108" fill="#2b2135"/>
+  <rect x="34" y="62" width="92" height="8" fill="#2b2135"/>
+  <rect x="42" y="20" width="12" height="96" fill="#ffffff" opacity="0.55"/>
+  <rect x="16" y="8" width="22" height="126" fill="#8fd694"/>
+  <rect x="16" y="8" width="22" height="126" fill="none" stroke="#2b2135" stroke-width="5"/>
+  <rect x="122" y="8" width="22" height="126" fill="#8fd694"/>
+  <rect x="122" y="8" width="22" height="126" fill="none" stroke="#2b2135" stroke-width="5"/>
+  <rect x="10" y="4" width="140" height="9" fill="#2b2135"/>
+  <g fill="#14141c">
+    <rect x="86" y="76" width="22" height="40"/>
+    <rect x="80" y="60" width="34" height="22"/>
+    <rect x="80" y="52" width="9" height="13"/>
+    <rect x="99" y="52" width="9" height="13"/>
+    <rect x="100" y="110" width="10" height="28"/>
+    <rect x="90" y="134" width="30" height="7"/>
+  </g>
+  <rect x="30" y="140" width="100" height="8" fill="#c9a06a"/>
+  <rect x="30" y="140" width="100" height="8" fill="none" stroke="#2b2135" stroke-width="4"/>
+</svg>

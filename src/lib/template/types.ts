@@ -9,7 +9,7 @@ export type PageDef = {
   sections: SectionConfig[]
 }
 
-export type FieldType = "text" | "date" | "time" | "image" | "audio" | "color" | "textarea"
+export type FieldType = "text" | "date" | "time" | "image" | "audio" | "color" | "textarea" | "select"
 
 export type FieldSchema = {
   key: string
@@ -18,6 +18,9 @@ export type FieldSchema = {
   section: string
   required: boolean
   placeholder?: string
+  // Only meaningful when type === "select" — the choices the editor renders in the
+  // dropdown. Saved as a plain string into fieldValues, same as any other field.
+  options?: string[]
 }
 
 export type Theme = {

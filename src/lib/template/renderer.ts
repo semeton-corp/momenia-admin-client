@@ -34,10 +34,32 @@ export function renderSection(
   _sectionConfig: SectionConfig,
   userData: Record<string, string>,
 ): { html: string; css: string; js: string } {
-  let html = sectionDef.html ?? ""
-
-  Object.entries(userData).forEach(([key, val]) => {
-    html = html.replaceAll(`{{${key}}}`, val ?? "")
+  const sourceWithImages = (sectionDef.html ?? "").replace(/<img\b[^>]*>/gi, (tag) => {
+    if (/\bdata-field-img\s*=/.test(tag)) return tag
+    const imageField = tag.match(/\bsrc\s*=\s*(["'])\{\{\s*([^}\s]+)\s*\}\}\1/i)?.[2]
+    return imageField ? tag.replace(/^<img/i, `<img data-field-img="${imageField.replace(/"/g, "&quot;")}"`) : tag
+  })
+  // Retain attribute templates so URLs, dates, alt text and placeholders can be
+  // updated inside the iframe without rebuilding its document.
+  const source = sourceWithImages.replace(/<[a-z][^>]*>/gi, (tag) => {
+    const bindings: Record<string, string> = {}
+    for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/g)) {
+      if (/\{\{\s*[^}\s]+\s*\}\}/.test(match[3])) bindings[match[1]] = match[3]
+    }
+    if (!Object.keys(bindings).length) return tag
+    return tag.replace(/>$/, ` data-memoria-bind="${encodeURIComponent(JSON.stringify(bindings))}">`)
+  })
+  // Text placeholders need a stable target for `memoriaUpdate` so changing a
+  // sample value does not require rebuilding the iframe. Attribute placeholders
+  // (src, alt, href, …) cannot contain an injected span, so keep those as text.
+  const html = source.replace(/\{\{\s*([^}\s]+)\s*\}\}/g, (match, key: string, offset: number) => {
+    if (!Object.hasOwn(userData, key)) return match
+    const value = userData[key] ?? ""
+    const before = source.slice(0, offset)
+    const isInsideTag = before.lastIndexOf("<") > before.lastIndexOf(">")
+    const escaped = value.replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char]!)
+    if (isInsideTag) return escaped.replace(/"/g, "&quot;")
+    return `<span data-field="${key}" style="all:unset">${escaped}</span>`
   })
 
   return { html, css: sectionDef.css ?? "", js: sectionDef.js ?? "" }
@@ -62,30 +84,47 @@ export function buildThemeCSS(theme: Theme): string {
 //   - window.__memoriaGoTo(pageId) — show a page by id, hide all others
 //   - postMessage "memoriaGoTo" { pageId } — same, triggered from parent (admin preview)
 //   - postMessage "memoriaUpdate" — live-update data-field slots and CSS vars
-//   - postMessage "memoriaResize" — reports body height back to parent
+//   - postMessage "memoriaPageChange" — tells the parent which page is showing, so a
+//     template's own nav button ("Let's Party") keeps the editor's tabs in sync
 const RUNTIME_SCRIPT = `(function(){
+  var currentUserData = {};
+  var boundAttributes = Array.from(document.querySelectorAll('[data-memoria-bind]')).map(function(el){
+    try { return {el:el, templates:JSON.parse(decodeURIComponent(el.getAttribute('data-memoria-bind')))}; }
+    catch(_error) { return null; }
+  }).filter(Boolean);
+  function updateBoundAttributes(changed){
+    boundAttributes.forEach(function(binding){
+      Object.keys(binding.templates).forEach(function(attribute){
+        var template = binding.templates[attribute];
+        var keys = Array.from(template.matchAll(/\\{\\{\\s*([^}\\s]+)\\s*\\}\\}/g)).map(function(match){return match[1]});
+        if(!keys.some(function(key){return Object.prototype.hasOwnProperty.call(changed,key)})) return;
+        binding.el.setAttribute(attribute,template.replace(/\\{\\{\\s*([^}\\s]+)\\s*\\}\\}/g,function(_match,key){return currentUserData[key] || ''}));
+      });
+    });
+  }
   function getPages(){
     return Array.from(document.querySelectorAll('[data-memoria-page]'));
   }
-  function reportHeight(){
-    var pages = getPages();
-    var active = pages.find(function(el){ return el.style.display !== 'none'; }) || pages[0];
-    // First page is always fullscreen — report fixed height to avoid resize loop
-    var isFirst = active && active === pages[0];
-    var h = isFirst ? 812 : (active ? active.scrollHeight : document.body.scrollHeight);
-    window.parent.postMessage({type:'memoriaResize', height: h}, '*');
-  }
+  // Kept only so older previews listening for it don't break: the phone mockup is a
+  // fixed 375x812 viewport now and each page scrolls inside it, exactly like the
+  // guest's real screen — the frame no longer grows to fit the page.
+  function reportHeight(){}
   window.__memoriaGoTo = function(pageId){
     getPages().forEach(function(el){
-      el.style.display = el.dataset.memoriaPage === pageId ? 'block' : 'none';
+      // '' (not 'block') so the cover keeps the flex layout that stretches it to a
+      // full screen; 'block' would flatten it back to a short, content-sized page.
+      el.style.display = el.dataset.memoriaPage === pageId ? '' : 'none';
     });
-    setTimeout(reportHeight, 40);
+    // Each page starts at its own top rather than inheriting the previous scroll.
+    document.body.scrollTop = 0;
+    window.parent.postMessage({type:'memoriaPageChange', pageId: pageId}, '*');
   };
   function init(){
-    // Show only the first page on load
+    // Pages are already separated by inline display in the markup, so nothing to
+    // show or hide here — this only announces the starting page to the parent.
     var pages = getPages();
-    pages.forEach(function(el, i){ el.style.display = i === 0 ? 'block' : 'none'; });
-    reportHeight();
+    if(pages[0]) window.parent.postMessage({type:'memoriaPageChange', pageId: pages[0].dataset.memoriaPage}, '*');
+    window.parent.postMessage({type:'memoriaReady'}, '*');
   }
   window.addEventListener('message', function(e){
     if(!e.data) return;
@@ -93,8 +132,18 @@ const RUNTIME_SCRIPT = `(function(){
     if(d.type === 'memoriaGoTo' && d.pageId){
       window.__memoriaGoTo(d.pageId);
     }
+    if(d.type === 'memoriaScrollToSection' && d.sectionId){
+      var section = Array.from(document.querySelectorAll('[data-section-id]')).find(function(el){
+        return el.getAttribute('data-section-id') === d.sectionId;
+      });
+      var sectionPage = section && section.closest('[data-memoria-page]');
+      if(sectionPage && window.getComputedStyle(sectionPage).display !== 'none'){
+        section.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
     if(d.type === 'memoriaUpdate'){
       var u = d.userData || {};
+      Object.assign(currentUserData,u);
       Object.keys(u).forEach(function(k){
         document.querySelectorAll('[data-field="'+k+'"]').forEach(function(el){
           el.textContent = u[k] || '';
@@ -105,6 +154,7 @@ const RUNTIME_SCRIPT = `(function(){
           if(v){ el.style.display = ''; el.style.opacity = ''; }
         });
       });
+      updateBoundAttributes(u);
       if(d.theme){
         var r = document.documentElement, t = d.theme;
         if(t.color_primary)    r.style.setProperty('--color-primary',    t.color_primary);
@@ -113,12 +163,78 @@ const RUNTIME_SCRIPT = `(function(){
         if(t.font_title)       r.style.setProperty('--font-title',       "'"+t.font_title+"', serif");
         if(t.font_body)        r.style.setProperty('--font-body',        "'"+t.font_body+"', sans-serif");
       }
+      document.dispatchEvent(new CustomEvent('memoriaDataUpdated',{detail:{userData:currentUserData,changed:u}}));
       reportHeight();
     }
   });
-  if(document.readyState==='complete'){ init(); }
-  else{ window.addEventListener('load', init); }
-  try{ new ResizeObserver(reportHeight).observe(document.body); }catch(e){}
+  // ── Guest interaction preview (data-momenia-*) ───────────────────────────
+  // In production the real invitation posts these submits up to the app, which
+  // owns the endpoints. There is no host here, so this stub fakes a signed-in
+  // guest with sample messages — enough for an author to see and style RSVP and
+  // guestbook sections. Nothing is sent anywhere.
+  var MOCK_GUEST = 'Haidai';
+  var MOCK_MESSAGES = [
+    { name: 'Haidai',       message: 'Selamat menempuh hidup baru! Bahagia selalu.', messageAt: '2 jam lalu' },
+    { name: 'Rina Astuti',  message: 'Turut berbahagia, semoga samawa ya!',          messageAt: 'Kemarin' }
+  ];
+
+  function when(root, name, on){
+    root.querySelectorAll('[data-momenia-when="'+name+'"]').forEach(function(el){
+      el.style.display = on ? '' : 'none';
+    });
+  }
+
+  function initGuestPreview(){
+    // Preview always behaves as though the link carries a guestInvitationId,
+    // otherwise the author would only ever see the "no-guest" fallback.
+    when(document, 'guest', true);
+    when(document, 'no-guest', false);
+    document.querySelectorAll('[data-momenia-text="guestName"]').forEach(function(el){
+      el.textContent = MOCK_GUEST;
+    });
+
+    document.querySelectorAll('[data-momenia-form]').forEach(function(form){
+      when(form, 'sending', false);
+      when(form, 'success', false);
+      when(form, 'error', false);
+    });
+
+    document.querySelectorAll('[data-momenia-list="messages"]').forEach(function(list){
+      when(list, 'empty', MOCK_MESSAGES.length === 0);
+      var tpl = list.querySelector('template[data-momenia-item]');
+      if(!tpl) return;
+      MOCK_MESSAGES.forEach(function(item){
+        var node = tpl.content.cloneNode(true).firstElementChild;
+        if(!node) return;
+        node.querySelectorAll('[data-momenia-text]').forEach(function(el){
+          var val = item[el.getAttribute('data-momenia-text')];
+          if(val === undefined || val === null || val === ''){ el.style.display = 'none'; return; }
+          el.textContent = val;
+        });
+        list.appendChild(node);
+      });
+    });
+
+    document.addEventListener('submit', function(e){
+      var form = e.target && e.target.closest ? e.target.closest('[data-momenia-form]') : null;
+      if(!form) return;
+      e.preventDefault();
+      when(form, 'error', false);
+      when(form, 'sending', true);
+      setTimeout(function(){
+        when(form, 'sending', false);
+        when(form, 'success', true);
+        reportHeight();
+      }, 500);
+    }, true);
+
+    reportHeight();
+  }
+
+  // DOMContentLoaded, not load: waiting on every image and web font left both pages
+  // stacked and visible for as long as the assets took to arrive.
+  if(document.readyState!=='loading'){ init(); initGuestPreview(); }
+  else{ document.addEventListener('DOMContentLoaded', function(){ init(); initGuestPreview(); }); }
 })();`
 
 export function renderInvitation(
@@ -139,7 +255,7 @@ export function renderInvitation(
   const allJS: string[] = []
   const pageBlocks: string[] = []
 
-  for (const page of pages) {
+  for (const [pageIndex, page] of pages.entries()) {
     const isMain = page.id === "main"
 
     const pageSections = Array.isArray(page?.sections) ? page.sections : []
@@ -156,12 +272,16 @@ export function renderInvitation(
       if (!sectionDef) continue
       const rendered = renderSection(sectionDef, sectionConfig, effectiveUserData)
       allCSS.push(rendered.css)
-      sectionsHTML.push(rendered.html)
+      sectionsHTML.push(`<div data-section-id="${sectionConfig.id.replace(/[&<>"]/g, "")}">${rendered.html}</div>`)
       if (rendered.js) allJS.push(rendered.js)
     }
 
+    // Non-first pages are hidden in the markup itself, not by the runtime: the
+    // browser paints the document before any script runs, so hiding them in JS
+    // showed every page stacked together for the first frames.
+    const isCover = pageIndex === 0
     pageBlocks.push(
-      `<div data-memoria-page="${page.id}">${sectionsHTML.join("\n")}</div>`
+      `<div data-memoria-page="${page.id}"${isCover ? " data-memoria-cover" : ' style="display:none"'}>${sectionsHTML.join("\n")}</div>`
     )
   }
 
@@ -179,7 +299,20 @@ export function renderInvitation(
     ${themeCSS}
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    /* The preview is a fixed 375x812 phone viewport: <html> clips at that size and
+       <body> carries the scrollbar, so each page scrolls inside the mockup instead
+       of stretching the frame — same as the guest's real screen. */
+    html { height: 100%; overflow: hidden; }
+    body { height: 100%; overflow-y: auto; overflow-x: hidden; }
     body { background: var(--color-background); color: var(--color-primary); font-family: var(--font-body); }
+    /* The cover is a full-screen splash, but templates size it in fixed pixels
+       (e.g. min-height:812px). Stretching it to whatever height it's given fixes
+       every template at once; the template's own min-height stays the floor.
+       Deliberately not applied to the other pages — those scroll through sections. */
+    [data-memoria-cover] { min-height: 100%; display: flex; flex-direction: column; }
+    [data-memoria-cover] > * { flex: 1 0 auto; }
+    [data-memoria-cover] > [data-section-id] { display: flex; flex-direction: column; }
+    [data-memoria-cover] > [data-section-id] > * { flex: 1 0 auto; }
     ${allCSS.join("\n")}
   </style>
 </head>

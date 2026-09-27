@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <title>Moonlit grass ground tile (seamless)</title>
+  <rect x="0" y="0" width="16" height="5" fill="#6fbf5f"/>
+  <rect x="0" y="0" width="16" height="1" fill="#a8e6a1"/>
+  <rect x="2" y="2" width="1" height="1" fill="#3f7d3a"/>
+  <rect x="7" y="1" width="1" height="1" fill="#3f7d3a"/>
+  <rect x="11" y="3" width="1" height="1" fill="#3f7d3a"/>
+  <rect x="14" y="2" width="1" height="1" fill="#3f7d3a"/>
+  <rect x="0" y="5" width="16" height="11" fill="#8a5a2b"/>
+  <rect x="3" y="7" width="2" height="2" fill="#6b4423"/>
+  <rect x="10" y="9" width="2" height="2" fill="#6b4423"/>
+  <rect x="6" y="12" width="2" height="2" fill="#6b4423"/>
+  <rect x="13" y="13" width="2" height="2" fill="#6b4423"/>
+  <rect x="1" y="10" width="1" height="1" fill="#a06a35"/>
+  <rect x="0" y="5" width="1" height="11" fill="#5d3d24"/>
+  <rect x="15" y="5" width="1" height="11" fill="#5d3d24"/>
+  <rect x="0" y="15" width="16" height="1" fill="#5d3d24"/>
+</svg>

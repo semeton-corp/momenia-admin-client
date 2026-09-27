@@ -3,8 +3,11 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { MOCK_TEMPLATE, SECTION_TYPES, createDefaultInvitation } from "@/lib/template/mock-data"
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
+import { openTemplatePreview } from "@/lib/template/preview-window"
+import { parseThemeJson, parseSchemaJson, findTemplateJsonIssue } from "@/lib/template/validate"
 import { getTemplate, saveTemplate } from "@/lib/template/template-store"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,13 +51,16 @@ function JsonEditor({
   value,
   onChange,
   example,
+  validate: validateValue,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   example?: string
+  validate?: (v: string) => string | null
 }) {
   const [error, setError] = useState<string | null>(null)
+  const [formatting, setFormatting] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
 
   const lastExternalRef = useRef(value)
@@ -66,6 +72,9 @@ function JsonEditor({
   }, [value])
 
   const validate = (v: string) => {
+    // The page passes a validator that checks the document's shape too, not just
+    // its syntax — same rule that decides whether the edit reaches the preview.
+    if (validateValue) { setError(validateValue(v)); return }
     try { JSON.parse(v); setError(null) } catch { setError("Invalid JSON") }
   }
 
@@ -90,12 +99,33 @@ function JsonEditor({
     validate(example)
   }
 
+  const handleFormat = async () => {
+    if (!ref.current || error) return
+    setFormatting(true)
+    try {
+      const formatted = await formatJson(ref.current.value)
+      ref.current.value = formatted
+      lastExternalRef.current = formatted
+      onChange(formatted)
+      validate(formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
         <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest">{label}</span>
         <div className="flex items-center gap-3">
           {error && <span className="text-xs text-red-400">{error}</span>}
+          <button
+            onClick={handleFormat}
+            disabled={formatting || !!error}
+            className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40"
+          >
+            {formatting ? "Formatting…" : "Prettier"}
+          </button>
           {example && (
             <button
               onClick={loadExample}
@@ -131,6 +161,19 @@ function SectionCodeEditor({
   onChange: (field: CodeTab, value: string) => void
 }) {
   const tabs: CodeTab[] = ["html", "css", "js"]
+  const [formatting, setFormatting] = useState(false)
+  const formatters: Record<CodeTab, (code: string) => Promise<string>> = { html: formatHtml, css: formatCss, js: formatJs }
+
+  const handleFormat = async () => {
+    setFormatting(true)
+    try {
+      const formatted = await formatters[tab](sectionType[tab])
+      onChange(tab, formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-0.5 px-3 pt-2 pb-0 border-b border-border bg-card shrink-0">
@@ -148,6 +191,13 @@ function SectionCodeEditor({
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 pb-1">
+          <button
+            onClick={handleFormat}
+            disabled={formatting}
+            className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40"
+          >
+            {formatting ? "Formatting…" : "Prettier"}
+          </button>
           <span className="text-[11px] text-muted-foreground/60 font-mono">{sectionType.id}</span>
         </div>
       </div>
@@ -593,6 +643,8 @@ export default function TemplateMaker() {
     return { ...createDefaultInvitation(), theme: parsedTheme, sectionOrder }
   }, [template, themeJson])
 
+  const jsonIssue = useMemo(() => findTemplateJsonIssue(themeJson, schemaJson), [themeJson, schemaJson])
+
   const previewHtml = useMemo(() => {
     try {
       return renderInvitation(template, previewInvitation, sectionTypes)
@@ -603,19 +655,18 @@ export default function TemplateMaker() {
 
   const handleThemeJson = useCallback((v: string) => {
     setThemeJson(v)
-    try {
-      const parsed = JSON.parse(v)
-      setTemplate((t) => ({ ...t, theme_defaults: parsed }))
-    } catch { /* noop */ }
+    const parsed = parseThemeJson(v)
+    if (parsed.ok) setTemplate((t) => ({ ...t, theme_defaults: parsed.value }))
   }, [])
 
   const handleSchemaJson = useCallback((v: string) => {
     setSchemaJson(v)
-    try {
-      const parsed = JSON.parse(v)
-      setTemplate((t) => ({ ...t, schema: parsed }))
-    } catch { /* noop */ }
+    const parsed = parseSchemaJson(v)
+    if (parsed.ok) setTemplate((t) => ({ ...t, schema: parsed.value }))
   }, [])
+
+  const validateThemeJson = useCallback((v: string) => { const r = parseThemeJson(v); return r.ok ? null : r.error }, [])
+  const validateSchemaJson = useCallback((v: string) => { const r = parseSchemaJson(v); return r.ok ? null : r.error }, [])
 
   const handleSectionCode = useCallback((id: string, field: CodeTab, value: string) => {
     setSectionTypes((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }))
@@ -701,14 +752,18 @@ export default function TemplateMaker() {
   }, [])
 
   const handleSave = () => {
+    if (jsonIssue) return
     saveTemplate(template, sectionTypes)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   const handlePreviewTemplate = () => {
-    const win = window.open("", "_blank")
-    if (win) { win.document.write(previewHtml); win.document.close() }
+    openTemplatePreview(previewHtml, {
+      userData: previewInvitation.userData,
+      theme: previewInvitation.theme,
+      activePage: previewPage,
+    })
   }
 
   if (!loaded) {
@@ -750,10 +805,18 @@ export default function TemplateMaker() {
             </svg>
             Preview
           </button>
+          {jsonIssue && (
+            <span title={`${jsonIssue.pane}: ${jsonIssue.message}`} className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+              Invalid {jsonIssue.pane}
+            </span>
+          )}
           <button
             onClick={handleSave}
+            disabled={jsonIssue !== null}
+            title={jsonIssue ? `Fix ${jsonIssue.pane} before saving — ${jsonIssue.message}` : undefined}
             className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors ${
-              saved ? "bg-green-700 text-white" : "bg-amber-600 hover:bg-amber-500 text-white"
+              jsonIssue ? "bg-muted text-muted-foreground cursor-not-allowed" : saved ? "bg-green-700 text-white" : "bg-amber-600 hover:bg-amber-500 text-white"
             }`}
           >
             {saved ? "Saved!" : "Save Template"}
@@ -803,9 +866,9 @@ export default function TemplateMaker() {
               </div>
             )
           ) : selection.kind === "theme" ? (
-            <JsonEditor label="theme.json" value={themeJson} onChange={handleThemeJson} example={EXAMPLE_THEME} />
+            <JsonEditor label="theme.json" value={themeJson} onChange={handleThemeJson} example={EXAMPLE_THEME} validate={validateThemeJson} />
           ) : (
-            <JsonEditor label="schema.json" value={schemaJson} onChange={handleSchemaJson} example={EXAMPLE_SCHEMA} />
+            <JsonEditor label="schema.json" value={schemaJson} onChange={handleSchemaJson} example={EXAMPLE_SCHEMA} validate={validateSchemaJson} />
           )}
         </main>
 

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" shape-rendering="crispEdges">
+  <title>Pixel bed</title>
+  <rect width="200" height="140" fill="#f7f1e5"/>
+  <rect x="120" y="14" width="66" height="56" fill="#8a8fa8"/>
+  <rect x="120" y="14" width="66" height="56" fill="none" stroke="#2b2135" stroke-width="5"/>
+  <rect x="128" y="24" width="24" height="18" fill="#f2a7b8"/>
+  <rect x="128" y="24" width="24" height="18" fill="none" stroke="#2b2135" stroke-width="3"/>
+  <rect x="156" y="24" width="24" height="18" fill="#f2a7b8"/>
+  <rect x="156" y="24" width="24" height="18" fill="none" stroke="#2b2135" stroke-width="3"/>
+  <rect x="10" y="60" width="176" height="58" fill="#fdf6ec"/>
+  <rect x="10" y="60" width="176" height="58" fill="none" stroke="#2b2135" stroke-width="5"/>
+  <rect x="80" y="60" width="106" height="58" fill="#f2a7b8"/>
+  <rect x="80" y="60" width="106" height="58" fill="none" stroke="#2b2135" stroke-width="4"/>
+  <g fill="#e07f92">
+    <rect x="94" y="72" width="14" height="5"/>
+    <rect x="120" y="80" width="14" height="5"/>
+    <rect x="148" y="72" width="14" height="5"/>
+    <rect x="106" y="94" width="14" height="5"/>
+    <rect x="136" y="98" width="14" height="5"/>
+    <rect x="160" y="90" width="14" height="5"/>
+  </g>
+  <rect x="30" y="84" width="24" height="5" fill="#2b2135"/>
+  <rect x="120" y="120" width="40" height="8" fill="#5d3d24"/>
+</svg>

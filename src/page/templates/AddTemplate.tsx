@@ -5,9 +5,15 @@ import { createInvitationTemplate } from "@/api/cms/invitation-templates"
 import { getInvitationTemplateCategories, type InvitationTemplateCategory } from "@/api/cms/invitation-template-categories"
 import { getInvitationTemplateTags } from "@/api/cms/invitation-template-tags"
 import { uploadObjectWithPresignedUrl } from "@/api/objects"
+import { ImageUploader } from "@/components/ImageUploader"
+import { formatHtml, formatCss, formatJs, formatJson } from "@/utils/formatCode"
 import type { Template, SectionTypeDef, Invitation, SectionConfig } from "@/lib/template/types"
 import { renderInvitation, renderPreviewError } from "@/lib/template/renderer"
+import { openTemplatePreview } from "@/lib/template/preview-window"
+import { openTemplateSampleEditor } from "@/lib/template/sample-editor-window"
 import { createDefaultInvitation } from "@/lib/template/mock-data"
+import { parseThemeJson, parseSchemaJson, findTemplateJsonIssue } from "@/lib/template/validate"
+import { PreviewErrorBoundary } from "@/components/PreviewErrorBoundary"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
@@ -27,6 +33,18 @@ type NewPageState = { name: string } | null
 function formatPrice(raw: string): string {
   if (!raw) return ""
   return Number(raw).toLocaleString("id-ID")
+}
+
+// Backend stores categories as UPPER_SNAKE_CASE (e.g. "wedding event" -> "WEDDING_EVENT");
+// display them as Title Case everywhere in this form.
+function formatCategoryLabel(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
 }
 
 function makeBlankTemplate(): Template {
@@ -74,6 +92,17 @@ const EXAMPLE_SCHEMA = JSON.stringify({
       required: false,
       placeholder: "https://example.com/couple.jpg",
     },
+    // Reserved key — if present, its value becomes the desktop wallpaper behind the
+    // phone-shaped invitation (see DESKTOP_BACKGROUND_FIELD_KEY in the user client's
+    // lib/invitation-preview.ts). Falls back to a shared default image when omitted.
+    {
+      key: "desktop_background",
+      label: "Background Desktop",
+      type: "image",
+      section: "cover_section",
+      required: false,
+      placeholder: "https://example.com/desktop-bg.jpg",
+    },
     {
       key: "bride_name",
       label: "Nama Pengantin Wanita",
@@ -112,6 +141,17 @@ const EXAMPLE_SCHEMA = JSON.stringify({
       required: true,
       placeholder: "Gedung Balai Kartini",
     },
+    // "select" renders a dropdown in the editor's Content panel. `options` is a plain
+    // string list — whatever the couple picks saves into fieldValues as that exact
+    // string, same as any text field, so {{event_timezone}} in the section HTML just works.
+    {
+      key: "event_timezone",
+      label: "Time Zone",
+      type: "select",
+      section: "details_section",
+      required: false,
+      options: ["WIB", "WIT", "WITA"],
+    },
   ],
 }, null, 2)
 
@@ -119,7 +159,7 @@ const EXAMPLE_SCHEMA = JSON.stringify({
 
 function useCombobox<T extends { id: number; name: string }>(
   fetcher: (keyword?: string) => Promise<T[]>,
-  debounceMs = 3000,
+  debounceMs = 500,
 ) {
   const [inputText, setInputText] = useState("")
   const [suggestions, setSuggestions] = useState<T[]>([])
@@ -147,7 +187,7 @@ function useCombobox<T extends { id: number; name: string }>(
     debounceRef.current = setTimeout(() => fetchSuggestions(text), debounceMs)
   }
 
-  return { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown: () => setOpen(false), openDropdown: () => { if (suggestions.length > 0) setOpen(true) } }
+  return { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown: () => setOpen(false), openDropdown: () => { setOpen(true); if (suggestions.length === 0) fetchSuggestions(inputText) } }
 }
 
 // ─── CategoryCombobox ─────────────────────────────────────────────────────────
@@ -162,12 +202,22 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  const handleSelect = (cat: InvitationTemplateCategory) => { setInputText(cat.name); onChange({ id: cat.id, name: cat.name }); closeDropdown() }
+  const handleSelect = (cat: InvitationTemplateCategory) => {
+    const label = formatCategoryLabel(cat.name)
+    setInputText(label)
+    onChange({ id: cat.id, name: label })
+    closeDropdown()
+  }
 
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
-        <input type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, (t) => onChange({ id: null, name: t }))} onFocus={openDropdown} placeholder="e.g. Wedding Invitation"
+        <input type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, (t) => onChange({ id: null, name: t }))} onFocus={openDropdown}
+          onBlur={() => {
+            const match = suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase())
+            if (match) onChange({ id: match.id, name: formatCategoryLabel(match.name) })
+          }}
+          placeholder="e.g. Wedding Invitation"
           className={`w-full rounded-lg border bg-background px-4 py-2.5 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
@@ -177,9 +227,9 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
       {open && (
         <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
           {suggestions.map((cat) => (
-            <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{cat.name}</button>
+            <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(cat.name)}</button>
           ))}
-          {!loading && inputText.trim() && !suggestions.find((c) => c.name.toLowerCase() === inputText.trim().toLowerCase()) && (
+          {!loading && inputText.trim() && !suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase()) && (
             <button type="button" onMouseDown={(e) => { e.preventDefault(); onChange({ id: null, name: inputText.trim() }); closeDropdown() }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               Create "{inputText.trim()}"
@@ -205,7 +255,7 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
 function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onChange: (v: SelectedItem[]) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown } = useCombobox(getInvitationTemplateTags)
+  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateTags)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -214,14 +264,19 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
   }, [])
 
   const addTag = (item: SelectedItem) => {
-    if (value.find((t) => t.name.toLowerCase() === item.name.toLowerCase())) return
+    if (value.find((t) => formatCategoryLabel(t.name).toLowerCase() === formatCategoryLabel(item.name).toLowerCase())) return
     onChange([...value, item]); setInputText(""); inputRef.current?.focus(); closeDropdown()
   }
 
   const removeTag = (name: string) => onChange(value.filter((t) => t.name !== name))
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }
+    if ((e.key === "Enter" || e.key === ",") && inputText.trim()) {
+      e.preventDefault()
+      const trimmed = inputText.trim()
+      const match = suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === trimmed.toLowerCase())
+      addTag(match ? { id: match.id, name: formatCategoryLabel(match.name) } : { id: null, name: trimmed })
+    }
     if (e.key === "Backspace" && !inputText && value.length > 0) removeTag(value[value.length - 1].name)
   }
 
@@ -230,23 +285,23 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
       <div className={`flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border bg-background px-3 py-2 transition-colors cursor-text ${error ? "border-destructive" : "border-border focus-within:border-indigo-500"}`} onClick={() => inputRef.current?.focus()}>
         {value.map((tag) => (
           <span key={tag.name} className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-            {tag.name}
+            {formatCategoryLabel(tag.name)}
             <button type="button" onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }} className="ml-0.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 p-0.5 transition-colors">
               <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </span>
         ))}
         <div className="relative flex flex-1 items-center min-w-24">
-          <input ref={inputRef} type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, () => {})} onKeyDown={handleKeyDown} placeholder={value.length === 0 ? "e.g. Elegant, Modern…" : ""} className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          <input ref={inputRef} type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, () => {})} onFocus={openDropdown} onKeyDown={handleKeyDown} placeholder={value.length === 0 ? "e.g. Elegant, Modern…" : ""} className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
           {loading && <div className="absolute right-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
         </div>
       </div>
       {open && (
         <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {suggestions.filter((t) => !value.find((v) => v.name.toLowerCase() === t.name.toLowerCase())).map((tag) => (
-            <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: tag.name }) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{tag.name}</button>
+          {suggestions.filter((t) => !value.find((v) => formatCategoryLabel(v.name).toLowerCase() === formatCategoryLabel(t.name).toLowerCase())).map((tag) => (
+            <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: formatCategoryLabel(tag.name) }) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(tag.name)}</button>
           ))}
-          {!loading && inputText.trim() && !suggestions.find((t) => t.name.toLowerCase() === inputText.trim().toLowerCase()) && (
+          {!loading && inputText.trim() && !suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === inputText.trim().toLowerCase()) && (
             <button type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
               <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               Create "{inputText.trim()}"
@@ -262,54 +317,25 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
 
 // ─── PriceInput ───────────────────────────────────────────────────────────────
 
-function PriceInput({ label, value, onChange }: { label: string; value: string; onChange: (raw: string) => void }) {
-  const [focused, setFocused] = useState(false)
+function PriceInput({ label, value, onChange, required, error }: { label: string; value: string; onChange: (raw: string) => void; required?: boolean; error?: string }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-foreground">{label}</label>
+      <label className="mb-2 block text-sm font-medium text-foreground">{label} {required && <span className="text-destructive">*</span>}</label>
       <div className="relative">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground select-none">Rp</span>
-        <input type="text" inputMode="numeric" value={focused ? value : formatPrice(value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder="0"
-          className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
-      </div>
-    </div>
-  )
-}
-
-// ─── ImageUploader ────────────────────────────────────────────────────────────
-
-function ImageUploader({ label, previewUrl, uploading, onFileSelect, error }: { label: string; previewUrl: string; uploading: boolean; onFileSelect: (file: File) => void; error?: string }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  return (
-    <div className="flex-1">
-      <label className="mb-2 block text-sm font-medium text-foreground">{label} <span className="text-destructive">*</span></label>
-      <div onClick={() => !uploading && inputRef.current?.click()} className={`relative flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-muted-foreground/50 ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}>
-        {previewUrl ? <img src={previewUrl} alt={label} className="absolute inset-0 h-full w-full rounded-xl object-cover" /> : (
-          <>
-            <svg className="h-10 w-10 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">Image Banner Empty</p>
-              <p className="text-xs text-muted-foreground">Upload banner files to show on the landing page.</p>
-              <p className="text-xs text-muted-foreground">(max size 1 Mb)</p>
-            </div>
-          </>
-        )}
-        {uploading && <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/60"><div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" /></div>}
-        {previewUrl && !uploading && <div className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur-sm">Click to replace</div>}
-      </div>
-      <div className="mt-2 flex justify-center">
-        <button type="button" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading} className="rounded-lg border border-border px-4 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60">{uploading ? "Uploading..." : "Upload Files"}</button>
+        <input type="text" inputMode="numeric" value={formatPrice(value)} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} placeholder="0"
+          className={`w-full rounded-lg border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
       </div>
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) onFileSelect(file); e.target.value = "" }} />
     </div>
   )
 }
 
 // ─── TemplateMaker sub-components (inlined for step 2) ───────────────────────
 
-function JsonEditor({ label, value, onChange, example }: { label: string; value: string; onChange: (v: string) => void; example?: string }) {
+function JsonEditor({ label, value, onChange, example, validate: validateValue }: { label: string; value: string; onChange: (v: string) => void; example?: string; validate?: (v: string) => string | null }) {
   const [error, setError] = useState<string | null>(null)
+  const [formatting, setFormatting] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
   const lastExternalRef = useRef(value)
 
@@ -322,6 +348,9 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
 
   const validate = (v: string) => {
     if (!v.trim()) { setError(null); return }
+    // The page passes a validator that checks the document's shape too, not just
+    // its syntax — same rule that decides whether the edit reaches the preview.
+    if (validateValue) { setError(validateValue(v)); return }
     try { JSON.parse(v); setError(null) } catch (e) { setError(`Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`) }
   }
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const v = e.target.value; lastExternalRef.current = v; onChange(v); validate(v) }
@@ -331,6 +360,19 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
     lastExternalRef.current = example
     onChange(example); validate(example)
   }
+  const handleFormat = async () => {
+    if (!ref.current || error) return
+    setFormatting(true)
+    try {
+      const formatted = await formatJson(ref.current.value)
+      ref.current.value = formatted
+      lastExternalRef.current = formatted
+      onChange(formatted)
+      validate(formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -338,6 +380,7 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
         <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest">{label}</span>
         <div className="flex items-center gap-3">
           {error && <span className="text-xs text-red-400">{error}</span>}
+          <button onClick={handleFormat} disabled={formatting || !!error} className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40">{formatting ? "Formatting…" : "Prettier"}</button>
           {example && <button onClick={loadExample} className="text-[11px] text-amber-400 hover:text-amber-300 border border-amber-800 hover:border-amber-600 rounded px-2 py-0.5 transition-colors">Load Example</button>}
         </div>
       </div>
@@ -348,6 +391,19 @@ function JsonEditor({ label, value, onChange, example }: { label: string; value:
 
 function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectionType: SectionTypeDef; tab: CodeTab; onTabChange: (t: CodeTab) => void; onChange: (field: CodeTab, value: string) => void }) {
   const tabs: CodeTab[] = ["html", "css", "js"]
+  const [formatting, setFormatting] = useState(false)
+  const formatters: Record<CodeTab, (code: string) => Promise<string>> = { html: formatHtml, css: formatCss, js: formatJs }
+
+  const handleFormat = async () => {
+    setFormatting(true)
+    try {
+      const formatted = await formatters[tab](sectionType[tab])
+      onChange(tab, formatted)
+    } finally {
+      setFormatting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-0.5 px-3 pt-2 pb-0 border-b border-border bg-card shrink-0">
@@ -355,6 +411,7 @@ function SectionCodeEditor({ sectionType, tab, onTabChange, onChange }: { sectio
           <button key={t} onClick={() => onTabChange(t)} className={`px-4 py-1.5 text-xs font-mono font-semibold rounded-t transition-colors ${tab === t ? "bg-background text-amber-400 border-t border-l border-r border-border" : "text-muted-foreground hover:text-foreground/80"}`}>{t.toUpperCase()}</button>
         ))}
         <div className="ml-auto flex items-center gap-2 pb-1">
+          <button onClick={handleFormat} disabled={formatting} className="text-[11px] text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground rounded px-2 py-0.5 transition-colors disabled:opacity-40">{formatting ? "Formatting…" : "Prettier"}</button>
           <span className="text-[11px] text-muted-foreground/60 font-mono">{sectionType.id}</span>
         </div>
       </div>
@@ -506,26 +563,29 @@ function FileTree({ template, sectionTypes, selection, onSelect, onAddSectionTyp
   )
 }
 
-function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: string }) {
+function PreviewWithPageControl({ html: liveHtml, page, onPageChange }: { html: string; page: string; onPageChange: (pageId: string) => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [height, setHeight] = useState(812)
   const isLoadedRef = useRef(false)
   const pageRef = useRef(page)
   pageRef.current = page
-
   // Reloading the iframe on every keystroke freezes the editor on large pastes.
   const html = useDebouncedValue(liveHtml, 500)
 
+  // A template can navigate itself (its own "Let's Party" button), so mirror that
+  // back into the page tabs.
   useEffect(() => {
-    const handler = (e: MessageEvent) => { if (e.data?.type === "memoriaResize" && typeof e.data.height === "number") setHeight(e.data.height) }
+    const handler = (e: MessageEvent) => {
+      if (e.source !== iframeRef.current?.contentWindow) return
+      if (e.data?.type === "memoriaPageChange" && typeof e.data.pageId === "string") onPageChange(e.data.pageId)
+    }
     window.addEventListener("message", handler)
     return () => window.removeEventListener("message", handler)
-  }, [])
+  }, [onPageChange])
 
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe || !html) return
-    isLoadedRef.current = false; setHeight(812)
+    isLoadedRef.current = false
     const onLoad = () => { isLoadedRef.current = true; iframe.contentWindow?.postMessage({ type: "memoriaGoTo", pageId: pageRef.current }, "*") }
     iframe.addEventListener("load", onLoad, { once: true })
     iframe.setAttribute("srcdoc", html)
@@ -542,9 +602,9 @@ function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: 
     <div className="flex flex-col items-center gap-3">
       <div className="relative overflow-hidden shrink-0" style={{ width: 391, borderRadius: "2.5rem", background: "#1a1a1a", border: "8px solid #111", outline: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 32px 64px rgba(0,0,0,0.4)" }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 rounded-b-xl" style={{ width: 120, height: 28, background: "#111" }} />
-        <iframe ref={iframeRef} sandbox="allow-scripts" style={{ width: 375, height, display: "block", border: 0 }} title="Template Preview" />
+        <iframe ref={iframeRef} sandbox="allow-scripts" style={{ width: 375, height: 812, display: "block", border: 0 }} title="Template Preview" />
       </div>
-      <p className="text-xs text-muted-foreground pb-4">Live Preview — 375px</p>
+      <p className="text-xs text-muted-foreground pb-4">Live Preview — 375 x 812</p>
     </div>
   )
 }
@@ -553,7 +613,7 @@ function PreviewWithPageControl({ html: liveHtml, page }: { html: string; page: 
 
 type FormState = { name: string; descriptionEn: string; descriptionIdn: string; price: string; priceAfterDiscount: string }
 type UploadState = { mobileThumbnailKey: string; mobileThumbnailPreview: string; desktopThumbnailKey: string; desktopThumbnailPreview: string }
-type FormErrors = Partial<Record<keyof FormState | "category" | "tags", string>>
+type FormErrors = Partial<Record<keyof FormState | "category" | "tags" | "mobileThumbnail" | "desktopThumbnail", string>>
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -575,7 +635,13 @@ export default function AddTemplate() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [importJson, setImportJson] = useState("")
   const [importError, setImportError] = useState("")
+  const [isImporting, setIsImporting] = useState(false)
+  const [importFileName, setImportFileName] = useState("")
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
   const importFileRef = useRef<HTMLInputElement>(null)
+  // dragenter/dragleave also fire when the pointer crosses a child element, so the
+  // highlight is driven by a depth count rather than by the last event seen.
+  const dragDepthRef = useRef(0)
 
   // Step 2 state (template maker)
   const [template, setTemplate] = useState<Template>(makeBlankTemplate)
@@ -600,16 +666,26 @@ export default function AddTemplate() {
     setErrors((e) => ({ ...e, [key]: undefined }))
   }
 
+  // ImageUploader already crops and compresses the file before calling these, so
+  // uploading it as-is here doesn't run it through compressImage a second time.
   const handleMobileUpload = async (file: File) => {
     setUploadingMobile(true)
-    try { const r = await uploadObjectWithPresignedUrl(file, "invitation-template"); setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(file) })) }
+    try {
+      const r = await uploadObjectWithPresignedUrl(file, "invitation-template")
+      setUploads((u) => ({ ...u, mobileThumbnailKey: r.key, mobileThumbnailPreview: URL.createObjectURL(file) }))
+      setErrors((e) => ({ ...e, mobileThumbnail: undefined }))
+    }
     catch { setSubmitError("Failed to upload mobile thumbnail.") }
     finally { setUploadingMobile(false) }
   }
 
   const handleDesktopUpload = async (file: File) => {
     setUploadingDesktop(true)
-    try { const r = await uploadObjectWithPresignedUrl(file, "invitation-template"); setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(file) })) }
+    try {
+      const r = await uploadObjectWithPresignedUrl(file, "invitation-template")
+      setUploads((u) => ({ ...u, desktopThumbnailKey: r.key, desktopThumbnailPreview: URL.createObjectURL(file) }))
+      setErrors((e) => ({ ...e, desktopThumbnail: undefined }))
+    }
     catch { setSubmitError("Failed to upload desktop thumbnail.") }
     finally { setUploadingDesktop(false) }
   }
@@ -617,10 +693,14 @@ export default function AddTemplate() {
   const validateStep1 = (): FormErrors => {
     const next: FormErrors = {}
     if (!form.name.trim()) next.name = "Template title is required"
-    if (!uploads.mobileThumbnailKey) next.name = "Mobile thumbnail is required"
-    if (!uploads.desktopThumbnailKey) next.name = "Desktop thumbnail is required"
+    if (!uploads.mobileThumbnailKey) next.mobileThumbnail = "Mobile thumbnail is required"
+    if (!uploads.desktopThumbnailKey) next.desktopThumbnail = "Desktop thumbnail is required"
     if (!category.name.trim()) next.category = "Category is required"
     if (tags.length === 0) next.tags = "At least one tag is required"
+    if (!form.price.trim() || Number(form.price) <= 0) next.price = "Sell price is required"
+    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) <= 0) next.priceAfterDiscount = "After discount price is required"
+    if (!form.descriptionEn.trim()) next.descriptionEn = "English description is required"
+    if (!form.descriptionIdn.trim()) next.descriptionIdn = "Indonesian description is required"
     return next
   }
 
@@ -636,11 +716,42 @@ export default function AddTemplate() {
   // ── Template maker helpers ──────────────────────────────────────────────────
 
   const previewInvitation = useMemo<Invitation>(() => {
-    let parsedTheme = template.theme_defaults
-    try { parsedTheme = JSON.parse(themeJson) } catch { /* noop */ }
-    const mainPage = template.pages.find((p) => p.id === "main")
-    return { ...createDefaultInvitation(), theme: parsedTheme, sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [] }
+    const defaultInvitation = createDefaultInvitation()
+    try {
+      const parsedTheme = parseThemeJson(themeJson)
+      const mainPage = Array.isArray(template.pages) ? template.pages.find((p) => p.id === "main") : undefined
+      // Guarded rather than trusted: an imported template (or a hand-edited
+      // schema.json that got past the editor) can carry a non-array here, and
+      // mapping over it would throw during render — killing the whole route.
+      const fields = Array.isArray(template.schema?.fields) ? template.schema.fields : []
+      // Schema field placeholders (e.g. imported photo URLs) take priority over
+      // the generic mock defaults, so an imported template previews with real content.
+      // select-type fields have no placeholder (they use `options` instead) — without
+      // this, a raw `{{fieldKey}}` token was left in the preview HTML since renderSection
+      // only substitutes keys it finds in userData, so it seeds the first option instead.
+      const schemaDefaults = Object.fromEntries(
+        fields
+          .map((f): [string, string] | null => {
+            if (f?.placeholder?.trim()) return [f.key, f.placeholder]
+            if (f?.type === "select" && f.options?.[0]?.trim()) return [f.key, f.options[0]]
+            return null
+          })
+          .filter((entry): entry is [string, string] => entry !== null)
+      )
+      return {
+        ...defaultInvitation,
+        theme: parsedTheme.ok ? parsedTheme.value : template.theme_defaults,
+        sectionOrder: mainPage ? mainPage.sections.map((s) => s.id) : [],
+        userData: { ...defaultInvitation.userData, ...schemaDefaults },
+      }
+    } catch {
+      // Last resort — the preview falls back to plain mock data instead of the
+      // editor going down with it. renderInvitation() reports the real problem.
+      return defaultInvitation
+    }
   }, [template, themeJson])
+
+  const jsonIssue = useMemo(() => findTemplateJsonIssue(themeJson, schemaJson), [themeJson, schemaJson])
 
   const previewHtml = useMemo(() => {
     try {
@@ -650,8 +761,22 @@ export default function AddTemplate() {
     }
   }, [template, previewInvitation, sectionTypes])
 
-  const handleThemeJson = useCallback((v: string) => { setThemeJson(v); try { setTemplate((t) => ({ ...t, theme_defaults: JSON.parse(v) })) } catch { /* noop */ } }, [])
-  const handleSchemaJson = useCallback((v: string) => { setSchemaJson(v); try { setTemplate((t) => ({ ...t, schema: JSON.parse(v) })) } catch { /* noop */ } }, [])
+  // Parse *before* calling setTemplate, never inside the updater: React runs an
+  // updater later, during render, where this try/catch no longer applies — a throw
+  // there escapes into React and takes the whole route down. While the JSON is
+  // mid-edit the commit is simply skipped, so the preview holds its last valid render.
+  const handleThemeJson = useCallback((v: string) => {
+    setThemeJson(v)
+    const parsed = parseThemeJson(v)
+    if (parsed.ok) setTemplate((t) => ({ ...t, theme_defaults: parsed.value }))
+  }, [])
+  const handleSchemaJson = useCallback((v: string) => {
+    setSchemaJson(v)
+    const parsed = parseSchemaJson(v)
+    if (parsed.ok) setTemplate((t) => ({ ...t, schema: parsed.value }))
+  }, [])
+  const validateThemeJson = useCallback((v: string) => { const r = parseThemeJson(v); return r.ok ? null : r.error }, [])
+  const validateSchemaJson = useCallback((v: string) => { const r = parseSchemaJson(v); return r.ok ? null : r.error }, [])
   const handleSectionCode = useCallback((id: string, field: CodeTab, value: string) => { setSectionTypes((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } })) }, [])
   const handleDeleteSectionType = useCallback((id: string) => { setSectionTypes((prev) => { const next = { ...prev }; delete next[id]; return next }); setSelection((s) => (s?.kind === "section" && s.sectionTypeId === id ? null : s)) }, [])
   const handleAddPage = useCallback((id: string, label: string) => { setTemplate((prev) => ({ ...prev, pages: [...prev.pages, { id, label, sections: [] }] })) }, [])
@@ -671,6 +796,9 @@ export default function AddTemplate() {
   const handleTabChange = useCallback((tab: CodeTab) => { setSelection((s) => s?.kind === "section" ? { ...s, tab } : s) }, [])
 
   const handleSaveTemplate = () => {
+    // Belt and braces — the button is disabled in this state, but never persist a
+    // template whose on-screen JSON disagrees with what's committed to `template`.
+    if (jsonIssue) { setSubmitError(`Fix ${jsonIssue.pane} before saving — ${jsonIssue.message}`); return }
     setSaving(true)
     setSubmitError("")
 
@@ -697,21 +825,68 @@ export default function AddTemplate() {
   }
 
   const handlePreviewTemplate = () => {
-    const win = window.open("", "_blank")
-    if (win) { win.document.write(previewHtml); win.document.close() }
+    openTemplatePreview(previewHtml, {
+      userData: previewInvitation.userData,
+      theme: previewInvitation.theme,
+      activePage: previewPage,
+    })
+  }
+
+  const handleEditSampleContent = () => {
+    openTemplateSampleEditor({
+      template,
+      sectionTypes,
+      invitation: previewInvitation,
+    })
   }
 
   const handleImportFile = async (file: File) => {
     setImportError("")
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setImportFileName("")
+      setImportError(`"${file.name}" is not a .json file`)
+      return
+    }
     try {
       const text = await file.text()
       setImportJson(text)
-    } catch (e) {
+      setImportFileName(file.name)
+    } catch {
+      setImportFileName("")
       setImportError("Failed to read file")
     }
   }
 
-  const handleImportTemplate = () => {
+  const resetDrag = () => { dragDepthRef.current = 0; setIsDraggingFile(false) }
+
+  const handleDropZoneDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepthRef.current += 1
+    setIsDraggingFile(true)
+  }
+
+  const handleDropZoneDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepthRef.current -= 1
+    if (dragDepthRef.current <= 0) resetDrag()
+  }
+
+  const handleDropZoneDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    resetDrag()
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleImportFile(file)
+  }
+
+  const closeImportModal = () => {
+    setShowImportModal(false)
+    setImportJson("")
+    setImportError("")
+    setImportFileName("")
+    resetDrag()
+  }
+
+  const handleImportTemplate = async () => {
     setImportError("")
     try {
       const imported = JSON.parse(importJson)
@@ -734,20 +909,37 @@ export default function AddTemplate() {
       if (imported.descriptionIdn) setField("descriptionIdn", imported.descriptionIdn)
       if (imported.theme_defaults) {
         setTemplate((t) => ({ ...t, theme_defaults: imported.theme_defaults }))
+        setThemeJson(JSON.stringify(imported.theme_defaults, null, 2))
       }
       if (imported.pages) {
         setTemplate((t) => ({ ...t, pages: imported.pages }))
       }
       if (imported.schema) {
         setTemplate((t) => ({ ...t, schema: imported.schema }))
+        setSchemaJson(JSON.stringify(imported.schema, null, 2))
       }
       if (imported.sectionTypes) {
-        setSectionTypes(imported.sectionTypes)
+        setIsImporting(true)
+        // Imported HTML/CSS/JS usually arrives minified into a single line —
+        // pretty-print each so the code editor is actually readable.
+        const entries = Object.entries(imported.sectionTypes) as [string, SectionTypeDef][]
+        const formatted = await Promise.all(
+          entries.map(async ([id, section]) => {
+            const [html, css, js] = await Promise.all([
+              formatHtml(section.html ?? ""),
+              formatCss(section.css ?? ""),
+              formatJs(section.js ?? ""),
+            ])
+            return [id, { ...section, html, css, js }] as const
+          }),
+        )
+        setSectionTypes(Object.fromEntries(formatted))
       }
-      setShowImportModal(false)
-      setImportJson("")
+      closeImportModal()
     } catch (e) {
       setImportError(e instanceof Error ? e.message : "Invalid JSON format")
+    } finally {
+      setIsImporting(false)
     }
   }
 
@@ -767,6 +959,10 @@ export default function AddTemplate() {
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Step 1 of 2 — Details</span>
           </div>
           <div className="flex items-center gap-2">
+            <a href="/template-example.json" download="template-example.json" className="flex items-center gap-2 rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5m-4.5 4.5V3" /></svg>
+              Download Example
+            </a>
             <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0 0V8m0 4h4m-4 0H8" /></svg>
               Import
@@ -789,8 +985,8 @@ export default function AddTemplate() {
           </div>
 
           <div className="flex gap-6">
-            <ImageUploader label="Mobile Thumbnail" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.name && !uploads.mobileThumbnailKey ? "Mobile thumbnail is required" : undefined} />
-            <ImageUploader label="Desktop Thumbnail" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.name && !uploads.desktopThumbnailKey ? "Desktop thumbnail is required" : undefined} />
+            <ImageUploader label="Mobile Thumbnail" aspect="portrait" previewUrl={uploads.mobileThumbnailPreview} uploading={uploadingMobile} onFileSelect={handleMobileUpload} error={errors.mobileThumbnail} />
+            <ImageUploader label="Desktop Thumbnail" aspect="landscape" previewUrl={uploads.desktopThumbnailPreview} uploading={uploadingDesktop} onFileSelect={handleDesktopUpload} error={errors.desktopThumbnail} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -805,20 +1001,22 @@ export default function AddTemplate() {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} />
-            <PriceInput label="Before Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} />
+            <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} required error={errors.price} />
+            <PriceInput label="After Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} required error={errors.priceAfterDiscount} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h3 className="mb-4 text-base font-semibold text-foreground">English</h3>
               <label className="mb-2 block text-sm font-medium text-foreground">Template Description</label>
-              <textarea value={form.descriptionEn} onChange={(e) => setField("descriptionEn", e.target.value)} placeholder="Type the feature description (Max 50 words)" rows={8} className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+              <textarea value={form.descriptionEn} onChange={(e) => setField("descriptionEn", e.target.value)} placeholder="Type the feature description (Max 50 words)" rows={8} className={`w-full resize-none rounded-lg border px-4 py-2.5 text-sm text-foreground bg-background placeholder:text-muted-foreground focus:outline-none transition-colors ${errors.descriptionEn ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
+              {errors.descriptionEn && <p className="mt-1 text-xs text-destructive">{errors.descriptionEn}</p>}
             </div>
             <div>
               <h3 className="mb-4 text-base font-semibold text-foreground">Indonesia</h3>
               <label className="mb-2 block text-sm font-medium text-foreground">Deskripsi Template</label>
-              <textarea value={form.descriptionIdn} onChange={(e) => setField("descriptionIdn", e.target.value)} placeholder="Type the feature description (Max 50 words)" rows={8} className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+              <textarea value={form.descriptionIdn} onChange={(e) => setField("descriptionIdn", e.target.value)} placeholder="Type the feature description (Max 50 words)" rows={8} className={`w-full resize-none rounded-lg border px-4 py-2.5 text-sm text-foreground bg-background placeholder:text-muted-foreground focus:outline-none transition-colors ${errors.descriptionIdn ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
+              {errors.descriptionIdn && <p className="mt-1 text-xs text-destructive">{errors.descriptionIdn}</p>}
             </div>
           </div>
         </div>
@@ -831,7 +1029,32 @@ export default function AddTemplate() {
               <div className="mb-4 space-y-3">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">Upload File</label>
-                  <input ref={importFileRef} type="file" accept=".json" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportFile(file) }} className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border file:border-border file:bg-muted file:px-4 file:py-2 file:text-sm file:font-semibold file:text-foreground hover:file:bg-muted/80 transition-colors" />
+                  {/* The whole area is the drop target and also opens the picker on click,
+                      so the hidden input only ever exists to carry the browser dialog. */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => importFileRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); importFileRef.current?.click() } }}
+                    onDragEnter={handleDropZoneDragEnter}
+                    // Without preventDefault on dragover the browser refuses the drop and
+                    // opens the file in the tab instead.
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragLeave={handleDropZoneDragLeave}
+                    onDrop={handleDropZoneDrop}
+                    className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isDraggingFile ? "border-indigo-500 bg-indigo-500/10" : "border-border bg-background hover:border-indigo-500/60 hover:bg-muted/50"}`}
+                  >
+                    <svg className={`h-6 w-6 transition-colors ${isDraggingFile ? "text-indigo-400" : "text-muted-foreground"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V3m0 0L7.5 7.5M12 3l4.5 4.5M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" /></svg>
+                    {importFileName ? (
+                      <p className="text-sm font-medium text-foreground">{importFileName}</p>
+                    ) : (
+                      <p className="text-sm text-foreground">
+                        {isDraggingFile ? "Drop the file to load it" : <>Drag &amp; drop a JSON file here, or <span className="font-semibold text-indigo-400">browse</span></>}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">{importFileName ? "Click or drop another file to replace it" : ".json only"}</p>
+                    <input ref={importFileRef} type="file" accept=".json,application/json" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportFile(file); e.target.value = "" }} className="hidden" />
+                  </div>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
@@ -850,8 +1073,8 @@ export default function AddTemplate() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => { setShowImportModal(false); setImportJson(""); setImportError("") }} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">Cancel</button>
-                <button onClick={handleImportTemplate} disabled={!importJson.trim()} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">Import</button>
+                <button onClick={closeImportModal} disabled={isImporting} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60">Cancel</button>
+                <button onClick={handleImportTemplate} disabled={!importJson.trim() || isImporting} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">{isImporting ? "Formatting…" : "Import"}</button>
               </div>
             </div>
           </div>
@@ -886,7 +1109,16 @@ export default function AddTemplate() {
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Preview
           </button>
-          <button onClick={handleSaveTemplate} disabled={saving} className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors ${saving ? "bg-muted text-muted-foreground" : "bg-amber-600 hover:bg-amber-500 text-white"}`}>
+          <button onClick={handleEditSampleContent} className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 px-3 py-1.5 text-xs font-medium text-indigo-500 hover:bg-indigo-500/10 hover:text-indigo-400 transition-colors">
+            Edit Sample Content
+          </button>
+          {jsonIssue && (
+            <span title={`${jsonIssue.pane}: ${jsonIssue.message}`} className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+              Invalid {jsonIssue.pane}
+            </span>
+          )}
+          <button onClick={handleSaveTemplate} disabled={saving || jsonIssue !== null} title={jsonIssue ? `Fix ${jsonIssue.pane} before saving — ${jsonIssue.message}` : undefined} className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors ${saving || jsonIssue ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500 text-white"}`}>
             {saving ? "Saving..." : "Save Template"}
           </button>
         </div>
@@ -908,8 +1140,8 @@ export default function AddTemplate() {
               ? <SectionCodeEditor sectionType={sectionTypes[selection.sectionTypeId]} tab={selection.tab} onTabChange={handleTabChange} onChange={(field, val) => handleSectionCode(selection.sectionTypeId, field, val)} />
               : <div className="flex flex-1 items-center justify-center text-red-400 text-sm">Section type "{selection.sectionTypeId}" not found.</div>
           ) : selection.kind === "theme"
-            ? <JsonEditor label="theme.json" value={themeJson} onChange={handleThemeJson} example={EXAMPLE_THEME} />
-            : <JsonEditor label="schema.json" value={schemaJson} onChange={handleSchemaJson} example={EXAMPLE_SCHEMA} />
+            ? <JsonEditor label="theme.json" value={themeJson} onChange={handleThemeJson} example={EXAMPLE_THEME} validate={validateThemeJson} />
+            : <JsonEditor label="schema.json" value={schemaJson} onChange={handleSchemaJson} example={EXAMPLE_SCHEMA} validate={validateSchemaJson} />
           }
         </main>
 
@@ -921,7 +1153,9 @@ export default function AddTemplate() {
             ))}
           </div>
           <div className="flex-1 overflow-auto flex items-start justify-center p-4">
-            <PreviewWithPageControl html={previewHtml} page={previewPage} />
+            <PreviewErrorBoundary>
+              <PreviewWithPageControl html={previewHtml} page={previewPage} onPageChange={setPreviewPage} />
+            </PreviewErrorBoundary>
           </div>
         </aside>
       </div>
