@@ -103,3 +103,11 @@ jobs:
         with:
           name: momenia-admin-client-image-${{ github.sha }}
           path: image.txt
+
+      - name: Trigger production deployment
+        run: |
+          curl -sSf -X POST \
+            -H "Authorization: Bearer ${{ secrets.DEPLOY_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/semeton-corp/momenia-deployment/dispatches \
+            -d '{"event_type":"momenia-admin-client-released","client_payload":{"tag":"sha-${{ github.sha }}"}}'
