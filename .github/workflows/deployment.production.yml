@@ -1,9 +1,8 @@
 name: Deployment Production
 
 on:
-  push:
-    branches: [master]
-  workflow_dispatch:
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -19,12 +18,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
-      - name: Resolve image tags
+      - name: Resolve release image
         id: image
-        run: |
-          echo "latest=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> "$GITHUB_OUTPUT"
-          echo "sha=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+        run: echo "target=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -38,9 +37,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: |
-            ${{ steps.image.outputs.latest }}
-            ${{ steps.image.outputs.sha }}
+          tags: ${{ steps.image.outputs.target }}
           build-args: |
             VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
 
@@ -52,7 +49,7 @@ jobs:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
-          image-ref: ${{ steps.image.outputs.sha }}
+          image-ref: ${{ steps.image.outputs.target }}
           format: table
           output: trivy-image-results.txt
           vuln-type: os,library
@@ -87,21 +84,15 @@ jobs:
           exit 1
 
       - name: Push image
-        run: |
-          docker push "${{ steps.image.outputs.latest }}"
-          docker push "${{ steps.image.outputs.sha }}"
+        run: docker push "${{ steps.image.outputs.target }}"
 
       - name: Write image artifact
-        run: |
-          {
-            echo "${{ steps.image.outputs.latest }}"
-            echo "${{ steps.image.outputs.sha }}"
-          } > image.txt
+        run: echo "${{ steps.image.outputs.target }}" > image.txt
 
       - name: Upload image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: momenia-admin-client-image-${{ github.sha }}
+          name: momenia-admin-client-image-${{ github.event.release.tag_name }}
           path: image.txt
 
       - name: Trigger production deployment
@@ -110,4 +101,4 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.DEPLOY_DISPATCH_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/semeton-corp/momenia-deployment/dispatches \
-            -d '{"event_type":"momenia-admin-client-released","client_payload":{"tag":"sha-${{ github.sha }}"}}'
+            -d '{"event_type":"momenia-admin-client-released","client_payload":{"tag":"${{ github.event.release.tag_name }}"}}'

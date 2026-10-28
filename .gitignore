@@ -34,3 +34,4 @@ dist-ssr
 # Local template examples and their source artwork
 /examples/
 /templates/
+./templates/
