@@ -114,8 +114,8 @@ export default function TemplateDurations() {
 
     const price = Number(form.price)
 
-    if (!form.price || !Number.isFinite(price) || price <= 0) {
-      const message = "Price must be greater than 0"
+    if (!form.price || !Number.isFinite(price) || price < 0) {
+      const message = "Price must be 0 or greater"
       setFormError(message)
       toast.error(message)
       return
