@@ -21,7 +21,9 @@ RUN npm install -g pnpm && pnpm build
 FROM node:22-alpine AS runner
 WORKDIR /app
 
+# serve@14 pins compression@1.8.1 (CVE-2026-87776); bump to 1.8.2 until serve ships a fix
 RUN npm install -g serve && \
+    npm install --prefix /usr/local/lib/node_modules/serve --no-save --omit=dev compression@1.8.2 && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
            /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
