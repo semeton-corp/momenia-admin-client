@@ -220,10 +220,6 @@ export async function getGoogleSignInRedirectUrl() {
   const response = await fetch(getGoogleSignInUrl(), {
     method: "GET",
     credentials: "include",
-    redirect: "manual",
-    headers: {
-      Accept: "application/json",
-    },
   });
 
   const location = response.headers.get("Location");
