@@ -183,6 +183,7 @@ export function getGoogleSignInUrl() {
 export async function signInWithGoogleCode(code: string) {
   const response = await fetch(getGoogleSignInUrl(), {
     method: "POST",
+    credentials: "include",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
@@ -218,6 +219,7 @@ export async function signInWithGoogleCode(code: string) {
 export async function getGoogleSignInRedirectUrl() {
   const response = await fetch(getGoogleSignInUrl(), {
     method: "GET",
+    credentials: "include",
     redirect: "manual",
     headers: {
       Accept: "application/json",
@@ -263,6 +265,7 @@ async function requestFreshAccessToken() {
 
     const response = await fetch(buildApiUrl(REFRESH_PATH), {
       method: "POST",
+      credentials: "include",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
