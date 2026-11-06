@@ -623,8 +623,8 @@ export default function EditTemplate() {
     if (!form.name.trim()) next.name = "Template title is required"
     if (!uploads.mobileThumbnailKey) next.mobileThumbnail = "Mobile thumbnail is required"
     if (!uploads.desktopThumbnailKey) next.desktopThumbnail = "Desktop thumbnail is required"
-    if (!form.price.trim() || Number(form.price) <= 0) next.price = "Sell price is required"
-    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) <= 0) next.priceAfterDiscount = "After discount price is required"
+    if (!form.price.trim() || Number(form.price) < 0) next.price = "Sell price is required"
+    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) < 0) next.priceAfterDiscount = "After discount price is required"
     if (!category.name.trim()) next.category = "Category is required"
     return next
   }

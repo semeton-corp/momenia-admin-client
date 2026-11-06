@@ -697,8 +697,8 @@ export default function AddTemplate() {
     if (!uploads.desktopThumbnailKey) next.desktopThumbnail = "Desktop thumbnail is required"
     if (!category.name.trim()) next.category = "Category is required"
     if (tags.length === 0) next.tags = "At least one tag is required"
-    if (!form.price.trim() || Number(form.price) <= 0) next.price = "Sell price is required"
-    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) <= 0) next.priceAfterDiscount = "After discount price is required"
+    if (!form.price.trim() || Number(form.price) < 0) next.price = "Sell price is required"
+    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) < 0) next.priceAfterDiscount = "After discount price is required"
     if (!form.descriptionEn.trim()) next.descriptionEn = "English description is required"
     if (!form.descriptionIdn.trim()) next.descriptionIdn = "Indonesian description is required"
     return next
