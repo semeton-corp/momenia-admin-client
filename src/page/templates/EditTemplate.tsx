@@ -99,29 +99,42 @@ function useCombobox<T extends { id: number; name: string }>(fetcher: (keyword?:
 
   const fetchSuggestions = useCallback(async (keyword: string) => {
     setLoading(true)
-    try { const results = await fetcher(keyword || undefined); setSuggestions(results); setOpen(true) }
-    catch { setSuggestions([]) }
-    finally { setLoading(false) }
+    try {
+      const results = await fetcher(keyword || undefined)
+      setSuggestions(results)
+      setOpen(true)
+    } catch {
+      setSuggestions([])
+    } finally {
+      setLoading(false)
+    }
   }, [fetcher])
 
-  const handleInputChange = (text: string, onChangeCallback: (t: string) => void) => {
-    setInputText(text); onChangeCallback(text)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+  const handleInputChange = (text: string) => {
+    setInputText(text)
+    clearTimeout(debounceRef.current ?? undefined)
     debounceRef.current = setTimeout(() => fetchSuggestions(text), debounceMs)
   }
 
-  return { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown: () => setOpen(false), openDropdown: () => { setOpen(true); if (suggestions.length === 0) fetchSuggestions(inputText) } }
+  const closeDropdown = () => {
+    clearTimeout(debounceRef.current ?? undefined)
+    setInputText("")
+    setOpen(false)
+  }
+
+  const openDropdown = () => {
+    setOpen(true)
+    fetchSuggestions("")
+  }
+
+  return { inputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown }
 }
 
 // ─── CategoryCombobox ─────────────────────────────────────────────────────────
 
 function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onChange: (v: SelectedItem) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateCategories)
-
-  // Only reformat when the value is an existing category (has an id) — a
-  // freshly-typed new-category name (id === null) must stay exactly as typed.
-  useEffect(() => { setInputText(value.id !== null ? formatCategoryLabel(value.name) : value.name) }, [value.id, value.name])
+  const { inputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateCategories)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -130,38 +143,36 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
   }, [])
 
   const handleSelect = (cat: InvitationTemplateCategory) => {
-    const label = formatCategoryLabel(cat.name)
-    setInputText(label)
-    onChange({ id: cat.id, name: label })
+    onChange({ id: cat.id, name: formatCategoryLabel(cat.name) })
     closeDropdown()
   }
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="relative">
-        <input type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, (t) => onChange({ id: null, name: t }))} onFocus={openDropdown}
-          onBlur={() => {
-            const match = suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase())
-            if (match) onChange({ id: match.id, name: formatCategoryLabel(match.name) })
-          }}
-          placeholder="e.g. Wedding Invitation"
-          className={`w-full rounded-lg border bg-background px-4 py-2.5 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
-            : <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>}
-        </div>
-      </div>
+      <button type="button" onClick={openDropdown} aria-expanded={open} className={`flex w-full items-center justify-between rounded-lg border bg-background px-4 py-2.5 text-left text-sm transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`}>
+        <span className={value.name ? "text-foreground" : "text-muted-foreground"}>{value.name ? formatCategoryLabel(value.name) : "Select category"}</span>
+        <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+      </button>
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {suggestions.map((cat) => (
-            <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(cat.name)}</button>
-          ))}
-          {!loading && inputText.trim() && !suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase()) && (
-            <button type="button" onMouseDown={(e) => { e.preventDefault(); onChange({ id: null, name: inputText.trim() }); closeDropdown() }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Create "{inputText.trim()}"
-            </button>
-          )}
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="border-b border-border p-2">
+            <div className="relative">
+              <input autoFocus type="search" value={inputText} onChange={(e) => handleInputChange(e.target.value)} placeholder="Search categories..." className="w-full rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+              {loading && <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
+            </div>
+          </div>
+          <div className="max-h-44 overflow-y-auto">
+            {suggestions.map((cat) => (
+              <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted">{formatCategoryLabel(cat.name)}</button>
+            ))}
+            {!loading && inputText.trim() && !suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase()) && (
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); onChange({ id: null, name: inputText.trim() }); closeDropdown() }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-indigo-500 transition-colors hover:bg-muted">
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Create "{inputText.trim()}"
+              </button>
+            )}
+            {!loading && suggestions.length === 0 && <div className="px-4 py-2.5 text-sm text-muted-foreground">No categories found.</div>}
+          </div>
         </div>
       )}
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
@@ -173,8 +184,7 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
 
 function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onChange: (v: SelectedItem[]) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateTags, 300)
+  const { inputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateTags, 300)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -184,10 +194,13 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
 
   const addTag = (item: SelectedItem) => {
     if (value.find((t) => formatCategoryLabel(t.name).toLowerCase() === formatCategoryLabel(item.name).toLowerCase())) return
-    onChange([...value, item]); setInputText(""); inputRef.current?.focus(); closeDropdown()
+    onChange([...value, item])
+    closeDropdown()
   }
+
   const removeTag = (name: string) => onChange(value.filter((t) => t.name !== name))
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === "Enter" || e.key === ",") && inputText.trim()) {
       e.preventDefault()
       if (loading) return
@@ -195,39 +208,45 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
       const match = suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === trimmed.toLowerCase())
       addTag(match ? { id: match.id, name: formatCategoryLabel(match.name) } : { id: null, name: trimmed })
     }
-    if (e.key === "Backspace" && !inputText && value.length > 0) removeTag(value[value.length - 1].name)
   }
 
   return (
     <div ref={containerRef} className="relative">
-      <div className={`flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border bg-background px-3 py-2 transition-colors cursor-text ${error ? "border-destructive" : "border-border focus-within:border-indigo-500"}`} onClick={() => inputRef.current?.focus()}>
+      <div role="button" tabIndex={0} onClick={openDropdown} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDropdown() } }} className={`flex min-h-11 cursor-pointer flex-wrap items-center gap-1.5 rounded-lg border bg-background px-3 py-2 transition-colors ${error ? "border-destructive" : "border-border focus-within:border-indigo-500"}`}>
         {value.map((tag) => (
           <span key={tag.name} className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
             {formatCategoryLabel(tag.name)}
-            <button type="button" onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }} className="ml-0.5 rounded-full hover:bg-indigo-200 p-0.5 transition-colors">
+            <button type="button" onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }} className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-indigo-200">
               <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </span>
         ))}
-        <div className="relative flex flex-1 items-center min-w-24">
-          <input ref={inputRef} type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, () => {})} onFocus={openDropdown} onKeyDown={handleKeyDown} placeholder={value.length === 0 ? "e.g. Elegant, Modern…" : ""} className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
-          {loading && <div className="absolute right-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
-        </div>
+        {value.length === 0 && <span className="text-sm text-muted-foreground">Select tags</span>}
+        <svg className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
       </div>
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {suggestions.filter((t) => !value.find((v) => formatCategoryLabel(v.name).toLowerCase() === formatCategoryLabel(t.name).toLowerCase())).map((tag) => (
-            <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: formatCategoryLabel(tag.name) }) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(tag.name)}</button>
-          ))}
-          {!loading && inputText.trim() && !suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === inputText.trim().toLowerCase()) && (
-            <button type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Create "{inputText.trim()}"
-            </button>
-          )}
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="border-b border-border p-2">
+            <div className="relative">
+              <input autoFocus type="search" value={inputText} onChange={(e) => handleInputChange(e.target.value)} onKeyDown={handleSearchKeyDown} placeholder="Search tags..." className="w-full rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+              {loading && <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
+            </div>
+          </div>
+          <div className="max-h-44 overflow-y-auto">
+            {suggestions.filter((t) => !value.find((v) => formatCategoryLabel(v.name).toLowerCase() === formatCategoryLabel(t.name).toLowerCase())).map((tag) => (
+              <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: formatCategoryLabel(tag.name) }) }} className="flex w-full items-center px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted">{formatCategoryLabel(tag.name)}</button>
+            ))}
+            {!loading && inputText.trim() && !suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === inputText.trim().toLowerCase()) && (
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-indigo-500 transition-colors hover:bg-muted">
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Create "{inputText.trim()}"
+              </button>
+            )}
+            {!loading && suggestions.length === 0 && <div className="px-4 py-2.5 text-sm text-muted-foreground">No tags found.</div>}
+          </div>
         </div>
       )}
-      <p className="mt-1 text-xs text-muted-foreground">Type and press Enter or comma to add. Backspace to remove.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Select existing tags or search to create one.</p>
       {error && <p className="mt-0.5 text-xs text-destructive">{error}</p>}
     </div>
   )
@@ -521,6 +540,14 @@ export default function EditTemplate() {
   const [uploadingDesktop, setUploadingDesktop] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitError, setSubmitError] = useState("")
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importJson, setImportJson] = useState("")
+  const [importError, setImportError] = useState("")
+  const [isImporting, setIsImporting] = useState(false)
+  const [importFileName, setImportFileName] = useState("")
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
+  const importFileRef = useRef<HTMLInputElement>(null)
+  const dragDepthRef = useRef(0)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<"draft" | "active" | "inactive">("draft")
   const [version, setVersion] = useState<number | undefined>(undefined)
@@ -635,6 +662,96 @@ export default function EditTemplate() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setTemplate((t) => ({ ...t, name: form.name.trim() }))
     setStep(2)
+  }
+
+  const handleImportFile = async (file: File) => {
+    setImportError("")
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setImportFileName("")
+      setImportError(`"${file.name}" is not a .json file`)
+      return
+    }
+    try {
+      const text = await file.text()
+      setImportJson(text)
+      setImportFileName(file.name)
+    } catch {
+      setImportFileName("")
+      setImportError("Failed to read file")
+    }
+  }
+
+  const resetDrag = () => { dragDepthRef.current = 0; setIsDraggingFile(false) }
+
+  const handleDropZoneDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepthRef.current += 1
+    setIsDraggingFile(true)
+  }
+
+  const handleDropZoneDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepthRef.current -= 1
+    if (dragDepthRef.current <= 0) resetDrag()
+  }
+
+  const handleDropZoneDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    resetDrag()
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleImportFile(file)
+  }
+
+  const closeImportModal = () => {
+    setShowImportModal(false)
+    setImportJson("")
+    setImportError("")
+    setImportFileName("")
+    resetDrag()
+  }
+
+  const handleImportTemplate = async () => {
+    setImportError("")
+    try {
+      const imported = JSON.parse(importJson)
+      const errors: string[] = []
+      if (!imported.name) errors.push("Missing 'name'")
+      if (!imported.theme_defaults) errors.push("Missing 'theme_defaults'")
+      if (!imported.pages || !Array.isArray(imported.pages)) errors.push("Missing or invalid 'pages'")
+      if (!imported.schema) errors.push("Missing 'schema'")
+
+      if (errors.length > 0) {
+        setImportError(`Invalid format: ${errors.join(", ")}`)
+        return
+      }
+
+      setField("name", imported.name)
+      if (imported.descriptionEn) setField("descriptionEn", imported.descriptionEn)
+      if (imported.descriptionIdn) setField("descriptionIdn", imported.descriptionIdn)
+      setTemplate((t) => ({ ...t, theme_defaults: imported.theme_defaults, pages: imported.pages, schema: imported.schema }))
+      setThemeJson(JSON.stringify(imported.theme_defaults, null, 2))
+      setSchemaJson(JSON.stringify(imported.schema, null, 2))
+      if (imported.sectionTypes) {
+        setIsImporting(true)
+        const entries = Object.entries(imported.sectionTypes) as [string, SectionTypeDef][]
+        const formatted = await Promise.all(
+          entries.map(async ([id, section]) => {
+            const [html, css, js] = await Promise.all([
+              formatHtml(section.html ?? ""),
+              formatCss(section.css ?? ""),
+              formatJs(section.js ?? ""),
+            ])
+            return [id, { ...section, html, css, js }] as const
+          }),
+        )
+        setSectionTypes(Object.fromEntries(formatted))
+      }
+      closeImportModal()
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : "Invalid JSON format")
+    } finally {
+      setIsImporting(false)
+    }
   }
 
   const previewInvitation = useMemo<Invitation>(() => {
@@ -808,10 +925,16 @@ export default function EditTemplate() {
             <h1 className="text-sm font-semibold text-foreground">Edit Template</h1>
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Step 1 of 2 — Details</span>
           </div>
-          <button onClick={handleNext} disabled={uploadingMobile || uploadingDesktop} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">
-            Next
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0 0V8m0 4h4m-4 0H8" /></svg>
+              Import
+            </button>
+            <button onClick={handleNext} disabled={uploadingMobile || uploadingDesktop} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">
+              Next
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
         </div>
 
         <div className="mx-auto max-w-5xl px-6 py-8 space-y-8">
@@ -858,6 +981,61 @@ export default function EditTemplate() {
             </div>
           </div>
         </div>
+
+        {showImportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Import Template from JSON</h2>
+
+              <div className="mb-4 space-y-3">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Upload File</label>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => importFileRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); importFileRef.current?.click() } }}
+                    onDragEnter={handleDropZoneDragEnter}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragLeave={handleDropZoneDragLeave}
+                    onDrop={handleDropZoneDrop}
+                    className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isDraggingFile ? "border-indigo-500 bg-indigo-500/10" : "border-border bg-background hover:border-indigo-500/60 hover:bg-muted/50"}`}
+                  >
+                    <svg className={`h-6 w-6 transition-colors ${isDraggingFile ? "text-indigo-400" : "text-muted-foreground"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V3m0 0L7.5 7.5M12 3l4.5 4.5M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" /></svg>
+                    {importFileName ? (
+                      <p className="text-sm font-medium text-foreground">{importFileName}</p>
+                    ) : (
+                      <p className="text-sm text-foreground">
+                        {isDraggingFile ? "Drop the file to load it" : <>Drag &amp; drop a JSON file here, or <span className="font-semibold text-indigo-400">browse</span></>}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">{importFileName ? "Click or drop another file to replace it" : ".json only"}</p>
+                    <input ref={importFileRef} type="file" accept=".json,application/json" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportFile(file); e.target.value = "" }} className="hidden" />
+                  </div>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
+                  <div className="relative flex justify-center"><span className="bg-card px-2 text-xs text-muted-foreground">OR</span></div>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Paste JSON</label>
+                  <textarea value={importJson} onChange={(e) => setImportJson(e.target.value)} placeholder="Paste template JSON here..." className="h-40 w-full rounded-lg border border-border bg-background p-3 font-mono text-sm text-foreground focus:border-indigo-500 focus:outline-none" />
+                </div>
+              </div>
+
+              {importError && <p className="mb-3 text-xs text-destructive">{importError}</p>}
+
+              <div className="mb-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                ✓ Required fields: <code className="font-mono">name</code>, <code className="font-mono">theme_defaults</code>, <code className="font-mono">pages</code>, <code className="font-mono">schema</code>
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={closeImportModal} disabled={isImporting} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60">Cancel</button>
+                <button onClick={handleImportTemplate} disabled={!importJson.trim() || isImporting} className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-60">{isImporting ? "Formatting…" : "Import"}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
