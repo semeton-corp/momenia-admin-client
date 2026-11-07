@@ -3,24 +3,14 @@ const REFRESH_PATH =
   import.meta.env.VITE_ADMIN_REFRESH_PATH ?? "/api/v1/sessions/refresh";
 
 const ACCESS_TOKEN_KEY = "accessToken";
-const REFRESH_TOKEN_KEY = "refreshToken";
+const LEGACY_REFRESH_TOKEN_KEY = "refreshToken";
 const ACCESS_TOKEN_RESPONSE_KEYS = [ACCESS_TOKEN_KEY];
-const REFRESH_TOKEN_RESPONSE_KEYS = [REFRESH_TOKEN_KEY];
 
 type TokenResponse = Record<string, unknown>;
 let refreshAccessTokenPromise: Promise<string | null> | null = null;
 
 const TOKEN_EXPIRY_SKEW_MS = 30_000;
 const TOKEN_EXPIRY_KEYS = ["exp"];
-
-const GOOGLE_REDIRECT_KEYS = [
-  "url",
-  "redirectUrl",
-  "redirect_url",
-  "authUrl",
-  "auth_url",
-  "location",
-];
 
 export function buildApiUrl(path: string) {
   const isAbsoluteUrl = /^https?:\/\//i.test(path);
@@ -103,9 +93,6 @@ function findNumberValue(data: unknown, names: string[]): number | null {
   return null;
 }
 
-function findStringValue(data: unknown, names: string[]) {
-  return findTokenValue(data, names);
-}
 
 function parseJwtPayload(token: string): TokenResponse | null {
   const [, payload] = token.split(".");
@@ -139,18 +126,13 @@ export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
-export function getRefreshToken() {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
 export function saveAuthTokens(data: unknown) {
   const accessToken = findTokenValue(data, ACCESS_TOKEN_RESPONSE_KEYS);
-  const refreshToken = findTokenValue(data, REFRESH_TOKEN_RESPONSE_KEYS);
 
   writeStorage(ACCESS_TOKEN_KEY, accessToken);
-  writeStorage(REFRESH_TOKEN_KEY, refreshToken);
+  localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 
-  return Boolean(accessToken || refreshToken);
+  return Boolean(accessToken);
 }
 
 export function saveAuthTokensFromUrl(url: URL) {
@@ -166,7 +148,7 @@ export function saveAuthTokensFromUrl(url: URL) {
 }
 
 export function clearAuthTokens() {
-  removeStorage([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+  removeStorage([ACCESS_TOKEN_KEY, LEGACY_REFRESH_TOKEN_KEY]);
 }
 
 export function redirectToLogin() {
@@ -216,46 +198,20 @@ export async function signInWithGoogleCode(code: string) {
   return data;
 }
 
-export async function getGoogleSignInRedirectUrl() {
-  const response = await fetch(getGoogleSignInUrl(), {
-    method: "GET",
-    credentials: "include",
-  });
-
-  const location = response.headers.get("Location");
-
-  if (location) {
-    return location;
-  }
-
-  const contentType = response.headers.get("content-type");
-
-  if (contentType?.includes("application/json")) {
-    const data = await response.json();
-    const redirectUrl = findStringValue(data, GOOGLE_REDIRECT_KEYS);
-
-    if (redirectUrl) {
-      return redirectUrl;
-    }
-  }
-
-  if (response.redirected) {
-    return response.url;
-  }
-
-  throw new Error("Google login redirect was not returned by the API.");
+// This navigation lets the API issue its HttpOnly OAuth state cookie before redirecting to Google.
+export function getGoogleSignInStartUrl() {
+  const url = new URL(buildApiUrl("/api/v1/admins/signin/google/redirect"), window.location.origin);
+  url.searchParams.set("redirect_origin", window.location.origin);
+  return url.toString();
 }
 
+// The API reads and rotates its HttpOnly refresh cookie; it never enters JavaScript or JSON.
 async function requestFreshAccessToken() {
-  const refreshToken = getRefreshToken();
-
-  if (!refreshToken) {
-    return null;
-  }
+  const accessTokenBeforeRefresh = getAccessToken();
 
   const performRefresh = async () => {
-    // Another tab may have refreshed while this one waited for the lock.
-    if (getRefreshToken() !== refreshToken) {
+    // Another tab may have refreshed or logged out while this one waited for the lock.
+    if (getAccessToken() !== accessTokenBeforeRefresh) {
       return getAccessToken();
     }
 
@@ -268,7 +224,6 @@ async function requestFreshAccessToken() {
         "x-idempotency-key": crypto.randomUUID(),
       },
       body: JSON.stringify({
-        refreshToken,
         userAgent: navigator.userAgent,
       }),
     });
@@ -277,7 +232,7 @@ async function requestFreshAccessToken() {
     // Network errors, 5xx responses, and malformed responses must not log out
     // a user who still has a valid refresh token.
     if (response.status === 401 || response.status === 403) {
-      if (getRefreshToken() !== refreshToken) return getAccessToken();
+      if (getAccessToken() !== accessTokenBeforeRefresh) return getAccessToken();
       clearAuthTokens();
       return null;
     }
@@ -287,18 +242,18 @@ async function requestFreshAccessToken() {
     }
 
     const data: unknown = await response.json();
-    const accessToken = findTokenValue(data, ACCESS_TOKEN_RESPONSE_KEYS);
-    if (!accessToken) {
+    const refreshedAccessToken = findTokenValue(data, ACCESS_TOKEN_RESPONSE_KEYS);
+    if (!refreshedAccessToken) {
       throw new Error("Token refresh response did not include an access token.");
     }
 
-    if (getRefreshToken() !== refreshToken) return getAccessToken();
+    if (getAccessToken() !== accessTokenBeforeRefresh) return getAccessToken();
     saveAuthTokens(data);
-    return accessToken;
+    return refreshedAccessToken;
   };
 
   // localStorage is shared across tabs, but the in-memory promise below is not.
-  // A cross-tab lock prevents two tabs from using the same rotating refresh token.
+  // A cross-tab lock prevents two tabs from rotating the cookie-backed session.
   if (navigator.locks) {
     return navigator.locks.request("memoria-admin-token-refresh", performRefresh);
   }

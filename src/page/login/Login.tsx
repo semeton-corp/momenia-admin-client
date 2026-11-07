@@ -4,7 +4,7 @@ import { Chrome } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   getAccessToken,
-  getGoogleSignInRedirectUrl,
+  getGoogleSignInStartUrl,
   saveAuthTokensFromUrl,
 } from "@/lib/auth";
 
@@ -12,7 +12,6 @@ export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const hasAccessToken = Boolean(getAccessToken());
 
   useEffect(() => {
@@ -27,18 +26,9 @@ export default function Login() {
     return <Navigate to="/" replace />;
   }
 
-  const redirectToGoogle = async () => {
+  const redirectToGoogle = () => {
     setIsRedirecting(true);
-    setError(null);
-
-    try {
-      const redirectUrl = await getGoogleSignInRedirectUrl();
-
-      window.location.assign(redirectUrl);
-    } catch {
-      setError("Google login could not start. Please try again.");
-      setIsRedirecting(false);
-    }
+    window.location.assign(getGoogleSignInStartUrl());
   };
 
   return (
@@ -61,8 +51,6 @@ export default function Login() {
           <Chrome />
           {isRedirecting ? "Opening Google..." : "Login with Google"}
         </Button>
-
-        {error && <p className="mt-4 text-center text-xs text-destructive">{error}</p>}
 
         {location.state && (
           <p className="mt-4 text-center text-xs text-muted-foreground">
