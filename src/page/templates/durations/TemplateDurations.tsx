@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { AlertDialog } from "radix-ui"
 import {
   getInvitationTemplateDurations,
   createInvitationTemplateDuration,
@@ -30,7 +31,7 @@ function formatPrice(raw: string): string {
 const emptyForm = (): DurationForm => ({
   duration: "1",
   unit: "week",
-  price: "",
+  price: "0",
   isActive: true,
 })
 
@@ -42,6 +43,7 @@ export default function TemplateDurations() {
   const [form, setForm] = useState<DurationForm>(emptyForm())
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [formError, setFormError] = useState("")
+  const [freeConfirmPayload, setFreeConfirmPayload] = useState<InvitationTemplateDurationPayload | null>(null)
 
   const { data: durations = [], isLoading, isError, refetch } = useQuery({
     queryKey: queryKeys.invitationTemplateDurations.lists(),
@@ -102,7 +104,16 @@ export default function TemplateDurations() {
     setModal({ type: "edit", item })
   }
 
+  const saveDuration = (payload: InvitationTemplateDurationPayload) => {
+    if (modal?.type === "edit") {
+      update({ id: modal.item.id, payload })
+    } else if (modal?.type === "create") {
+      create(payload)
+    }
+  }
+
   const handleSubmit = () => {
+    if (isSaving) return
     const duration = Number(form.duration)
 
     if (!form.duration || !Number.isInteger(duration) || duration < 1) {
@@ -129,11 +140,12 @@ export default function TemplateDurations() {
       isActive: form.isActive,
     }
 
-    if (modal?.type === "edit") {
-      update({ id: modal.item.id, payload })
-    } else {
-      create(payload)
+    if (price === 0) {
+      setFreeConfirmPayload(payload)
+      return
     }
+
+    saveDuration(payload)
   }
 
   const isSaving = isCreating || isUpdating
@@ -328,6 +340,37 @@ export default function TemplateDurations() {
           </div>
         </div>
       )}
+
+      <AlertDialog.Root
+        open={freeConfirmPayload !== null}
+        onOpenChange={(open) => { if (!open) setFreeConfirmPayload(null) }}
+      >
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <AlertDialog.Title className="mb-2 text-lg font-semibold text-foreground">
+              Save Free Duration?
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mb-6 text-sm text-muted-foreground">
+              This duration will be shown as Free. Are you sure you want to continue?
+            </AlertDialog.Description>
+            <div className="flex gap-3">
+              <AlertDialog.Cancel className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted">
+                Go Back
+              </AlertDialog.Cancel>
+              <AlertDialog.Action
+                onClick={() => {
+                  if (freeConfirmPayload && !isSaving) saveDuration(freeConfirmPayload)
+                }}
+                disabled={isSaving}
+                className="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-60"
+              >
+                {modal?.type === "create" ? "Create Free Duration" : "Save Free Duration"}
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
 
       {/* Delete Confirm */}
       {deleteConfirmId && (
