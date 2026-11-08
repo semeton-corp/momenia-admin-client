@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { createMusic, getMusics, updateMusic, type Music, type MusicPayload } from "@/api/cms/musics";
+import { createMusic, getMusicCategories, getMusics, updateMusic, type Music, type MusicPayload } from "@/api/cms/musics";
 import { uploadObjectWithPresignedUrl } from "@/api/objects";
 import { queryKeys } from "@/api/query-keys";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 type MusicForm = {
   title: string;
   artist: string;
+  category: string;
   musicKey: string;
   contentType: string;
   durationSeconds: string;
@@ -41,6 +42,7 @@ const WAVEFORM_POINT_COUNT = 160;
 const emptyForm = (): MusicForm => ({
   title: "",
   artist: "",
+  category: "",
   musicKey: "",
   contentType: "audio/mp3",
   durationSeconds: "",
@@ -56,6 +58,16 @@ function formatDuration(seconds: number) {
   const remainingSeconds = Math.floor(seconds % 60);
 
   return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function formatCategoryLabel(raw: string) {
+  return raw
+    .trim()
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 function readAudioDuration(file: File) {
@@ -80,6 +92,7 @@ function buildPayload(form: MusicForm): MusicPayload {
   return {
     title: form.title.trim(),
     artist: form.artist.trim(),
+    category: form.category.trim(),
     musicKey: form.musicKey.trim(),
     durationSeconds: Number(form.durationSeconds),
     isActive: form.isActive,
@@ -184,12 +197,14 @@ function buildWaveformPath(amplitudes: number[]) {
 export default function MusicManagement() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const [modal, setModal] = useState<ModalMode | null>(null);
   const [form, setForm] = useState<MusicForm>(emptyForm());
   const [formError, setFormError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [activeMusicId, setActiveMusicId] = useState<string | null>(null);
-
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   const {
     data: musics = [],
     isLoading,
@@ -199,6 +214,46 @@ export default function MusicManagement() {
     queryKey: queryKeys.musics.lists(),
     queryFn: getMusics,
   });
+
+  const {
+    data: musicCategories = [],
+    isLoading: isLoadingMusicCategories,
+  } = useQuery({
+    queryKey: queryKeys.musics.categories(),
+    queryFn: () => getMusicCategories(),
+  });
+
+  const filteredMusicCategories = useMemo(() => {
+    const query = formatCategoryLabel(categorySearch).toLowerCase();
+    return query
+      ? musicCategories.filter((category) => formatCategoryLabel(category).toLowerCase().includes(query))
+      : musicCategories;
+  }, [categorySearch, musicCategories]);
+
+  const hasExactCategoryMatch = musicCategories.some(
+    (category) => formatCategoryLabel(category).toLowerCase() === formatCategoryLabel(categorySearch).toLowerCase(),
+  );
+
+  const closeCategoryDropdown = () => {
+    setCategorySearch("");
+    setIsCategoryDropdownOpen(false);
+  };
+
+  const selectCategory = (category: string) => {
+    setForm((current) => ({ ...current, category }));
+    closeCategoryDropdown();
+  };
+
+  useEffect(() => {
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!categoryDropdownRef.current?.contains(event.target as Node)) {
+        closeCategoryDropdown();
+      }
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, []);
 
   const createMutation = useMutation({
     mutationFn: (payload: MusicPayload) => createMusic(payload),
@@ -235,12 +290,14 @@ export default function MusicManagement() {
     setForm(emptyForm());
     setFormError("");
     setModal({ type: "create" });
+    closeCategoryDropdown();
   };
 
   const openEdit = (music: Music) => {
     setForm({
       title: music.title,
       artist: music.artist,
+      category: music.category,
       musicKey: music.musicKey,
       contentType: music.contentType,
       durationSeconds: String(music.durationSeconds),
@@ -249,6 +306,7 @@ export default function MusicManagement() {
       waveform: normalizeWaveformBars(music.waveform),
     });
     setFormError("");
+    closeCategoryDropdown();
     setModal({ type: "edit", item: music });
   };
 
@@ -301,6 +359,11 @@ export default function MusicManagement() {
 
     if (!payload.artist) {
       setFormError("Artist is required.");
+      return;
+    }
+
+    if (!payload.category) {
+      setFormError("Category is required.");
       return;
     }
 
@@ -482,6 +545,77 @@ export default function MusicManagement() {
                     placeholder="indra"
                     onChange={(event) => setForm((current) => ({ ...current, artist: event.target.value }))}
                   />
+                </div>
+
+                <div ref={categoryDropdownRef} className="relative space-y-2">
+                  <Label id="music-category-label">Category</Label>
+                  <button
+                    type="button"
+                    aria-labelledby="music-category-label"
+                    aria-expanded={isCategoryDropdownOpen}
+                    onClick={() => {
+                      setCategorySearch("");
+                      setIsCategoryDropdownOpen(true);
+                    }}
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-left text-sm shadow-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  >
+                    <span className={form.category ? "text-foreground" : "text-muted-foreground"}>
+                      {form.category ? formatCategoryLabel(form.category) : "Select category"}
+                    </span>
+                    <svg className="size-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isCategoryDropdownOpen && (
+                    <div className="absolute z-20 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                      <div className="border-b border-border p-2">
+                        <div className="relative">
+                          <input
+                            autoFocus
+                            type="search"
+                            value={categorySearch}
+                            maxLength={255}
+                            aria-label="Search categories"
+                            placeholder="Search categories..."
+                            onChange={(event) => setCategorySearch(event.target.value)}
+                            className="w-full rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none"
+                          />
+                          {isLoadingMusicCategories && <div className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
+                        </div>
+                      </div>
+                      <div className="max-h-44 overflow-y-auto">
+                        {filteredMusicCategories.map((category) => (
+                          <button
+                            key={category}
+                            type="button"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              selectCategory(category);
+                            }}
+                            className="flex w-full items-center px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                          >
+                            {formatCategoryLabel(category)}
+                          </button>
+                        ))}
+                        {!isLoadingMusicCategories && categorySearch.trim() && !hasExactCategoryMatch && (
+                          <button
+                            type="button"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              selectCategory(categorySearch.trim());
+                            }}
+                            className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-indigo-500 transition-colors hover:bg-muted"
+                          >
+                            <Plus className="size-3.5 shrink-0" />
+                            Create "{formatCategoryLabel(categorySearch)}"
+                          </button>
+                        )}
+                        {!isLoadingMusicCategories && filteredMusicCategories.length === 0 && (
+                          <div className="px-4 py-2.5 text-sm text-muted-foreground">No categories found.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -782,6 +916,7 @@ function MusicRow({
           >
             {music.isActive ? "Active" : "Inactive"}
           </Badge>
+          <Badge variant="secondary">{formatCategoryLabel(music.category)}</Badge>
         </div>
         <p className="mt-1 truncate text-sm text-muted-foreground">{music.artist}</p>
         <p className="mt-2 truncate font-mono text-xs text-muted-foreground">{music.musicKey}</p>
