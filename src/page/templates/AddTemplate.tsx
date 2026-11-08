@@ -180,21 +180,31 @@ function useCombobox<T extends { id: number; name: string }>(
     }
   }, [fetcher])
 
-  const handleInputChange = (text: string, onChangeCallback: (t: string) => void) => {
+  const handleInputChange = (text: string) => {
     setInputText(text)
-    onChangeCallback(text)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    clearTimeout(debounceRef.current ?? undefined)
     debounceRef.current = setTimeout(() => fetchSuggestions(text), debounceMs)
   }
 
-  return { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown: () => setOpen(false), openDropdown: () => { setOpen(true); if (suggestions.length === 0) fetchSuggestions(inputText) } }
+  const closeDropdown = () => {
+    clearTimeout(debounceRef.current ?? undefined)
+    setInputText("")
+    setOpen(false)
+  }
+
+  const openDropdown = () => {
+    setOpen(true)
+    fetchSuggestions("")
+  }
+
+  return { inputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown }
 }
 
 // ─── CategoryCombobox ─────────────────────────────────────────────────────────
 
 function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onChange: (v: SelectedItem) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateCategories)
+  const { inputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateCategories)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -203,39 +213,36 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
   }, [])
 
   const handleSelect = (cat: InvitationTemplateCategory) => {
-    const label = formatCategoryLabel(cat.name)
-    setInputText(label)
-    onChange({ id: cat.id, name: label })
+    onChange({ id: cat.id, name: formatCategoryLabel(cat.name) })
     closeDropdown()
   }
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="relative">
-        <input type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, (t) => onChange({ id: null, name: t }))} onFocus={openDropdown}
-          onBlur={() => {
-            const match = suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase())
-            if (match) onChange({ id: match.id, name: formatCategoryLabel(match.name) })
-          }}
-          placeholder="e.g. Wedding Invitation"
-          className={`w-full rounded-lg border bg-background px-4 py-2.5 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`} />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
-            : <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>}
-        </div>
-      </div>
+      <button type="button" onClick={openDropdown} aria-expanded={open} className={`flex w-full items-center justify-between rounded-lg border bg-background px-4 py-2.5 text-left text-sm transition-colors ${error ? "border-destructive" : "border-border focus:border-indigo-500"}`}>
+        <span className={value.name ? "text-foreground" : "text-muted-foreground"}>{value.name ? formatCategoryLabel(value.name) : "Select category"}</span>
+        <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+      </button>
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {suggestions.map((cat) => (
-            <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(cat.name)}</button>
-          ))}
-          {!loading && inputText.trim() && !suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase()) && (
-            <button type="button" onMouseDown={(e) => { e.preventDefault(); onChange({ id: null, name: inputText.trim() }); closeDropdown() }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Create "{inputText.trim()}"
-            </button>
-          )}
-          {!loading && suggestions.length === 0 && <div className="px-4 py-2.5 text-sm text-muted-foreground">Start typing to search…</div>}
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="border-b border-border p-2">
+            <div className="relative">
+              <input autoFocus type="search" value={inputText} onChange={(e) => handleInputChange(e.target.value)} placeholder="Search categories..." className="w-full rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+              {loading && <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
+            </div>
+          </div>
+          <div className="max-h-44 overflow-y-auto">
+            {suggestions.map((cat) => (
+              <button key={cat.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelect(cat) }} className="flex w-full items-center px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted">{formatCategoryLabel(cat.name)}</button>
+            ))}
+            {!loading && inputText.trim() && !suggestions.find((c) => formatCategoryLabel(c.name).toLowerCase() === inputText.trim().toLowerCase()) && (
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); onChange({ id: null, name: inputText.trim() }); closeDropdown() }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-indigo-500 transition-colors hover:bg-muted">
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Create "{inputText.trim()}"
+              </button>
+            )}
+            {!loading && suggestions.length === 0 && <div className="px-4 py-2.5 text-sm text-muted-foreground">No categories found.</div>}
+          </div>
         </div>
       )}
       {value.name.trim() && !error && (
@@ -254,8 +261,7 @@ function CategoryCombobox({ value, onChange, error }: { value: SelectedItem; onC
 
 function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onChange: (v: SelectedItem[]) => void; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const { inputText, setInputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateTags)
+  const { inputText, suggestions, open, loading, handleInputChange, closeDropdown, openDropdown } = useCombobox(getInvitationTemplateTags)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (containerRef.current && !containerRef.current.contains(e.target as Node)) closeDropdown() }
@@ -265,51 +271,59 @@ function TagsCombobox({ value, onChange, error }: { value: SelectedItem[]; onCha
 
   const addTag = (item: SelectedItem) => {
     if (value.find((t) => formatCategoryLabel(t.name).toLowerCase() === formatCategoryLabel(item.name).toLowerCase())) return
-    onChange([...value, item]); setInputText(""); inputRef.current?.focus(); closeDropdown()
+    onChange([...value, item])
+    closeDropdown()
   }
 
   const removeTag = (name: string) => onChange(value.filter((t) => t.name !== name))
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === "Enter" || e.key === ",") && inputText.trim()) {
       e.preventDefault()
+      if (loading) return
       const trimmed = inputText.trim()
       const match = suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === trimmed.toLowerCase())
       addTag(match ? { id: match.id, name: formatCategoryLabel(match.name) } : { id: null, name: trimmed })
     }
-    if (e.key === "Backspace" && !inputText && value.length > 0) removeTag(value[value.length - 1].name)
   }
 
   return (
     <div ref={containerRef} className="relative">
-      <div className={`flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border bg-background px-3 py-2 transition-colors cursor-text ${error ? "border-destructive" : "border-border focus-within:border-indigo-500"}`} onClick={() => inputRef.current?.focus()}>
+      <div role="button" tabIndex={0} onClick={openDropdown} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDropdown() } }} className={`flex min-h-11 cursor-pointer flex-wrap items-center gap-1.5 rounded-lg border bg-background px-3 py-2 transition-colors ${error ? "border-destructive" : "border-border focus-within:border-indigo-500"}`}>
         {value.map((tag) => (
           <span key={tag.name} className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
             {formatCategoryLabel(tag.name)}
-            <button type="button" onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }} className="ml-0.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 p-0.5 transition-colors">
+            <button type="button" onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }} className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-indigo-200 dark:hover:bg-indigo-800">
               <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </span>
         ))}
-        <div className="relative flex flex-1 items-center min-w-24">
-          <input ref={inputRef} type="text" value={inputText} onChange={(e) => handleInputChange(e.target.value, () => {})} onFocus={openDropdown} onKeyDown={handleKeyDown} placeholder={value.length === 0 ? "e.g. Elegant, Modern…" : ""} className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
-          {loading && <div className="absolute right-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
-        </div>
+        {value.length === 0 && <span className="text-sm text-muted-foreground">Select tags</span>}
+        <svg className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
       </div>
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {suggestions.filter((t) => !value.find((v) => formatCategoryLabel(v.name).toLowerCase() === formatCategoryLabel(t.name).toLowerCase())).map((tag) => (
-            <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: formatCategoryLabel(tag.name) }) }} className="flex w-full items-center px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors text-left">{formatCategoryLabel(tag.name)}</button>
-          ))}
-          {!loading && inputText.trim() && !suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === inputText.trim().toLowerCase()) && (
-            <button type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-indigo-500 hover:bg-muted transition-colors text-left">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Create "{inputText.trim()}"
-            </button>
-          )}
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="border-b border-border p-2">
+            <div className="relative">
+              <input autoFocus type="search" value={inputText} onChange={(e) => handleInputChange(e.target.value)} onKeyDown={handleSearchKeyDown} placeholder="Search tags..." className="w-full rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none" />
+              {loading && <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />}
+            </div>
+          </div>
+          <div className="max-h-44 overflow-y-auto">
+            {suggestions.filter((t) => !value.find((v) => formatCategoryLabel(v.name).toLowerCase() === formatCategoryLabel(t.name).toLowerCase())).map((tag) => (
+              <button key={tag.id} type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: tag.id, name: formatCategoryLabel(tag.name) }) }} className="flex w-full items-center px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted">{formatCategoryLabel(tag.name)}</button>
+            ))}
+            {!loading && inputText.trim() && !suggestions.find((t) => formatCategoryLabel(t.name).toLowerCase() === inputText.trim().toLowerCase()) && (
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); addTag({ id: null, name: inputText.trim() }) }} className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-indigo-500 transition-colors hover:bg-muted">
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Create "{inputText.trim()}"
+              </button>
+            )}
+            {!loading && suggestions.length === 0 && <div className="px-4 py-2.5 text-sm text-muted-foreground">No tags found.</div>}
+          </div>
         </div>
       )}
-      <p className="mt-1 text-xs text-muted-foreground">Type and press Enter or comma to add. Backspace to remove.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Select existing tags or search to create one.</p>
       {error && <p className="mt-0.5 text-xs text-destructive">{error}</p>}
     </div>
   )

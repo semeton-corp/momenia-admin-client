@@ -10,6 +10,7 @@ export type Music = {
   durationSeconds: number;
   isActive: boolean;
   waveform: number[];
+  category: string;
 };
 
 export type MusicPayload = {
@@ -20,10 +21,17 @@ export type MusicPayload = {
   isActive: boolean;
   contentType: string;
   waveform: number[];
+  category: string;
 };
 
 export function getMusics() {
   return apiClient.get<Music[]>("/api/v1/musics");
+}
+
+export function getMusicCategories(keyword?: string) {
+  return apiClient
+    .get<{ data: string[] }>("/api/v1/musics/categories", { params: keyword ? { keyword } : undefined })
+    .then((response) => response.data);
 }
 
 export function getMusicById(id: string) {

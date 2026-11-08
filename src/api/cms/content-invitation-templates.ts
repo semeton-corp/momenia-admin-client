@@ -4,6 +4,7 @@ export type ContentInvitationTemplate = {
   id: number;
   name: string;
   content: string;
+  contentType: string;
   createdAt: string;
 };
 
@@ -29,6 +30,7 @@ export type ContentInvitationTemplateFolderTree =
 export type CreateContentInvitationTemplatePayload = {
   name: string;
   content: string;
+  contentType: string;
   folderId: number | null;
 };
 

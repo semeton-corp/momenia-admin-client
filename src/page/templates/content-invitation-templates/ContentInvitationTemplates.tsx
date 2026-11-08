@@ -10,12 +10,15 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  FileAudio,
   Folder,
   FolderOpen,
   FolderPlus,
   Home,
   ImagePlus,
+  Pause,
   Pencil,
+  Play,
   Plus,
   RefreshCw,
   Trash2,
@@ -54,6 +57,14 @@ import { compressImage } from "@/utils/compressImage";
 import { formatApiDate } from "@/utils/formatApiDate";
 
 const MAX_IMAGE_BYTES = 1024 * 1024;
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const AUDIO_CONTENT_TYPES: Record<string, true> = {
+  "audio/mpeg": true,
+  "audio/mp3": true,
+  "audio/wav": true,
+  "audio/ogg": true,
+  "audio/mp4": true,
+};
 
 type CreatePayload = {
   name: string;
@@ -65,6 +76,20 @@ function formatBytes(bytes: number) {
   return bytes >= MAX_IMAGE_BYTES
     ? `${(bytes / MAX_IMAGE_BYTES).toFixed(2)} MB`
     : `${Math.round(bytes / 1024)} KB`;
+}
+
+function isAudioContentType(contentType: string) {
+  return contentType.startsWith("audio/");
+}
+
+function contentTypeLabel(contentType: string) {
+  return isAudioContentType(contentType) ? "Audio" : "Image";
+}
+
+function formatAudioTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+
+  return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -159,16 +184,17 @@ export default function ContentInvitationTemplates() {
   const createMutation = useMutation({
     mutationFn: async ({
       name: templateName,
-      file: imageFile,
+      file: mediaFile,
       folderId,
     }: CreatePayload) => {
       const uploaded = await uploadObjectWithPresignedUrl(
-        imageFile,
+        mediaFile,
         "content-invitation-template",
       );
       await createContentInvitationTemplate({
         name: templateName,
         content: uploaded.key,
+        contentType: uploaded.contentType,
         folderId,
       });
     },
@@ -260,14 +286,22 @@ export default function ContentInvitationTemplates() {
 
   const handleFileSelect = async (selectedFile: File | undefined) => {
     if (!selectedFile) return;
-    if (!selectedFile.type.startsWith("image/")) {
-      setFormError("Please choose a PNG, JPG, or WEBP image");
+
+    const isAudio = Boolean(AUDIO_CONTENT_TYPES[selectedFile.type]);
+    if (!selectedFile.type.startsWith("image/") && !isAudio) {
+      setFormError("Please choose an image or MP3, WAV, OGG, or M4A audio file");
+      return;
+    }
+    if (isAudio && selectedFile.size > MAX_AUDIO_BYTES) {
+      setFormError(
+        `Audio is ${formatBytes(selectedFile.size)}. Please use a file no larger than ${formatBytes(MAX_AUDIO_BYTES)}.`,
+      );
       return;
     }
 
     setFormError("");
     let finalFile = selectedFile;
-    if (selectedFile.size > MAX_IMAGE_BYTES) {
+    if (!isAudio && selectedFile.size > MAX_IMAGE_BYTES) {
       setIsCompressing(true);
       try {
         finalFile = await compressImage(selectedFile, {
@@ -312,7 +346,7 @@ export default function ContentInvitationTemplates() {
               Content Invitation Templates
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Organize reusable invitation images, then copy their public URLs.
+              Organize reusable invitation images and audio, then copy their public URLs.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -385,7 +419,7 @@ export default function ContentInvitationTemplates() {
               This folder is empty.
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create a folder or upload the first image.
+              Create a folder or upload the first file.
             </p>
           </div>
         )}
@@ -452,7 +486,7 @@ export default function ContentInvitationTemplates() {
       {isCreateOpen && (
         <DialogFrame
           title="Add content template"
-          description="Upload one image to the current folder."
+          description="Upload one image or audio file to the current folder."
           onClose={closeCreate}
         >
           <form
@@ -460,7 +494,7 @@ export default function ContentInvitationTemplates() {
               event.preventDefault();
               if (!name.trim())
                 return setFormError("Template name is required");
-              if (!file) return setFormError("Image file is required");
+              if (!file) return setFormError("Content file is required");
               setFormError("");
               createMutation.mutate({
                 name: name.trim(),
@@ -491,7 +525,7 @@ export default function ContentInvitationTemplates() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Image</Label>
+              <Label>Content</Label>
               <button
                 type="button"
                 disabled={isBusy}
@@ -524,23 +558,37 @@ export default function ContentInvitationTemplates() {
                 )}
               >
                 {previewUrl ? (
-                  <img
-                    src={previewUrl}
-                    alt="Selected content template"
-                    className="h-full w-full object-contain"
-                  />
+                  <>
+                    {isAudioContentType(file?.type ?? "") ? (
+                      <span className="flex flex-col items-center gap-2 px-6 text-center">
+                        <FileAudio className="size-10 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
+                          {file?.name}
+                        </span>
+                      </span>
+                    ) : (
+                      <img
+                        src={previewUrl}
+                        alt="Selected content template"
+                        className="h-full w-full object-contain"
+                      />
+                    )}
+                    <span className="absolute left-3 top-3 rounded-full border border-border bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground">
+                      {contentTypeLabel(file?.type ?? "")}
+                    </span>
+                  </>
                 ) : (
                   <span className="flex flex-col items-center gap-3 px-6 text-center">
                     <Upload className="size-9 text-muted-foreground/50" />
                     <span>
                       <span className="block text-sm font-medium text-foreground">
                         {isDragging
-                          ? "Drop image here"
-                          : "Drag & drop or choose image file"}
+                          ? "Drop file here"
+                          : "Drag & drop or choose image or audio file"}
                       </span>
                       <span className="mt-1 block text-xs text-muted-foreground">
-                        PNG, JPG, or WEBP · images over 1 MB are compressed
-                        automatically
+                        PNG, JPG, WEBP, GIF, MP3, WAV, OGG, or M4A · images over
+                        1 MB are compressed automatically
                       </span>
                     </span>
                   </span>
@@ -554,7 +602,7 @@ export default function ContentInvitationTemplates() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,.mp3,.wav,.ogg,.m4a"
                 className="hidden"
                 onChange={(event) => {
                   void handleFileSelect(event.target.files?.[0]);
@@ -782,6 +830,90 @@ function FolderCard({
   );
 }
 
+function ContentAudioPlayer({
+  src,
+  name,
+}: {
+  src: string;
+  name: string;
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  const syncPlayback = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    setCurrentTime(audio.currentTime);
+    setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+  };
+
+  const togglePlayback = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (audio.paused) {
+      try {
+        await audio.play();
+      } catch {
+        toast.error("Could not play this audio file");
+      }
+      return;
+    }
+
+    audio.pause();
+  };
+
+  return (
+    <div className="flex w-full items-center gap-2 rounded-lg border border-border bg-background p-2">
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="outline"
+        onClick={togglePlayback}
+        aria-label={`${isPlaying ? "Pause" : "Play"} ${name}`}
+      >
+        {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+      </Button>
+      <input
+        type="range"
+        min="0"
+        max={duration}
+        step="0.1"
+        value={Math.min(currentTime, duration)}
+        disabled={duration <= 0}
+        aria-label={`Seek ${name}`}
+        onChange={(event) => {
+          const audio = audioRef.current;
+          const nextTime = Number(event.target.value);
+          if (!audio || !Number.isFinite(nextTime)) return;
+
+          audio.currentTime = nextTime;
+          setCurrentTime(nextTime);
+        }}
+        className="h-1.5 min-w-0 flex-1 cursor-pointer accent-primary disabled:cursor-not-allowed"
+      />
+      <span className="shrink-0 font-mono text-xs text-muted-foreground">
+        {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
+      </span>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="metadata"
+        className="hidden"
+        onLoadedMetadata={syncPlayback}
+        onDurationChange={syncPlayback}
+        onTimeUpdate={syncPlayback}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => setCurrentTime(0)}
+      />
+    </div>
+  );
+}
+
 function TemplateCard({
   template,
   onCopy,
@@ -793,15 +925,27 @@ function TemplateCard({
   onMove: () => void;
   onDelete: () => void;
 }) {
+  const isAudio = isAudioContentType(template.contentType);
+
   return (
     <article className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/40">
       <div className="relative aspect-[4/3] bg-muted">
-        <img
-          src={template.content}
-          alt={template.name}
-          className="h-full w-full object-contain"
-          loading="lazy"
-        />
+        {isAudio ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 p-5">
+            <FileAudio className="size-8 text-muted-foreground" />
+            <ContentAudioPlayer src={template.content} name={template.name} />
+          </div>
+        ) : (
+          <img
+            src={template.content}
+            alt={template.name}
+            className="h-full w-full object-contain"
+            loading="lazy"
+          />
+        )}
+        <span className="absolute left-3 top-3 rounded-full border border-border bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground">
+          {contentTypeLabel(template.contentType)}
+        </span>
         <div className="absolute right-3 top-3 flex gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
           <IconButton
             label={`Copy URL for ${template.name}`}
