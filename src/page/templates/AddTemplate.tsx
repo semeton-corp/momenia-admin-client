@@ -638,7 +638,7 @@ export default function AddTemplate() {
   const [step, setStep] = useState<1 | 2>(1)
 
   // Step 1 state
-  const [form, setForm] = useState<FormState>({ name: "", descriptionEn: "", descriptionIdn: "", price: "", priceAfterDiscount: "" })
+  const [form, setForm] = useState<FormState>({ name: "", descriptionEn: "", descriptionIdn: "", price: "0", priceAfterDiscount: "0" })
   const [category, setCategory] = useState<SelectedItem>({ id: null, name: "" })
   const [tags, setTags] = useState<SelectedItem[]>([])
   const [uploads, setUploads] = useState<UploadState>({ mobileThumbnailKey: "", mobileThumbnailPreview: "", desktopThumbnailKey: "", desktopThumbnailPreview: "" })
@@ -711,8 +711,6 @@ export default function AddTemplate() {
     if (!uploads.desktopThumbnailKey) next.desktopThumbnail = "Desktop thumbnail is required"
     if (!category.name.trim()) next.category = "Category is required"
     if (tags.length === 0) next.tags = "At least one tag is required"
-    if (!form.price.trim() || Number(form.price) < 0) next.price = "Sell price is required"
-    if (!form.priceAfterDiscount.trim() || Number(form.priceAfterDiscount) < 0) next.priceAfterDiscount = "After discount price is required"
     if (!form.descriptionEn.trim()) next.descriptionEn = "English description is required"
     if (!form.descriptionIdn.trim()) next.descriptionIdn = "Indonesian description is required"
     return next
@@ -830,8 +828,8 @@ export default function AddTemplate() {
       ...(category.id !== null ? { categoryId: category.id } : { newCategory: category.name.trim() }),
       ...(tagIds.length > 0 ? { tagIds } : {}),
       ...(newTags.length > 0 ? { newTags } : {}),
-      ...(form.price ? { price: form.price } : {}),
-      ...(form.priceAfterDiscount ? { priceAfterDiscount: form.priceAfterDiscount } : {}),
+      price: form.price || "0",
+      priceAfterDiscount: form.priceAfterDiscount || "0",
       version: 1,
       status: status as "draft" | "active" | "inactive",
       template: { ...templateBody, sectionTypes },
@@ -1015,8 +1013,8 @@ export default function AddTemplate() {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} required error={errors.price} />
-            <PriceInput label="After Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} required error={errors.priceAfterDiscount} />
+            <PriceInput label="Sell Price" value={form.price} onChange={(v) => setField("price", v)} error={errors.price} />
+            <PriceInput label="After Discount Price" value={form.priceAfterDiscount} onChange={(v) => setField("priceAfterDiscount", v)} error={errors.priceAfterDiscount} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
